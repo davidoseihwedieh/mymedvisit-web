@@ -1,3 +1,12 @@
+/* Remove shadow, border, and enforce white background for AI processing image */
+.no-shadow-bg {
+  background: #fff !important;
+  box-shadow: none !important;
+  border: none !important;
+  outline: none !important;
+  filter: none !important;
+  border-radius: 0 !important;
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

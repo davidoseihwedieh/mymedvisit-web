@@ -1,6 +1,5 @@
-import Link from 'next/link'
-import { SectionHeader } from '@/components/SectionHeader'
 import { illustrations } from '@/assets/illustrations'
+import Link from 'next/link'
 
 const detailedSteps = [
   {
@@ -121,7 +120,7 @@ export default function HowItWorks() {
                       <img src={illustrations.heroVoiceCapture} alt="Voice capture" className="w-full object-contain" />
                     )}
                     {step.visual === 'process' && (
-                      <img src={illustrations.aiProcessing} alt="AI processing" className="w-full object-contain" />
+                      <img src={illustrations.aiProcessing} alt="AI processing" className="w-full object-contain no-shadow-bg" />
                     )}
                     {step.visual === 'review' && (
                       <img src={illustrations.healthJournal} alt="Health journal" className="w-full object-contain" />
