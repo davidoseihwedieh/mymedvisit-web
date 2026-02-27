@@ -3,6 +3,5 @@
   "buildCommand": "npm ci && npm run build",
   "outputDirectory": ".next",
   "regions": ["iad1"],
-  "installCommand": "npm ci",
-  "caching": false
+  "installCommand": "npm ci"
 }
