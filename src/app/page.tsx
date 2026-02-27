@@ -6,21 +6,21 @@ const steps = [
     title: 'Speak naturally',
     description: 'Describe a visit or say a quick metric. No typing, no menus.',
     icon: (
-      <img src={illustrations.heroVoiceCapture} alt="Speak naturally" className="h-14 w-14 object-contain" />
+      <img src={illustrations.heroVoiceCapture} alt="Speak naturally" className="h-[140px] w-[140px] object-contain" />
     ),
   },
   {
     title: 'AI extracts meaning',
     description: 'Summaries, medications, and action items — created in seconds.',
     icon: (
-      <img src={illustrations.aiProcessing} alt="AI extracts meaning" className="h-14 w-14 object-contain" />
+      <img src={illustrations.aiProcessing} alt="AI extracts meaning" className="h-[140px] w-[140px] object-contain" />
     ),
   },
   {
     title: 'Share with care',
     description: 'Encrypted updates to family, caregivers, or providers — on your terms.',
     icon: (
-      <img src={illustrations.familySharing} alt="Share with care" className="h-14 w-14 object-contain" />
+      <img src={illustrations.familySharing} alt="Share with care" className="h-[140px] w-[140px] object-contain" />
     ),
   },
 ]
@@ -253,11 +253,11 @@ export default function Home() {
             {steps.map((step, index) => (
               <div
                 key={step.title}
-                className={`reveal rounded-[24px] bg-white/90 p-8 text-center shadow-sm ${
+                className={`reveal rounded-[24px] bg-white/90 p-6 text-center shadow-sm ${
                   index === 1 ? 'stagger-1' : index === 2 ? 'stagger-2' : ''
                 }`}
               >
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl" style={{ background: 'rgba(10,126,164,0.08)' }}>
+                <div className="mx-auto flex h-40 w-40 items-center justify-center rounded-2xl" style={{ background: 'rgba(10,126,164,0.08)' }}>
                   {step.icon}
                 </div>
                 <p className="mt-5 font-[var(--font-fraunces)] text-xs text-[rgba(13,27,42,0.25)]">0{index + 1}</p>
