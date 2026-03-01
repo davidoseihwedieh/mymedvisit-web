@@ -108,11 +108,10 @@ export default function Home() {
               </p>
               <h1 className="reveal stagger-1 font-[var(--font-fraunces)] text-[clamp(2.6rem,4vw,4.4rem)] leading-[1.05]">
                 Your health data{' '}
-                <span className="text-gradient">finally connected</span>.
+                <span className="text-gradient">finally simplified</span>.
               </h1>
               <p className="reveal stagger-2 max-w-xl text-lg text-[rgba(13,27,42,0.74)]">
-                Speak about your doctor visit. We extract diagnoses, medications, and vital changes—
-                then connect them with your wearables and health patterns to surface insights you'd otherwise miss.
+                Inspired by individuals and caregivers seeking a clearer understanding of diagnoses, labs and medical data, MyMedVisit delivers digestible summaries and empowers users to dive deeper with an interactive platform designed to simplify your care.
               </p>
               <div className="reveal stagger-3 flex flex-wrap gap-4">
                 <Link
