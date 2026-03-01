@@ -4,57 +4,57 @@ import Link from 'next/link'
 const detailedSteps = [
   {
     num: '01',
-    title: 'Speak naturally',
-    subtitle: 'Your words, your pace, your way',
+    title: 'Record your doctor visit',
+    subtitle: 'Capture the conversation naturally',
     description:
-      'Open MyMedVisit and tap to record. Whether it\'s a quick vital ("blood pressure 120 over 80") or a full doctor visit recap, speak naturally. Our clinical-grade voice system understands medical terminology, accents, and pauses.',
+      'Open MyMedVisit and tap record. Talk naturally during or after your appointment. No need to take notes. Our system understands medical terminology, handles background noise, and captures everything discussed.',
     details: [
-      'Quick Commands (5–10 seconds) for vitals and quick metrics',
-      'Visit Summarization (up to 60 minutes) for full appointment recaps',
-      'Medical vocabulary recognized automatically',
-      'Works offline—data encrypts locally and syncs when reconnected',
+      'Record during the visit or immediately after',
+      'Works even in noisy clinic environments',
+      'Medical terminology recognized automatically',
+      'Data encrypted locally and never leaves your device unencrypted',
     ],
     visual: 'capture',
   },
   {
     num: '02',
-    title: 'AI understands medicine',
-    subtitle: 'Extracts structure, checks for safety',
+    title: 'Get a clinical summary',
+    subtitle: 'Structured note focusing on what matters',
     description:
-      'Your audio is converted to medical-grade text, then processed through specialized intelligence. The system extracts diagnoses (ICD-10), medications with dosages, vital changes, and action items—all while checking every medication against comprehensive drug interaction databases.',
+      'Our medical AI transforms your recording into a clean clinical note. Diagnoses, medications, dosages, and recommendations—clearly organized. No small talk, no fluff. Just clinically relevant information you can reference forever.',
     details: [
-      'Automatic extraction of diagnoses, medications, dosages, and follow-ups',
-      'Real-time cross-reference with drug interaction libraries',
-      'Contraindication and dosage safety checks',
-      'Clinical context preserved—it knows the difference between a side effect discussion and a medication mention',
+      'Automatic extraction of diagnoses and clinical findings',
+      'Medications with dosages clearly listed',
+      'Recommendations and action items prioritized',
+      'Ignores pleasantries and non-clinical conversation',
     ],
     visual: 'process',
   },
   {
     num: '03',
-    title: 'Patterns become visible',
-    subtitle: 'Connected data reveals what single sources can\'t',
+    title: 'Query your note with AI',
+    subtitle: 'Understand the medical reasoning',
     description:
-      'Visit summaries combine with your wearable data, glucose monitors, and health apps to build a complete picture. Glucose spikes, sleep disruption, vital trends—the system correlates them with medication changes and visits to surface patterns.',
+      'Your clinical note is searchable and queryable. Ask "Why did my doctor recommend this medication?" or "What does this diagnosis mean?" Our AI provides clear answers grounded in medical evidence and your specific situation.',
     details: [
-      'Apple Health, wearables, and CGM data automatically integrated',
-      'Trends detected across weeks and months, not just individual snapshots',
-      'Pattern alerts: "Glucose spike after medication adjustment" or "Sleep disruption linked to new prescription"',
-      'Timeline shows how your health responds to changes',
+      'Ask questions about diagnoses, medications, recommendations',
+      'Get explanations in plain English, not medical jargon',
+      'Understand the reasoning behind your doctor\'s choices',
+      'Upload lab results and get interpretations',
     ],
     visual: 'review',
   },
   {
     num: '04',
-    title: 'You stay in control',
-    subtitle: 'Share insights, keep your privacy',
+    title: 'Log symptoms, share with family',
+    subtitle: 'Better health insights through data',
     description:
-      'Invite family, caregivers, or doctors to receive updates—but only what you choose. Every share is encrypted. Every access is logged. Revoke permissions anytime.',
+      'Log how you feel daily—symptoms, energy levels, concerns. This data helps your clinician make better decisions. Share your visit notes with family who missed the appointment. They can query your notes too. Get AI alerts for concerning symptom combinations.',
     details: [
-      'Granular controls: choose what each person sees (full visit, meds only, vital trends, alerts only)',
-      'End-to-end encryption—we can\'t read it, neither can unauthorized viewers',
-      'Family members don\'t need an account for basic access',
-      'Full audit trail: see exactly who viewed what, when',
+      'Daily symptom logging improves clinician decision-making',
+      'Share visit summaries with loved ones instantly',
+      'Family members can query your clinical notes',
+      'Red flag alerts if you log a dangerous symptom given your diagnoses',
     ],
     visual: 'share',
   },
@@ -72,12 +72,11 @@ export default function HowItWorks() {
               How it works
             </p>
             <h1 className="reveal stagger-1 mt-4 font-[var(--font-fraunces)] text-[clamp(2.4rem,4vw,4.2rem)] leading-[1.08]">
-              From voice to clarity in{' '}
-              <span className="text-gradient">four simple steps</span>.
+              From doctor visit to{' '}
+              <span className="text-gradient">medical understanding</span>.
             </h1>
             <p className="reveal stagger-2 mt-6 text-lg leading-relaxed text-[rgba(13,27,42,0.6)]">
-              MyMedVisit was designed so that the hardest part of managing your health
-              is already done — you just have to speak.
+              Record your appointment. Get a searchable clinical note. Query it for medical insights. Log your symptoms. Share with family. That\'s how you take control of your health.
             </p>
           </div>
         </div>
@@ -140,9 +139,9 @@ export default function HowItWorks() {
       <section className="px-6 pb-24 pt-16">
         <div className="mx-auto max-w-4xl">
           <div className="glass-card reveal rounded-[32px] p-12 text-center">
-            <h2 className="font-[var(--font-fraunces)] text-4xl">See what connected health looks like.</h2>
+            <h2 className="font-[var(--font-fraunces)] text-4xl">Never forget what your doctor said.</h2>
             <p className="mx-auto mt-4 max-w-lg text-[rgba(13,27,42,0.55)]">
-              Join early access and experience how voice, data, and intelligence combine to reveal insights about your health.
+              Join early access and start transforming your doctor visits into searchable, queryable medical records you can understand and share.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-4">
               <Link

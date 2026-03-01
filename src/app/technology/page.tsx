@@ -4,20 +4,20 @@ import { illustrations } from '@/assets/illustrations'
 
 const aiCapabilities = [
   {
-    title: 'Medical-Grade Voice Recognition',
-    description: 'Trained on millions of hours of clinical dialogue, our system understands medical terminology, accents, and speaking patterns. It works in noisy environments (hospitals, clinics, homes) and adapts to your voice in real time.',
+    title: 'Clinical Voice Recognition',
+    description: 'Trained on actual doctor-patient conversations, our system understands medical terminology, regional accents, and clinical shorthand. Works perfectly in noisy environments—hospitals, clinics, even home settings.',
   },
   {
-    title: 'Clinical Intelligence Extraction',
-    description: 'Automatically extracts structured medical data: diagnoses (ICD-10), medications with RxNorm codes, dosages, procedures, and vital changes. Understands clinical context—distinguishes a side effect discussion from a medication mention.',
+    title: 'Clinical Note Generation',
+    description: 'Transforms your recording into a clean, structured clinical note. Automatically extracts diagnoses, medications, dosages, and recommendations. Filters out pleasantries and focuses only on clinically relevant information.',
   },
   {
-    title: 'Evidence-Based Safety Checks',
-    description: 'Every medication is cross-referenced against comprehensive drug interaction databases and contraindication libraries. The system alerts you to potential conflicts before they become dangerous.',
+    title: 'Medical AI Reasoning',
+    description: 'When you ask your clinical note a question, our AI explains the medical reasoning behind your doctor\'s recommendations. Uses evidence-based medical knowledge to help you understand your diagnosis and treatment plan.',
   },
   {
-    title: 'Pattern Recognition Engine',
-    description: 'Correlates health data across multiple sources: glucose monitors, sleep trackers, wearables, and visits. Detects patterns (glucose spikes after medication changes, sleep disruption with new prescriptions) that single devices can\'t reveal.',
+    title: 'Symptom Intelligence & Red Flag Detection',
+    description: 'When you log daily symptoms, the system understands your known diagnoses and flags dangerous combinations. Example: hypertension + sudden vision loss = amaurosis fugax alert. Urges you to seek emergency care.',
   },
 ]
 
@@ -76,12 +76,11 @@ export default function Technology() {
               Our technology
             </p>
             <h1 className="reveal stagger-1 mt-4 font-[var(--font-fraunces)] text-[clamp(2.4rem,4vw,4.2rem)] leading-[1.08]">
-              <span className="text-gradient">Medical intelligence</span> you can trust.
+              <span className="text-gradient">Clinical-grade AI</span> that understands your care.
             </h1>
             <p className="reveal stagger-2 mt-6 text-lg leading-relaxed text-[rgba(13,27,42,0.6)]">
-              Every interaction—from voice capture to pattern detection to safety checks—is powered by
-              clinical-grade AI, comprehensive medical databases, and encryption-by-design security.
-              No shortcuts. No generic solutions.
+              Every step—recording, transcription, note generation, querying, symptom analysis—is built with medical expertise.
+              Our system knows clinical language, understands medical reasoning, and respects your privacy absolutely.
             </p>
           </div>
         </div>
@@ -91,9 +90,9 @@ export default function Technology() {
       <section className="px-6 py-20">
         <div className="mx-auto max-w-6xl">
           <SectionHeader
-            tag="Core Intelligence"
-            title="Built specifically for medicine."
-            description="Our AI pipeline is purpose-built for clinical accuracy. Every component—voice recognition, data extraction, interaction checking—is optimized for medical terminology and healthcare workflows."
+            tag="The Technology"
+            title="From recording to medical understanding."
+            description="Our technology pipeline transforms doctor visits into searchable, queryable clinical records. Voice recognition trained on clinical dialogue. AI that generates clean notes. Medical reasoning engines that answer your questions. Symptom intelligence that detects emergencies."
           />
           <div className="mt-14 grid gap-8 md:grid-cols-2">
             {aiCapabilities.map((cap, index) => (
