@@ -4,20 +4,20 @@ import { illustrations } from '@/assets/illustrations'
 
 const aiCapabilities = [
   {
-    title: 'Adaptive Voice Recognition',
-    description: 'Our multi-model transcription engine leverages advanced machine learning architectures trained on millions of hours of clinical dialogue. It adapts to accents, speaking patterns, and medical terminology in real time — delivering medical-grade accuracy even in noisy clinical environments.',
+    title: 'Medical-Grade Voice Recognition',
+    description: 'Trained on millions of hours of clinical dialogue, our system understands medical terminology, accents, and speaking patterns. It works in noisy environments (hospitals, clinics, homes) and adapts to your voice in real time.',
   },
   {
-    title: 'Clinical Natural Language Processing',
-    description: 'Specialized language models parse transcribed speech through layers of medical ontology, extracting diagnoses (ICD-10), medications (RxNorm), procedures, vitals, and sentiment. The system understands context — distinguishing a medication mention from a side effect discussion.',
+    title: 'Clinical Intelligence Extraction',
+    description: 'Automatically extracts structured medical data: diagnoses (ICD-10), medications with RxNorm codes, dosages, procedures, and vital changes. Understands clinical context—distinguishes a side effect discussion from a medication mention.',
   },
   {
-    title: 'Intelligent Summarization Engine',
-    description: 'Cutting-edge large language models with specialized medical knowledge libraries condense lengthy visits into structured, actionable summaries. Key findings, medication changes, and follow-up items are automatically prioritized — preserving clinical nuance without the noise.',
+    title: 'Evidence-Based Safety Checks',
+    description: 'Every medication is cross-referenced against comprehensive drug interaction databases and contraindication libraries. The system alerts you to potential conflicts before they become dangerous.',
   },
   {
-    title: 'Evidence-Based Cross-Referencing',
-    description: 'Our pharmacological intelligence layer cross-references extracted medications against comprehensive drug interaction databases, contraindication libraries, and dosage guidelines. The system surfaces potential concerns before they become problems.',
+    title: 'Pattern Recognition Engine',
+    description: 'Correlates health data across multiple sources: glucose monitors, sleep trackers, wearables, and visits. Detects patterns (glucose spikes after medication changes, sleep disruption with new prescriptions) that single devices can\'t reveal.',
   },
 ]
 
@@ -76,12 +76,12 @@ export default function Technology() {
               Our technology
             </p>
             <h1 className="reveal stagger-1 mt-4 font-[var(--font-fraunces)] text-[clamp(2.4rem,4vw,4.2rem)] leading-[1.08]">
-              Advanced intelligence,{' '}
-              <span className="text-gradient">invisible complexity</span>.
+              <span className="text-gradient">Medical intelligence</span> you can trust.
             </h1>
             <p className="reveal stagger-2 mt-6 text-lg leading-relaxed text-[rgba(13,27,42,0.6)]">
-              Behind every simple voice interaction lies a sophisticated pipeline of proprietary AI systems,
-              medical knowledge engines, and security infrastructure — purpose-built for health.
+              Every interaction—from voice capture to pattern detection to safety checks—is powered by
+              clinical-grade AI, comprehensive medical databases, and encryption-by-design security.
+              No shortcuts. No generic solutions.
             </p>
           </div>
         </div>
@@ -91,9 +91,9 @@ export default function Technology() {
       <section className="px-6 py-20">
         <div className="mx-auto max-w-6xl">
           <SectionHeader
-            tag="AI intelligence"
-            title="A multi-layered intelligence pipeline."
-            description="Each layer is purpose-built for the unique demands of clinical speech and medical data. No generic solutions. No shortcuts."
+            tag="Core Intelligence"
+            title="Built specifically for medicine."
+            description="Our AI pipeline is purpose-built for clinical accuracy. Every component—voice recognition, data extraction, interaction checking—is optimized for medical terminology and healthcare workflows."
           />
           <div className="mt-14 grid gap-8 md:grid-cols-2">
             {aiCapabilities.map((cap, index) => (

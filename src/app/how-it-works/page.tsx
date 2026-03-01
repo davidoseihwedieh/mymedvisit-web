@@ -4,57 +4,57 @@ import Link from 'next/link'
 const detailedSteps = [
   {
     num: '01',
-    title: 'Capture with your voice',
-    subtitle: 'Speak naturally — the way you already do',
+    title: 'Speak naturally',
+    subtitle: 'Your words, your pace, your way',
     description:
-      'Open MyMedVisit, tap once, and speak. Whether you\'re summarizing a quick blood pressure reading or an entire doctor\'s visit, our voice pipeline is optimized for natural speech — accents, pauses, medical terminology, and all.',
+      'Open MyMedVisit and tap to record. Whether it\'s a quick vital ("blood pressure 120 over 80") or a full doctor visit recap, speak naturally. Our clinical-grade voice system understands medical terminology, accents, and pauses.',
     details: [
-      'Two modes: Quick Commands (1–10 sec) and Visit Summarization (up to 60 min)',
-      'Advanced noise suppression isolates your voice in any environment',
-      'Offline-capable — data is encrypted and synced when you reconnect',
-      'No training required — the system adapts to you',
+      'Quick Commands (5–10 seconds) for vitals and quick metrics',
+      'Visit Summarization (up to 60 minutes) for full appointment recaps',
+      'Medical vocabulary recognized automatically',
+      'Works offline—data encrypts locally and syncs when reconnected',
     ],
     visual: 'capture',
   },
   {
     num: '02',
-    title: 'Intelligence extracts meaning',
-    subtitle: 'Proprietary AI pipelines turn speech into structured health data',
+    title: 'AI understands medicine',
+    subtitle: 'Extracts structure, checks for safety',
     description:
-      'Your visit is processed through multiple layers of specialized intelligence. Voice is converted to text with medical-grade accuracy, then analyzed to extract diagnoses, medications, vitals, action items, and emotional context.',
+      'Your audio is converted to medical-grade text, then processed through specialized intelligence. The system extracts diagnoses (ICD-10), medications with dosages, vital changes, and action items—all while checking every medication against comprehensive drug interaction databases.',
     details: [
-      'Multi-stage voice-to-text pipeline tuned for clinical vocabulary',
-      'Automatic extraction of medications, dosages, and scheduling',
-      'Intelligent summarization that preserves clinical nuance',
-      'Evidence-based cross-referencing with pharmacological databases',
+      'Automatic extraction of diagnoses, medications, dosages, and follow-ups',
+      'Real-time cross-reference with drug interaction libraries',
+      'Contraindication and dosage safety checks',
+      'Clinical context preserved—it knows the difference between a side effect discussion and a medication mention',
     ],
     visual: 'process',
   },
   {
     num: '03',
-    title: 'Review your insights',
-    subtitle: 'Clear summaries that make sense',
+    title: 'Patterns become visible',
+    subtitle: 'Connected data reveals what single sources can\'t',
     description:
-      'Every visit becomes a structured summary: key updates, next steps, medication changes, and follow-up dates. Your health journal builds over time, revealing trends that single visits can\'t show.',
+      'Visit summaries combine with your wearable data, glucose monitors, and health apps to build a complete picture. Glucose spikes, sleep disruption, vital trends—the system correlates them with medication changes and visits to surface patterns.',
     details: [
-      'Visit summaries organized by date, provider, and specialty',
-      'Timeline view shows vitals and symptoms trending over weeks',
-      'Medication list auto-updates with each visit',
-      'Alerts for potential interactions or missed follow-ups',
+      'Apple Health, wearables, and CGM data automatically integrated',
+      'Trends detected across weeks and months, not just individual snapshots',
+      'Pattern alerts: "Glucose spike after medication adjustment" or "Sleep disruption linked to new prescription"',
+      'Timeline shows how your health responds to changes',
     ],
     visual: 'review',
   },
   {
     num: '04',
-    title: 'Share with those who care',
-    subtitle: 'Keep your care circle informed — on your terms',
+    title: 'You stay in control',
+    subtitle: 'Share insights, keep your privacy',
     description:
-      'Invite family members, caregivers, or providers to receive updates. You control exactly what they see: full summaries, medication changes only, or emergency alerts. Revoke access anytime.',
+      'Invite family, caregivers, or doctors to receive updates—but only what you choose. Every share is encrypted. Every access is logged. Revoke permissions anytime.',
     details: [
-      'Granular sharing controls — by person, by visit, by data type',
-      'Family members get their own view (no account required for basic access)',
-      'Emergency contact auto-alerts for critical changes',
-      'HIPAA-aligned sharing with full audit trail',
+      'Granular controls: choose what each person sees (full visit, meds only, vital trends, alerts only)',
+      'End-to-end encryption—we can\'t read it, neither can unauthorized viewers',
+      'Family members don\'t need an account for basic access',
+      'Full audit trail: see exactly who viewed what, when',
     ],
     visual: 'share',
   },
@@ -140,9 +140,9 @@ export default function HowItWorks() {
       <section className="px-6 pb-24 pt-16">
         <div className="mx-auto max-w-4xl">
           <div className="glass-card reveal rounded-[32px] p-12 text-center">
-            <h2 className="font-[var(--font-fraunces)] text-4xl">Ready to simplify your health journey?</h2>
+            <h2 className="font-[var(--font-fraunces)] text-4xl">See what connected health looks like.</h2>
             <p className="mx-auto mt-4 max-w-lg text-[rgba(13,27,42,0.55)]">
-              Join early access and experience what it&apos;s like when your health information works for you.
+              Join early access and experience how voice, data, and intelligence combine to reveal insights about your health.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-4">
               <Link

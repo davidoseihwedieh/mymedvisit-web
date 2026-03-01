@@ -3,86 +3,93 @@ import { illustrations } from '@/assets/illustrations'
 
 const steps = [
   {
-    title: 'Speak naturally',
-    description: 'Describe a visit or say a quick metric. No typing, no menus.',
+    title: 'Capture health moments',
+    description: 'Speak naturally about visits or log vitals. Voice or text, it's up to you.',
     icon: (
-      <img src={illustrations.heroVoiceCapture} alt="Speak naturally" className="h-[210px] w-[210px] object-contain" />
+      <img src={illustrations.heroVoiceCapture} alt="Capture health moments" className="h-[210px] w-[210px] object-contain" />
     ),
   },
   {
-    title: 'AI extracts meaning',
-    description: 'Summaries, medications, and action items — created in seconds.',
+    title: 'AI understands medicine',
+    description: 'Extracts diagnoses, medications, dosages—then checks for dangerous interactions.',
     icon: (
-      <img src={illustrations.aiProcessing} alt="AI extracts meaning" className="h-[210px] w-[210px] object-contain" />
+      <img src={illustrations.aiProcessing} alt="AI understands medicine" className="h-[210px] w-[210px] object-contain" />
     ),
   },
   {
-    title: 'Share with care',
-    description: 'Encrypted updates to family, caregivers, or providers — on your terms.',
+    title: 'Patterns emerge',
+    description: 'Health data from wearables, devices, and visits reveal trends you might miss.',
     icon: (
-      <img src={illustrations.familySharing} alt="Share with care" className="h-[210px] w-[210px] object-contain" />
+      <img src={illustrations.passiveDevices} alt="Patterns emerge" className="h-[210px] w-[210px] object-contain" />
+    ),
+  },
+  {
+    title: 'Proactive alerts',
+    description: 'When patterns matter—medication conflicts, sleep disruption, glucose spikes—you're notified first.',
+    icon: (
+      <img src={illustrations.healthJournal} alt="Proactive alerts" className="h-[210px] w-[210px] object-contain" />
     ),
   },
 ]
 
 const features = [
   {
-    title: 'Visit summaries',
-    description: 'Clear, readable notes after every appointment.',
+    title: 'Drug interaction alerts',
+    description: 'Automatically detects dangerous medication combinations before they become problems.',
   },
   {
-    title: 'Health journal & trends',
-    description: 'Track vitals, symptoms, and mood in one calm timeline.',
+    title: 'Pattern detection',
+    description: 'Correlates glucose spikes, sleep disruption, and vital changes with medication or events.',
   },
   {
-    title: 'Family sharing',
-    description: 'Invite trusted family members to receive updates.',
+    title: 'Clinical-grade summaries',
+    description: 'Structured visit notes with diagnoses, medications, and actionable next steps.',
   },
   {
-    title: 'Medication tracking',
-    description: 'Keep lists, reminders, and adherence insights together.',
+    title: 'Ambient health intelligence',
+    description: 'Apple Health, wearables, and devices paint a complete picture of your wellbeing.',
   },
   {
-    title: 'Privacy by design',
-    description: 'Automatic PII anonymization before cloud analysis.',
+    title: 'Privacy-first architecture',
+    description: 'Data encrypted on-device. We can't read it. Neither can anyone else without your permission.',
   },
   {
-    title: 'Offline resilience',
-    description: 'Retry-safe uploads keep your data secure even on weak signal.',
+    title: 'Evidence-based guidance',
+    description: 'Recommendations grounded in clinical databases and your personal health history.',
   },
 ]
 
 const useCases = [
   {
     title: 'For seniors',
-    description: 'A simple voice-first companion that remembers the details.',
+    description: 'A health advisor that catches interactions, remembers details, and alerts you to concerning patterns.',
   },
   {
     title: 'For adult children',
-    description: 'Stay informed without hovering or overwhelming your loved one.',
+    description: 'Know your parent's health story without reading every visit note. Get alerts when something matters.',
   },
   {
-    title: 'For caregivers',
-    description: 'Create a shared view of outcomes, meds, and care plans.',
+    title: 'For caregivers & providers',
+    description: 'A shared intelligence layer that connects the dots across visits, medications, and vital trends.',
   },
 ]
 
 const faqs = [
   {
-    title: 'Do I need to type?',
-    description: 'No. MyMedVisit is voice-first. Speak naturally or tap once to start.',
+    title: 'How does it catch drug interactions?',
+    description: 'Our AI extracts medications and dosages from your visits, then cross-references them against comprehensive drug interaction databases. You're alerted immediately if conflicts exist.',
   },
   {
-    title: 'Who sees my data?',
-    description: 'Only you and the people you invite. Sharing is always optional.',
+    title: 'Can it detect health patterns?',
+    description: 'Yes. By combining visit data with your wearables, glucose monitors, and sleep trackers, we correlate patterns—like glucose spikes after medication changes—that single data sources can\'t reveal.',
   },
   {
-    title: 'Does it work for long visits?',
-    description: 'Yes. It supports short commands and full-length visit summaries.',
+    title: 'Do I have to share my data?',
+    description: 'No. Everything is yours. Sharing with family, caregivers, or providers is optional, granular, and revocable at any time.',
   },
   {
-    title: 'Can I use it between appointments?',
-    description: 'Absolutely. Log symptoms, vitals, and notes any time.',
+    title: 'How private is my information?',
+    description: 'Your data is encrypted on your device before it ever leaves your phone. We can\'t access it. Even our engineers can\'t read your health information.',
   },
 ]
 
@@ -97,16 +104,15 @@ export default function Home() {
           <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
             <div className="space-y-6">
               <p className="reveal text-sm font-semibold uppercase tracking-[0.35em] text-[var(--teal-dark)]">
-                Voice-first health intelligence
+                Health intelligence that understands medicine
               </p>
               <h1 className="reveal stagger-1 font-[var(--font-fraunces)] text-[clamp(2.6rem,4vw,4.4rem)] leading-[1.05]">
-                Your health,{' '}
-                <span className="text-gradient">remembered</span>
-                {' '}— by voice.
+                Your health data{' '}
+                <span className="text-gradient">finally connected</span>.
               </h1>
               <p className="reveal stagger-2 max-w-xl text-lg text-[rgba(13,27,42,0.74)]">
-                Speak naturally about your doctor visit. Our intelligence captures every detail,
-                creates clear summaries, and shares them with the people who care — securely.
+                Speak about your doctor visit. We extract diagnoses, medications, and vital changes—
+                then connect them with your wearables and health patterns to surface insights you'd otherwise miss.
               </p>
               <div className="reveal stagger-3 flex flex-wrap gap-4">
                 <Link
@@ -186,13 +192,14 @@ export default function Home() {
         <div className="mx-auto max-w-6xl">
           <div className="flex flex-col gap-4 items-center text-center">
             <p className="reveal text-sm font-semibold uppercase tracking-[0.35em] text-[var(--teal-dark)]">
-              How sharing works
+              Secure collaboration
             </p>
             <h2 className="reveal stagger-1 font-[var(--font-fraunces)] text-4xl leading-tight md:text-5xl">
-              From your voice to your care circle.
+              Intelligence without loss of control.
             </h2>
             <p className="reveal stagger-2 max-w-2xl text-lg text-[rgba(13,27,42,0.6)]">
-              Every visit summary is encrypted end-to-end. You control exactly who sees what.
+              Share granular updates with family, caregivers, or providers. Everything encrypted end-to-end.
+              You decide who sees what, and can revoke access instantly.
             </p>
           </div>
           <div className="reveal stagger-1 mx-auto mt-12 max-w-5xl">
@@ -219,26 +226,26 @@ export default function Home() {
         <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-2">
           <div className="reveal rounded-[28px] bg-white/80 p-8 shadow-sm">
             <h2 className="font-[var(--font-fraunces)] text-3xl">
-              Visits are overwhelming.
+              Your health is scattered.
             </h2>
             <p className="mt-3 text-[rgba(13,27,42,0.72)]">
-              Notes get lost, instructions blur together, and families worry
-              they missed the real story.
+              Visit notes sit in your phone. Medication lists live in your pharmacy. Sleep data in a watch app.
+              No one—not even you—sees the full picture.
             </p>
           </div>
           <div className="reveal stagger-1 rounded-[28px] bg-[var(--ink)] p-8 text-white shadow-[var(--shadow)]">
             <h2 className="font-[var(--font-fraunces)] text-3xl">
-              MyMedVisit turns speech into clarity.
+              MyMedVisit connects the dots.
             </h2>
             <p className="mt-3 text-white/80">
-              Speak once. We capture the visit, summarize it, and organize
-              everything for the people you trust.
+              We pull together your visits, medications, wearables, and vital trends—then surface
+              the patterns that matter: interactions, concerns, and insights.
             </p>
           </div>
         </div>
       </section>
 
-      {/* Three steps */}
+      {/* Four steps */}
       <section className="px-6 py-16">
         <div className="mx-auto max-w-6xl">
           <div className="flex flex-col gap-4">
@@ -246,15 +253,15 @@ export default function Home() {
               How it works
             </p>
             <h2 className="font-[var(--font-fraunces)] text-4xl">
-              Three calm steps.
+              From voice to health intelligence.
             </h2>
           </div>
-          <div className="mt-10 grid gap-6 md:grid-cols-3">
+          <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {steps.map((step, index) => (
               <div
                 key={step.title}
                 className={`reveal rounded-[24px] bg-white/90 p-6 text-center shadow-sm ${
-                  index === 1 ? 'stagger-1' : index === 2 ? 'stagger-2' : ''
+                  index === 1 ? 'stagger-1' : index === 2 ? 'stagger-2' : index === 3 ? 'stagger-3' : ''
                 }`}
               >
                 <div className="mx-auto flex items-center justify-center">
@@ -280,41 +287,41 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Two voice pipelines */}
+      {/* Intelligent analysis */}
       <section className="px-6 py-16">
         <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="reveal">
             <p className="text-sm font-semibold uppercase tracking-[0.35em] text-[var(--teal-dark)]">
-              Two voice pipelines
+              Clinical intelligence
             </p>
             <h2 className="mt-3 font-[var(--font-fraunces)] text-4xl">
-              Built for quick moments and full visits.
+              Every input becomes actionable intelligence.
             </h2>
             <p className="mt-4 text-[rgba(13,27,42,0.7)]">
-              Capture a 5-second metric or summarize a 30-minute visit. Each pipeline
-              is optimized for clarity and comfort.
+              Whether you speak a quick metric or narrate a full visit, our medical AI extracts
+              diagnoses, medications, dosages—then immediately checks them against evidence-based
+              databases for interactions and contraindications.
             </p>
           </div>
           <div className="grid gap-5">
             <div className="reveal rounded-[24px] border border-[rgba(13,27,42,0.12)] bg-white/80 p-6">
-              <h3 className="text-lg font-semibold">Quick Commands</h3>
+              <h3 className="text-lg font-semibold">Quick Insights</h3>
               <p className="mt-2 text-sm text-[rgba(13,27,42,0.7)]">
-                1–10 seconds, instant logging.
+                Instant extraction and analysis.
               </p>
               <div className="mt-4 space-y-2 rounded-2xl bg-[var(--mist)]/70 p-4 text-sm">
-                <p>&ldquo;Blood pressure 120 over 80.&rdquo;</p>
-                <p>&ldquo;Log temperature 98.6.&rdquo;</p>
-                <p>&ldquo;Medication taken at 8 PM.&rdquo;</p>
+                <p>&ldquo;Dose increased to 500mg.&rdquo;</p>
+                <p className="mt-2 text-xs font-semibold text-[var(--teal-dark)]">✓ No interactions detected</p>
               </div>
             </div>
             <div className="reveal stagger-1 rounded-[24px] border border-[rgba(13,27,42,0.12)] bg-white/80 p-6">
-              <h3 className="text-lg font-semibold">Visit Summarization</h3>
+              <h3 className="text-lg font-semibold">Visit Intelligence</h3>
               <p className="mt-2 text-sm text-[rgba(13,27,42,0.7)]">
-                10–60 minutes, structured summary.
+                Complete clinical summary with alerts.
               </p>
               <div className="mt-4 space-y-2 rounded-2xl bg-[var(--mist)]/70 p-4 text-sm">
-                <p>&ldquo;Cardiology visit, review of lab results.&rdquo;</p>
-                <p>&ldquo;New plan: reduce sodium and monitor weight.&rdquo;</p>
+                <p className="text-xs font-semibold text-[rgba(13,27,42,0.5)]">Cardiology visit summary</p>
+                <p className="mt-2 text-xs font-semibold text-[var(--teal-dark)]">⚠ Check interactions with current medications</p>
               </div>
             </div>
           </div>
@@ -356,10 +363,11 @@ export default function Home() {
           <div className="grid gap-8 lg:grid-cols-3">
             <div className="reveal rounded-[28px] bg-[var(--teal)]/8 p-10">
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--teal-dark)]">Intelligence</p>
-              <h3 className="mt-3 font-[var(--font-fraunces)] text-2xl">Cutting-edge AI that understands medicine.</h3>
+              <h3 className="mt-3 font-[var(--font-fraunces)] text-2xl">Medical AI that spots what you might miss.</h3>
               <p className="mt-4 text-sm leading-relaxed text-[rgba(13,27,42,0.55)]">
-                Proprietary voice recognition, clinical NLP, and specialized medical knowledge bases
-                work together to capture what matters.
+                Our system understands clinical data: extracts medications and diagnoses, checks for
+                dangerous drug interactions, correlates wearable data with visits, and surfaces patterns
+                before they become problems.
               </p>
               <Link
                 href="/technology"
@@ -499,10 +507,10 @@ export default function Home() {
                   Ready to try
                 </p>
                 <h2 className="mt-3 font-[var(--font-fraunces)] text-4xl">
-                  Make healthcare easier to remember.
+                  Get health intelligence, not just notes.
                 </h2>
                 <p className="mt-3 text-sm text-[rgba(13,27,42,0.7)]">
-                  Join early access and bring clarity to every appointment.
+                  Join early access and see how connected health data reveals patterns that matter.
                 </p>
               </div>
               <div className="flex w-full max-w-sm flex-col gap-3">
