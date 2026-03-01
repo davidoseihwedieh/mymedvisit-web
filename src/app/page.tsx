@@ -3,93 +3,93 @@ import { illustrations } from '@/assets/illustrations'
 
 const steps = [
   {
-    title: 'Capture health moments',
-    description: 'Speak naturally about visits or log vitals. Voice or text, it\'s up to you.',
+    title: 'Record your visit',
+    description: 'Speak naturally during or after your doctor appointment. Capture everything discussed.',
     icon: (
-      <img src={illustrations.heroVoiceCapture} alt="Capture health moments" className="h-[210px] w-[210px] object-contain" />
+      <img src={illustrations.heroVoiceCapture} alt="Record your visit" className="h-[210px] w-[210px] object-contain" />
     ),
   },
   {
-    title: 'AI understands medicine',
-    description: 'Extracts diagnoses, medications, dosages—then checks for dangerous interactions.',
+    title: 'Get a clinical note',
+    description: 'Our AI generates a clear, searchable clinical note—focusing on diagnoses, medications, advice.',
     icon: (
-      <img src={illustrations.aiProcessing} alt="AI understands medicine" className="h-[210px] w-[210px] object-contain" />
+      <img src={illustrations.aiProcessing} alt="Get a clinical note" className="h-[210px] w-[210px] object-contain" />
     ),
   },
   {
-    title: 'Patterns emerge',
-    description: 'Health data from wearables, devices, and visits reveal trends you might miss.',
+    title: 'Query & understand',
+    description: 'Ask your note questions. Our AI explains the reasoning behind your doctor\'s recommendations using medical evidence.',
     icon: (
-      <img src={illustrations.passiveDevices} alt="Patterns emerge" className="h-[210px] w-[210px] object-contain" />
+      <img src={illustrations.healthJournal} alt="Query & understand" className="h-[210px] w-[210px] object-contain" />
     ),
   },
   {
-    title: 'Proactive alerts',
-    description: 'When patterns matter—medication conflicts, sleep disruption, glucose spikes—you\'re notified first.',
+    title: 'Log symptoms, share with care circle',
+    description: 'Track daily symptoms. Upload lab results. Share notes with family. Get AI alerts for dangerous patterns.',
     icon: (
-      <img src={illustrations.healthJournal} alt="Proactive alerts" className="h-[210px] w-[210px] object-contain" />
+      <img src={illustrations.familySharing} alt="Log symptoms, share with care circle" className="h-[210px] w-[210px] object-contain" />
     ),
   },
 ]
 
 const features = [
   {
-    title: 'Drug interaction alerts',
-    description: 'Automatically detects dangerous medication combinations before they become problems.',
+    title: 'Clinical visit summaries',
+    description: 'Every appointment becomes a searchable clinical note. No small talk, no fluff—just clinically relevant information.',
   },
   {
-    title: 'Pattern detection',
-    description: 'Correlates glucose spikes, sleep disruption, and vital changes with medication or events.',
+    title: 'Query your medical records',
+    description: 'Ask your notes questions: "Why did my doctor recommend this?" or "What does this diagnosis mean?" Get AI-powered answers grounded in medical evidence.',
   },
   {
-    title: 'Clinical-grade summaries',
-    description: 'Structured visit notes with diagnoses, medications, and actionable next steps.',
+    title: 'Analyze your lab results',
+    description: 'Upload blood work, lab reports, imaging results. Get plain-English explanations of what your numbers mean and how they impact your health.',
   },
   {
-    title: 'Ambient health intelligence',
-    description: 'Apple Health, wearables, and devices paint a complete picture of your wellbeing.',
+    title: 'Log daily symptoms',
+    description: 'Track how you feel daily. Better memory for your clinician. Accurate data leads to better medical decisions.',
   },
   {
-    title: 'Privacy-first architecture',
-    description: 'Data encrypted on-device. We can\'t read it. Neither can anyone else without your permission.',
+    title: 'Share with family & caregivers',
+    description: 'Share your visit summaries with loved ones who live far away or can\'t attend appointments. They can query your notes too—no medical degree required.',
   },
   {
-    title: 'Evidence-based guidance',
-    description: 'Recommendations grounded in clinical databases and your personal health history.',
+    title: 'Red flag alerts',
+    description: 'When you log a symptom that\'s concerning given your known conditions, MyMedVisit alerts you. Hypertension + sudden vision loss = emergency. Seek help immediately.',
   },
 ]
 
 const useCases = [
   {
-    title: 'For seniors',
-    description: 'A health advisor that catches interactions, remembers details, and alerts you to concerning patterns.',
+    title: 'For patients',
+    description: 'Stop forgetting what your doctor said. Never again ask "wait, did they say twice daily or once?" Understand your diagnosis and medications. Make informed choices about your health.',
   },
   {
-    title: 'For adult children',
-    description: 'Know your parent\'s health story without reading every visit note. Get alerts when something matters.',
+    title: 'For adult children with aging parents',
+    description: 'Your parents live 1,000 miles away. They can\'t tell you exactly what their cardiologist said. MyMedVisit sends you their visit summary. You query it. You understand their diagnosis. You advocate for them even from afar.',
   },
   {
-    title: 'For caregivers & providers',
-    description: 'A shared intelligence layer that connects the dots across visits, medications, and vital trends.',
+    title: 'For busy caregivers',
+    description: 'You care deeply but can\'t make every appointment. Get the clinical notes. Query them for insights. Know when something is truly urgent vs. routine. Be the advocate your loved one needs.',
   },
 ]
 
 const faqs = [
   {
-    title: 'How does it catch drug interactions?',
-    description: 'Our AI extracts medications and dosages from your visits, then cross-references them against comprehensive drug interaction databases. You\'re alerted immediately if conflicts exist.',
+    title: 'Will MyMedVisit actually understand medical terminology?',
+    description: 'Yes. Our system is trained specifically on clinical conversations. It understands medical terminology, extracts relevant diagnoses and medications, and ignores small talk.',
   },
   {
-    title: 'Can it detect health patterns?',
-    description: 'Yes. By combining visit data with your wearables, glucose monitors, and sleep trackers, we correlate patterns—like glucose spikes after medication changes—that single data sources can\'t reveal.',
+    title: 'Can I really query my visit notes with AI?',
+    description: 'Absolutely. Ask questions like "Why did my doctor recommend this medication?" or "What does this diagnosis mean for my daily life?" Our AI uses medical evidence to provide clear, accurate explanations.',
   },
   {
-    title: 'Do I have to share my data?',
-    description: 'No. Everything is yours. Sharing with family, caregivers, or providers is optional, granular, and revocable at any time.',
+    title: 'What happens if I log a dangerous symptom?',
+    description: 'MyMedVisit knows your conditions from your visit summaries. If you log a symptom that\'s concerning given your diagnoses, we alert you to seek medical attention. Example: hypertension + sudden vision loss = emergency alert.',
   },
   {
-    title: 'How private is my information?',
-    description: 'Your data is encrypted on your device before it ever leaves your phone. We can\'t access it. Even our engineers can\'t read your health information.',
+    title: 'Can my family really understand medical records?',
+    description: 'Yes. They get your clinical summaries and can query them just like you do. Our AI explains complex medical information in plain English. No medical degree required to understand your care.',
   },
 ]
 
@@ -104,14 +104,14 @@ export default function Home() {
           <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
             <div className="space-y-6">
               <p className="reveal text-sm font-semibold uppercase tracking-[0.35em] text-[var(--teal-dark)]">
-                Health intelligence that understands medicine
+                Clinical intelligence for patients and families
               </p>
               <h1 className="reveal stagger-1 font-[var(--font-fraunces)] text-[clamp(2.6rem,4vw,4.4rem)] leading-[1.05]">
-                Your health data{' '}
-                <span className="text-gradient">finally simplified</span>.
+                Understand your health{' '}
+                <span className="text-gradient">more deeply</span>.
               </h1>
               <p className="reveal stagger-2 max-w-xl text-lg text-[rgba(13,27,42,0.74)]">
-                Inspired by individuals and caregivers seeking a clearer understanding of diagnoses, labs and medical data, MyMedVisit delivers digestible summaries and empowers users to dive deeper with an interactive platform designed to simplify your care.
+                Every doctor visit becomes a clinical note you can search, share, and query. Upload your lab results. Log your symptoms. Get AI-powered insights grounded in medical evidence. Detect concerning patterns before they become emergencies.
               </p>
               <div className="reveal stagger-3 flex flex-wrap gap-4">
                 <Link
@@ -225,20 +225,18 @@ export default function Home() {
         <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-2">
           <div className="reveal rounded-[28px] bg-white/80 p-8 shadow-sm">
             <h2 className="font-[var(--font-fraunces)] text-3xl">
-              Your health is scattered.
+              Medical visits are impossible to remember.
             </h2>
             <p className="mt-3 text-[rgba(13,27,42,0.72)]">
-              Visit notes sit in your phone. Medication lists live in your pharmacy. Sleep data in a watch app.
-              No one—not even you—sees the full picture.
+              Your doctor explains your diagnosis, changes your medication, suggests lifestyle changes. You nod. You leave. Three days later, you can't recall exactly what they said. Was it take this pill twice daily or once? Why did they say to avoid salt? Your clinician made the best recommendation with the information they had—but your incomplete memory means you won't follow through optimally.
             </p>
           </div>
           <div className="reveal stagger-1 rounded-[28px] bg-[var(--ink)] p-8 text-white shadow-[var(--shadow)]">
             <h2 className="font-[var(--font-fraunces)] text-3xl">
-              MyMedVisit connects the dots.
+              MyMedVisit captures the moment.
             </h2>
             <p className="mt-3 text-white/80">
-              We pull together your visits, medications, wearables, and vital trends—then surface
-              the patterns that matter: interactions, concerns, and insights.
+              Record your visit. We generate a clinical note—clear, searchable, permanently saved. Query it weeks later: "Why did my doctor recommend this medication?" Our AI explains the clinical reasoning using medical evidence. Upload your lab results. Log your daily symptoms. Your clinician gets a complete, accurate picture. You understand your health. Your family stays informed.
             </p>
           </div>
         </div>
@@ -291,36 +289,34 @@ export default function Home() {
         <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="reveal">
             <p className="text-sm font-semibold uppercase tracking-[0.35em] text-[var(--teal-dark)]">
-              Clinical intelligence
+              From recording to understanding
             </p>
             <h2 className="mt-3 font-[var(--font-fraunces)] text-4xl">
-              Every input becomes actionable intelligence.
+              Your visit becomes a resource you can query.
             </h2>
             <p className="mt-4 text-[rgba(13,27,42,0.7)]">
-              Whether you speak a quick metric or narrate a full visit, our medical AI extracts
-              diagnoses, medications, dosages—then immediately checks them against evidence-based
-              databases for interactions and contraindications.
+              Record your doctor visit. Our clinical AI transforms it into a clean, searchable note. No fluff, no small talk—just diagnoses, medications, and advice. Then ask it questions. "Why this medication?" "What does this diagnosis mean?" Get clear answers powered by medical evidence.
             </p>
           </div>
           <div className="grid gap-5">
             <div className="reveal rounded-[24px] border border-[rgba(13,27,42,0.12)] bg-white/80 p-6">
-              <h3 className="text-lg font-semibold">Quick Insights</h3>
+              <h3 className="text-lg font-semibold">The Note</h3>
               <p className="mt-2 text-sm text-[rgba(13,27,42,0.7)]">
-                Instant extraction and analysis.
+                Permanent, searchable clinical record.
               </p>
               <div className="mt-4 space-y-2 rounded-2xl bg-[var(--mist)]/70 p-4 text-sm">
-                <p>&ldquo;Dose increased to 500mg.&rdquo;</p>
-                <p className="mt-2 text-xs font-semibold text-[var(--teal-dark)]">✓ No interactions detected</p>
+                <p className="text-xs font-semibold text-[rgba(13,27,42,0.5)]">Diagnosis: Type 2 diabetes</p>
+                <p className="mt-2">Rx: Metformin 500mg twice daily</p>
               </div>
             </div>
             <div className="reveal stagger-1 rounded-[24px] border border-[rgba(13,27,42,0.12)] bg-white/80 p-6">
-              <h3 className="text-lg font-semibold">Visit Intelligence</h3>
+              <h3 className="text-lg font-semibold">Query It</h3>
               <p className="mt-2 text-sm text-[rgba(13,27,42,0.7)]">
-                Complete clinical summary with alerts.
+                Ask questions, get medical insights.
               </p>
               <div className="mt-4 space-y-2 rounded-2xl bg-[var(--mist)]/70 p-4 text-sm">
-                <p className="text-xs font-semibold text-[rgba(13,27,42,0.5)]">Cardiology visit summary</p>
-                <p className="mt-2 text-xs font-semibold text-[var(--teal-dark)]">⚠ Check interactions with current medications</p>
+                <p className="text-xs font-semibold text-[var(--teal-dark)]">Q: Why Metformin?</p>
+                <p className="mt-2 text-xs text-[rgba(13,27,42,0.6)]">A: Reduces liver glucose production, improves insulin sensitivity...</p>
               </div>
             </div>
           </div>
@@ -361,12 +357,10 @@ export default function Home() {
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-8 lg:grid-cols-3">
             <div className="reveal rounded-[28px] bg-[var(--teal)]/8 p-10">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--teal-dark)]">Intelligence</p>
-              <h3 className="mt-3 font-[var(--font-fraunces)] text-2xl">Medical AI that spots what you might miss.</h3>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--teal-dark)]">Medical Intelligence</p>
+              <h3 className="mt-3 font-[var(--font-fraunces)] text-2xl">Understand your diagnosis, medications, labs.</h3>
               <p className="mt-4 text-sm leading-relaxed text-[rgba(13,27,42,0.55)]">
-                Our system understands clinical data: extracts medications and diagnoses, checks for
-                dangerous drug interactions, correlates wearable data with visits, and surfaces patterns
-                before they become problems.
+                Your clinical note is queryable. Ask why your doctor recommended a medication. Upload your labs and get plain-English explanations. Our AI reasons through complex medical information so you can make informed decisions about your health.
               </p>
               <Link
                 href="/technology"
@@ -387,11 +381,10 @@ export default function Home() {
               </p>
             </div>
             <div className="reveal stagger-2 rounded-[28px] bg-[var(--ink)] p-10 text-white">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/40">Family</p>
-              <h3 className="mt-3 font-[var(--font-fraunces)] text-2xl">Built for every care circle.</h3>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/40">Family Empowerment</p>
+              <h3 className="mt-3 font-[var(--font-fraunces)] text-2xl">Keep your family informed, no matter the distance.</h3>
               <p className="mt-4 text-sm leading-relaxed text-white/55">
-                Seniors, adult children, caregivers, and providers — everyone gets the view they need,
-                nothing more.
+                Share your visit summaries with loved ones who live far away or can\'t attend appointments. They can query the notes themselves. No medical degree needed. Your family stays informed and can advocate for you.
               </p>
               <Link
                 href="/about"
@@ -503,13 +496,13 @@ export default function Home() {
             <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.35em] text-[var(--teal-dark)]">
-                  Ready to try
+                  Ready to understand your health
                 </p>
                 <h2 className="mt-3 font-[var(--font-fraunces)] text-4xl">
-                  Get health intelligence, not just notes.
+                  Never forget what your doctor said again.
                 </h2>
                 <p className="mt-3 text-sm text-[rgba(13,27,42,0.7)]">
-                  Join early access and see how connected health data reveals patterns that matter.
+                  Join early access. Record your next appointment. Get a clinical summary. Query it with questions. Understand your health on your terms.
                 </p>
               </div>
               <div className="flex w-full max-w-sm flex-col gap-3">
