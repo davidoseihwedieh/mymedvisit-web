@@ -4,7 +4,7 @@ import { illustrations } from '@/assets/illustrations'
 const steps = [
   {
     title: 'Capture health moments',
-    description: 'Speak naturally about visits or log vitals. Voice or text, it's up to you.',
+    description: 'Speak naturally about visits or log vitals. Voice or text, it\'s up to you.',
     icon: (
       <img src={illustrations.heroVoiceCapture} alt="Capture health moments" className="h-[210px] w-[210px] object-contain" />
     ),
@@ -25,7 +25,7 @@ const steps = [
   },
   {
     title: 'Proactive alerts',
-    description: 'When patterns matter—medication conflicts, sleep disruption, glucose spikes—you're notified first.',
+    description: 'When patterns matter—medication conflicts, sleep disruption, glucose spikes—you\'re notified first.',
     icon: (
       <img src={illustrations.healthJournal} alt="Proactive alerts" className="h-[210px] w-[210px] object-contain" />
     ),
@@ -51,7 +51,7 @@ const features = [
   },
   {
     title: 'Privacy-first architecture',
-    description: 'Data encrypted on-device. We can't read it. Neither can anyone else without your permission.',
+    description: 'Data encrypted on-device. We can\'t read it. Neither can anyone else without your permission.',
   },
   {
     title: 'Evidence-based guidance',
@@ -66,7 +66,7 @@ const useCases = [
   },
   {
     title: 'For adult children',
-    description: 'Know your parent's health story without reading every visit note. Get alerts when something matters.',
+    description: 'Know your parent\'s health story without reading every visit note. Get alerts when something matters.',
   },
   {
     title: 'For caregivers & providers',
@@ -77,7 +77,7 @@ const useCases = [
 const faqs = [
   {
     title: 'How does it catch drug interactions?',
-    description: 'Our AI extracts medications and dosages from your visits, then cross-references them against comprehensive drug interaction databases. You're alerted immediately if conflicts exist.',
+    description: 'Our AI extracts medications and dosages from your visits, then cross-references them against comprehensive drug interaction databases. You\'re alerted immediately if conflicts exist.',
   },
   {
     title: 'Can it detect health patterns?',
