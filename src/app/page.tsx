@@ -133,7 +133,7 @@ export default function Home() {
               <h1 className="reveal stagger-1 font-[var(--font-fraunces)] text-[clamp(2.6rem,4vw,4.4rem)] leading-[1.05]">
                 <span className="text-gradient">Your health data finally makes sense.</span>
               </h1>
-              <p className="reveal stagger-2 max-w-xl text-lg text-[rgba(13,27,42,0.74)]">
+              <p className="reveal stagger-2 max-w-xl text-lg text-[rgba(13,27,42,0.74)] leading-relaxed">
                 Summarize your appointment. Get a searchable clinical note. Ask the note questions to medical insights. Share with family. Log your symptoms to share at your next visit. That's how you take control of your health.
               </p>
               <div className="reveal stagger-3 flex flex-wrap gap-4">
@@ -150,15 +150,15 @@ export default function Home() {
                   See How It Works
                 </Link>
               </div>
-              <p className="reveal stagger-4 text-base italic font-medium text-[rgba(13,27,42,0.85)] max-w-xl leading-relaxed">
+              <p className="reveal stagger-4 text-base italic font-medium text-[var(--teal)] max-w-xl leading-relaxed">
                 Studies show that 40-80% of medical information provided by healthcare practitioners is forgotten immediately. The greater the amount of information presented, the lower the proportion recalled correctly.
               </p>
             </div>
 
             {/* Glass card mockup with dashboard screenshot */}
             <div className="relative">
-              <div className="glass-card reveal rounded-[32px] p-0 flex items-center justify-center overflow-hidden">
-                <img src={illustrations.dashboardScreen} alt="Dashboard screenshot" className="w-full object-contain rounded-xl scale-60" />
+              <div className="glass-card reveal rounded-[32px] p-3 flex items-center justify-center overflow-hidden">
+                <img src={illustrations.dashboardScreen} alt="Dashboard screenshot" className="w-full object-contain rounded-xl scale-54" />
               </div>
               <div className="absolute -right-8 -top-8 hidden h-28 w-28 rounded-full bg-[var(--warm)]/50 blur-2xl lg:block" />
             </div>
