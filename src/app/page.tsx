@@ -150,16 +150,14 @@ export default function Home() {
                   See How It Works
                 </Link>
               </div>
-              <p className="reveal stagger-4 text-base italic font-medium text-[var(--teal)] max-w-xl leading-relaxed">
+              <p className="reveal stagger-4 text-base italic font-medium text-[#0891B2] max-w-xl leading-relaxed">
                 Studies show that 40-80% of medical information provided by healthcare practitioners is forgotten immediately. The greater the amount of information presented, the lower the proportion recalled correctly.
               </p>
             </div>
 
-            {/* Glass card mockup with dashboard screenshot */}
+            {/* Dashboard screenshot */}
             <div className="relative">
-              <div className="glass-card reveal rounded-[32px] p-3 flex items-center justify-center overflow-hidden">
-                <img src={illustrations.dashboardScreen} alt="Dashboard screenshot" className="w-full object-contain rounded-xl scale-54" />
-              </div>
+              <img src={illustrations.dashboardScreen} alt="Dashboard screenshot" className="w-full object-contain rounded-xl scale-54 reveal" />
               <div className="absolute -right-8 -top-8 hidden h-28 w-28 rounded-full bg-[var(--warm)]/50 blur-2xl lg:block" />
             </div>
           </div>
