@@ -125,7 +125,7 @@ export default function Home() {
       {/* Hero */}
       <section className="relative px-6 pb-20 pt-16 sm:pt-20">
         <div className="mx-auto flex max-w-6xl flex-col gap-14">
-          <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="grid items-center gap-10 lg:grid-cols-[1.4fr_0.6fr]">
             <div className="space-y-6">
               <p className="reveal text-sm font-semibold uppercase tracking-[0.5em] text-[var(--teal-dark)]">
                 B E Y O N D<span style={{ letterSpacing: '1.5em' }} /> I N F O R M A T I O N —   C O N T E X T
@@ -152,10 +152,10 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Glass card mockup with illustration */}
+            {/* Glass card mockup with dashboard screenshot */}
             <div className="relative">
-              <div className="glass-card reveal rounded-[32px] p-8 flex items-center justify-center min-h-[400px]">
-                <img src={illustrations.healthJournal} alt="Health journey visualization" className="w-full max-w-[300px] object-contain" />
+              <div className="glass-card reveal rounded-[32px] p-6 flex items-center justify-center overflow-hidden">
+                <img src={illustrations.dashboardScreen} alt="Dashboard screenshot" className="w-full object-cover rounded-xl" />
               </div>
               <div className="absolute -right-8 -top-8 hidden h-28 w-28 rounded-full bg-[var(--warm)]/50 blur-2xl lg:block" />
             </div>

@@ -10,4 +10,5 @@ export const illustrations = {
   privacyEncryption: '/mmv_website_images/illustration-privacy-encryption.png',
   technologyStack: '/mmv_website_images/illustration-technology-stack.png',
   voiceToSummary: '/mmv_website_images/illustration-voice-to-summary.png',
+  dashboardScreen: '/mmv_website_images/dashboardscreen.png',
 };
