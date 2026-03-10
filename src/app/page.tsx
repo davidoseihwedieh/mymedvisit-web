@@ -3,59 +3,83 @@ import { illustrations } from '@/assets/illustrations'
 
 const steps = [
   {
-    title: 'Record your visit',
-    description: 'Speak naturally during or after your doctor appointment. Capture everything discussed.',
+    title: 'Record your doctor visit',
+    description: 'Capture the conversation naturally. Open the app and tap record—no need to take notes. Our system understands medical terminology and captures everything discussed, even in noisy clinics.',
     icon: (
-      <img src={illustrations.heroVoiceCapture} alt="Record your visit" className="h-[210px] w-[210px] object-contain" />
+      <img src={illustrations.heroVoiceCapture} alt="Record your doctor visit" className="h-[210px] w-[210px] object-contain" />
     ),
   },
   {
-    title: 'Get a clinical note',
-    description: 'Our AI generates a clear, searchable clinical note—focusing on diagnoses, medications, advice.',
+    title: 'Get a clinical summary',
+    description: 'Structured note focusing on what matters. Diagnoses, medications, dosages, and recommendations—clearly organized and easy to reference. No small talk, no fluff.',
     icon: (
-      <img src={illustrations.aiProcessing} alt="Get a clinical note" className="h-[210px] w-[210px] object-contain" />
+      <img src={illustrations.aiProcessing} alt="Get a clinical summary" className="h-[210px] w-[210px] object-contain" />
     ),
   },
   {
-    title: 'Query & understand',
-    description: 'Ask your note questions. Our AI explains the reasoning behind your doctor\'s recommendations using medical evidence.',
+    title: 'Query your note with AI',
+    description: 'Understand the medical reasoning. Ask questions like "Why did my doctor recommend this medication?" and get clear answers grounded in medical evidence and your specific situation.',
     icon: (
-      <img src={illustrations.healthJournal} alt="Query & understand" className="h-[210px] w-[210px] object-contain" />
+      <img src={illustrations.healthJournal} alt="Query your note with AI" className="h-[210px] w-[210px] object-contain" />
     ),
   },
   {
-    title: 'Log symptoms, share with care circle',
-    description: 'Track daily symptoms. Upload lab results. Share notes with family. Get AI alerts for dangerous patterns.',
+    title: 'Log symptoms, share with family',
+    description: 'Better health insights through data. Log how you feel daily—symptoms, energy, concerns. Share visit notes with family. Get AI alerts for concerning symptom combinations.',
     icon: (
-      <img src={illustrations.familySharing} alt="Log symptoms, share with care circle" className="h-[210px] w-[210px] object-contain" />
+      <img src={illustrations.familySharing} alt="Log symptoms, share with family" className="h-[210px] w-[210px] object-contain" />
     ),
   },
 ]
 
 const features = [
   {
-    title: 'Clinical visit summaries',
-    description: 'Every appointment becomes a searchable clinical note. No small talk, no fluff—just clinically relevant information.',
+    title: 'Clinical Voice Recognition',
+    description: 'Trained on actual doctor-patient conversations, our system understands medical terminology, regional accents, and clinical shorthand. Works perfectly in noisy environments—hospitals, clinics, even home settings.',
   },
   {
-    title: 'Query your medical records',
-    description: 'Ask your notes questions: "Why did my doctor recommend this?" or "What does this diagnosis mean?" Get AI-powered answers grounded in medical evidence.',
+    title: 'Clinical Note Generation',
+    description: 'Transforms your recording into a clean, structured clinical note. Automatically extracts diagnoses, medications, dosages, and recommendations. Filters out pleasantries and focuses only on clinically relevant information.',
   },
   {
-    title: 'Analyze your lab results',
-    description: 'Upload blood work, lab reports, imaging results. Get plain-English explanations of what your numbers mean and how they impact your health.',
+    title: 'Medical AI Reasoning',
+    description: 'When you ask your clinical note a question, our AI explains the medical reasoning behind your doctor\'s recommendations. Uses evidence-based medical knowledge to help you understand your diagnosis and treatment plan.',
   },
   {
-    title: 'Log daily symptoms',
-    description: 'Track how you feel daily. Better memory for your clinician. Accurate data leads to better medical decisions.',
+    title: 'Symptom Intelligence & Red Flag Detection',
+    description: 'When you log daily symptoms, the system understands your known diagnoses and flags dangerous combinations. Example: hypertension + sudden vision loss = amaurosis fugax alert. Urges you to seek emergency care.',
   },
   {
-    title: 'Share with family & caregivers',
-    description: 'Share your visit summaries with loved ones who live far away or can\'t attend appointments. They can query your notes too—no medical degree required.',
+    title: 'Apple Health Integration',
+    description: 'Seamlessly pull heart rate, blood pressure, step count, respiratory rate, and body measurements from Apple Health. Your wearable data enriches every visit summary with objective biometric context.',
   },
   {
-    title: 'Red flag alerts',
-    description: 'When you log a symptom that\'s concerning given your known conditions, MyMedVisit alerts you. Hypertension + sudden vision loss = emergency. Seek help immediately.',
+    title: 'Continuous Glucose Monitoring',
+    description: 'Connect compatible CGM devices and smart rings for real-time glucose trend data. Our intelligence correlates glucose patterns with visit notes, medication changes, and meal timing — building a complete metabolic picture.',
+  },
+  {
+    title: 'Sleep Pattern Analysis',
+    description: 'Import sleep data from wearable rings, watches, and dedicated sleep trackers. Our ambient intelligence analyzes sleep stages, duration, consistency, and disturbances — then correlates them with health events and medication changes.',
+  },
+  {
+    title: 'Wearable Biosensor Network',
+    description: 'From blood oxygen saturation to skin temperature, stress indicators to activity patterns — our platform unifies data from an expanding ecosystem of wearable health sensors into your personal health timeline.',
+  },
+  {
+    title: 'On-device encryption',
+    description: 'All voice data and health information are encrypted with AES-256 before leaving your device. The encryption keys are generated and stored locally — we never have access to them.',
+  },
+  {
+    title: 'Zero-knowledge processing',
+    description: 'Our AI processes anonymized, encrypted data. We cannot read your health information. The system is architectured so that even our own engineers cannot access patient data.',
+  },
+  {
+    title: 'Granular access control',
+    description: 'You define exactly who sees what. Share full visit summaries with your daughter, medication changes with your caregiver, and vitals trends with your physician — each with independently revocable access.',
+  },
+  {
+    title: 'Complete audit trail',
+    description: 'Every access, share, and modification is logged with cryptographic timestamps. You can see exactly who viewed your data, when, and what they saw. Full transparency, full control.',
   },
 ]
 
@@ -103,15 +127,14 @@ export default function Home() {
         <div className="mx-auto flex max-w-6xl flex-col gap-14">
           <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
             <div className="space-y-6">
-              <p className="reveal text-sm font-semibold uppercase tracking-[0.35em] text-[var(--teal-dark)]">
-                Clinical intelligence for patients and families
+              <p className="reveal text-sm font-semibold uppercase tracking-[0.5em] text-[var(--teal-dark)]">
+                B E Y O N D<span style={{ letterSpacing: '1.5em' }} /> I N F O R M A T I O N —   C O N T E X T
               </p>
               <h1 className="reveal stagger-1 font-[var(--font-fraunces)] text-[clamp(2.6rem,4vw,4.4rem)] leading-[1.05]">
-                Understand your health{' '}
-                <span className="text-gradient">more deeply</span>.
+                <span className="text-gradient">Your health data finally makes sense.</span>
               </h1>
               <p className="reveal stagger-2 max-w-xl text-lg text-[rgba(13,27,42,0.74)]">
-                Every doctor visit becomes a clinical note you can search, share, and query. Upload your lab results. Log your symptoms. Get AI-powered insights grounded in medical evidence. Detect concerning patterns before they become emergencies.
+                Summarize your appointment. Get a searchable clinical note. Ask the note questions to medical insights. Share with family. Log your symptoms to share at your next visit. That's how you take control of your health.
               </p>
               <div className="reveal stagger-3 flex flex-wrap gap-4">
                 <Link
@@ -127,61 +150,66 @@ export default function Home() {
                   See How It Works
                 </Link>
               </div>
-              <div className="reveal stagger-4 grid grid-cols-3 gap-6 pt-6 text-sm">
-                <div>
-                  <p className="font-[var(--font-fraunces)] text-2xl">2 min</p>
-                  <p className="text-[rgba(13,27,42,0.7)]">to log a visit</p>
-                </div>
-                <div>
-                  <p className="font-[var(--font-fraunces)] text-2xl">60 min</p>
-                  <p className="text-[rgba(13,27,42,0.7)]">max visit length</p>
-                </div>
-                <div>
-                  <p className="font-[var(--font-fraunces)] text-2xl">1 tap</p>
-                  <p className="text-[rgba(13,27,42,0.7)]">to share</p>
-                </div>
-              </div>
             </div>
 
-            {/* Glass card mockup */}
+            {/* Glass card mockup with illustration */}
             <div className="relative">
-              <div className="glass-card reveal rounded-[32px] p-6">
-                <div className="flex items-center justify-between text-sm font-semibold text-[rgba(13,27,42,0.6)]">
-                  <span>Visit Summary</span>
-                  <span>Today</span>
-                </div>
-                <div className="mt-6 space-y-4">
-                  <div className="rounded-2xl bg-white/70 p-4 shadow-sm">
-                    <p className="text-xs uppercase tracking-[0.2em] text-[var(--teal-dark)]">
-                      Key updates
-                    </p>
-                    <p className="mt-2 text-sm">
-                      Blood pressure stable, medication adjusted, follow-up in
-                      30 days.
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-dashed border-[rgba(13,27,42,0.2)] p-4">
-                    <p className="text-xs uppercase tracking-[0.2em] text-[rgba(13,27,42,0.6)]">
-                      Next Steps
-                    </p>
-                    <ul className="mt-2 space-y-2 text-sm">
-                      <li>&bull; Start evening dose</li>
-                      <li>&bull; Log daily glucose</li>
-                      <li>&bull; Share summary with daughter</li>
-                    </ul>
-                  </div>
-                </div>
-                <div className="mt-6 rounded-2xl bg-[var(--sky)]/60 p-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-[rgba(13,27,42,0.6)]">
-                    Voice capture
-                  </p>
-                  <div className="mt-3 h-12 rounded-full bg-white/80 px-4 py-2">
-                    <div className="pulse-wave waveform h-full w-full rounded-full" />
-                  </div>
-                </div>
+              <div className="glass-card reveal rounded-[32px] p-8 flex items-center justify-center min-h-[400px]">
+                <img src={illustrations.healthJournal} alt="Health journey visualization" className="w-full max-w-[300px] object-contain" />
               </div>
               <div className="absolute -right-8 -top-8 hidden h-28 w-28 rounded-full bg-[var(--warm)]/50 blur-2xl lg:block" />
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works - 4 Steps */}
+      <section className="px-6 py-20 bg-gradient-to-b from-transparent to-white/50">
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-16 flex flex-col gap-4">
+            <p className="reveal text-sm font-semibold uppercase tracking-[0.35em] text-[var(--teal-dark)]">
+              How it works
+            </p>
+            <h2 className="reveal stagger-1 font-[var(--font-fraunces)] text-4xl leading-tight md:text-5xl">
+              Four steps to better health understanding.
+            </h2>
+          </div>
+
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+            {steps.map((step, index) => (
+              <div
+                key={step.title}
+                className={`reveal flex flex-col gap-4 ${
+                  index === 0
+                    ? ''
+                    : index === 1
+                      ? 'stagger-1'
+                      : index === 2
+                        ? 'stagger-2'
+                        : 'stagger-3'
+                }`}
+              >
+                <div className="relative">
+                  <div className="glass-card rounded-[24px] p-6 flex items-center justify-center min-h-[200px]">
+                    {step.icon}
+                  </div>
+                  {index < steps.length - 1 && (
+                    <div className="hidden lg:block absolute -right-4 top-1/2 h-0.5 w-8 bg-gradient-to-r from-[var(--teal)]/50 to-transparent transform -translate-y-1/2 translate-x-full" />
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="text-sm font-semibold text-[var(--teal)] bg-[var(--teal)]/10 rounded-full w-6 h-6 flex items-center justify-center">
+                      {index + 1}
+                    </div>
+                  </div>
+                  <h3 className="text-lg font-semibold leading-tight">{step.title}</h3>
+                  <p className="text-sm text-[rgba(13,27,42,0.7)] leading-relaxed">
+                    {step.description}
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -222,211 +250,72 @@ export default function Home() {
 
       {/* Problem / Solution */}
       <section className="px-6 py-16">
-        <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-2">
-          <div className="reveal rounded-[28px] bg-white/80 p-8 shadow-sm">
-            <h2 className="font-[var(--font-fraunces)] text-3xl">
-              Medical visits are impossible to remember.
-            </h2>
-            <p className="mt-3 text-[rgba(13,27,42,0.72)]">
-              Your doctor explains your diagnosis, changes your medication, suggests lifestyle changes. You nod. You leave. Three days later, you can't recall exactly what they said. Was it take this pill twice daily or once? Why did they say to avoid salt? Your clinician made the best recommendation with the information they had—but your incomplete memory means you won't follow through optimally.
-            </p>
+        <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[1fr_1fr]">
+          <div className="reveal space-y-4">
+            <div className="rounded-[28px] bg-white/80 p-8 shadow-sm">
+              <h2 className="font-[var(--font-fraunces)] text-3xl">
+                Medical visits are impossible to remember.
+              </h2>
+              <p className="mt-4 text-[rgba(13,27,42,0.72)]">
+                Your doctor explains your diagnosis, changes your medication, suggests lifestyle changes. You nod. You leave. Three days later, you can't recall exactly what they said. Was it take this pill twice daily or once? Why did they say to avoid salt?
+              </p>
+            </div>
           </div>
-          <div className="reveal stagger-1 rounded-[28px] bg-[var(--ink)] p-8 text-white shadow-[var(--shadow)]">
-            <h2 className="font-[var(--font-fraunces)] text-3xl">
-              MyMedVisit captures the moment.
-            </h2>
-            <p className="mt-3 text-white/80">
-              Record your visit. We generate a clinical note—clear, searchable, permanently saved. Query it weeks later: "Why did my doctor recommend this medication?" Our AI explains the clinical reasoning using medical evidence. Upload your lab results. Log your daily symptoms. Your clinician gets a complete, accurate picture. You understand your health. Your family stays informed.
-            </p>
+          <div className="reveal stagger-1 space-y-4">
+            <div className="rounded-[28px] bg-[var(--ink)] p-8 text-white shadow-[var(--shadow)]">
+              <h2 className="font-[var(--font-fraunces)] text-3xl">
+                MyMedVisit captures the moment.
+              </h2>
+              <p className="mt-4 text-white/80">
+                Record your visit. We generate a clinical note—clear, searchable, permanently saved. Query it weeks later: "Why did my doctor recommend this medication?" Our AI explains the clinical reasoning.
+              </p>
+            </div>
+            <div className="glass-card rounded-[28px] p-6 flex items-center justify-center min-h-[180px]">
+              <img src={illustrations.voiceToSummary} alt="Voice to clinical summary transformation" className="w-full max-w-[240px] object-contain" />
+            </div>
           </div>
         </div>
       </section>
 
       {/* Four steps */}
-      <section className="px-6 py-16">
-        <div className="mx-auto max-w-6xl">
-          <div className="flex flex-col gap-4">
-            <p className="text-sm font-semibold uppercase tracking-[0.35em] text-[var(--teal-dark)]">
-              How it works
-            </p>
-            <h2 className="font-[var(--font-fraunces)] text-4xl">
-              From voice to health intelligence.
-            </h2>
-          </div>
-          <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {steps.map((step, index) => (
-              <div
-                key={step.title}
-                className={`reveal rounded-[24px] bg-white/90 p-6 text-center shadow-sm ${
-                  index === 1 ? 'stagger-1' : index === 2 ? 'stagger-2' : index === 3 ? 'stagger-3' : ''
-                }`}
-              >
-                <div className="mx-auto flex items-center justify-center">
-                  {step.icon}
-                </div>
-                <p className="mt-4 font-[var(--font-fraunces)] text-xs text-[rgba(13,27,42,0.25)]">0{index + 1}</p>
-                <h3 className="mt-2 text-xl font-semibold">{step.title}</h3>
-                <p className="mt-3 text-sm text-[rgba(13,27,42,0.7)]">{step.description}</p>
-              </div>
-            ))}
-          </div>
-          <div className="mt-10 text-center">
-            <Link
-              href="/how-it-works"
-              className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--teal-dark)] transition-colors hover:text-[var(--teal)]"
-            >
-              See the full walkthrough
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="2">
-                <path d="M3 8h10m-4-4l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Intelligent analysis */}
-      <section className="px-6 py-16">
-        <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="reveal">
-            <p className="text-sm font-semibold uppercase tracking-[0.35em] text-[var(--teal-dark)]">
-              From recording to understanding
-            </p>
-            <h2 className="mt-3 font-[var(--font-fraunces)] text-4xl">
-              Your visit becomes a resource you can query.
-            </h2>
-            <p className="mt-4 text-[rgba(13,27,42,0.7)]">
-              Record your doctor visit. Our clinical AI transforms it into a clean, searchable note. No fluff, no small talk—just diagnoses, medications, and advice. Then ask it questions. "Why this medication?" "What does this diagnosis mean?" Get clear answers powered by medical evidence.
-            </p>
-          </div>
-          <div className="grid gap-5">
-            <div className="reveal rounded-[24px] border border-[rgba(13,27,42,0.12)] bg-white/80 p-6">
-              <h3 className="text-lg font-semibold">The Note</h3>
-              <p className="mt-2 text-sm text-[rgba(13,27,42,0.7)]">
-                Permanent, searchable clinical record.
-              </p>
-              <div className="mt-4 space-y-2 rounded-2xl bg-[var(--mist)]/70 p-4 text-sm">
-                <p className="text-xs font-semibold text-[rgba(13,27,42,0.5)]">Diagnosis: Type 2 diabetes</p>
-                <p className="mt-2">Rx: Metformin 500mg twice daily</p>
-              </div>
-            </div>
-            <div className="reveal stagger-1 rounded-[24px] border border-[rgba(13,27,42,0.12)] bg-white/80 p-6">
-              <h3 className="text-lg font-semibold">Query It</h3>
-              <p className="mt-2 text-sm text-[rgba(13,27,42,0.7)]">
-                Ask questions, get medical insights.
-              </p>
-              <div className="mt-4 space-y-2 rounded-2xl bg-[var(--mist)]/70 p-4 text-sm">
-                <p className="text-xs font-semibold text-[var(--teal-dark)]">Q: Why Metformin?</p>
-                <p className="mt-2 text-xs text-[rgba(13,27,42,0.6)]">A: Reduces liver glucose production, improves insulin sensitivity...</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="px-6 py-16">
-        <div className="mx-auto max-w-6xl">
-          <div className="flex flex-col gap-4">
-            <p className="text-sm font-semibold uppercase tracking-[0.35em] text-[var(--teal-dark)]">
-              Features
-            </p>
-            <h2 className="font-[var(--font-fraunces)] text-4xl">
-              Everything seniors and families need.
-            </h2>
-          </div>
-          <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {features.map((feature, index) => (
-              <div
-                key={feature.title}
-                className={`reveal rounded-[22px] bg-white/85 p-6 shadow-sm ${
-                  index % 3 === 1 ? 'stagger-1' : index % 3 === 2 ? 'stagger-2' : ''
-                }`}
-              >
-                <h3 className="text-lg font-semibold">{feature.title}</h3>
-                <p className="mt-3 text-sm text-[rgba(13,27,42,0.7)]">
-                  {feature.description}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Feature teaser cards */}
-      <section className="px-6 py-16">
-        <div className="mx-auto max-w-6xl">
-          <div className="grid gap-8 lg:grid-cols-3">
-            <div className="reveal rounded-[28px] bg-[var(--teal)]/8 p-10">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--teal-dark)]">Medical Intelligence</p>
-              <h3 className="mt-3 font-[var(--font-fraunces)] text-2xl">Understand your diagnosis, medications, labs.</h3>
-              <p className="mt-4 text-sm leading-relaxed text-[rgba(13,27,42,0.55)]">
-                Your clinical note is queryable. Ask why your doctor recommended a medication. Upload your labs and get plain-English explanations. Our AI reasons through complex medical information so you can make informed decisions about your health.
-              </p>
-              <Link
-                href="/technology"
-                className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[var(--teal-dark)] hover:text-[var(--teal)]"
-              >
-                Our technology
-                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 14 14" stroke="currentColor" strokeWidth="2">
-                  <path d="M2 7h10m-4-4l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </Link>
-            </div>
-            <div className="reveal stagger-1 rounded-[28px] bg-white/85 p-10 shadow-sm">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--teal-dark)]">Privacy</p>
-              <h3 className="mt-3 font-[var(--font-fraunces)] text-2xl">End-to-end encrypted. Always.</h3>
-              <p className="mt-4 text-sm leading-relaxed text-[rgba(13,27,42,0.55)]">
-                Your health data is encrypted on-device before it ever leaves your phone.
-                We can&apos;t read it. No one can — except you and the people you choose.
-              </p>
-            </div>
-            <div className="reveal stagger-2 rounded-[28px] bg-[var(--ink)] p-10 text-white">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/40">Family Empowerment</p>
-              <h3 className="mt-3 font-[var(--font-fraunces)] text-2xl">Keep your family informed, no matter the distance.</h3>
-              <p className="mt-4 text-sm leading-relaxed text-white/55">
-                Share your visit summaries with loved ones who live far away or can\'t attend appointments. They can query the notes themselves. No medical degree needed. Your family stays informed and can advocate for you.
-              </p>
-              <Link
-                href="/about"
-                className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-white/60 hover:text-white/80"
-              >
-                Our story
-                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 14 14" stroke="currentColor" strokeWidth="2">
-                  <path d="M2 7h10m-4-4l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Four steps section removed: duplicate hero section deleted */}
 
       {/* Privacy & Accessibility */}
       <section className="px-6 py-16">
-        <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-2">
-          <div className="reveal rounded-[28px] bg-white/85 p-8 shadow-sm">
-            <p className="text-sm font-semibold uppercase tracking-[0.35em] text-[var(--teal-dark)]">
-              Privacy & trust
-            </p>
-            <h2 className="mt-3 font-[var(--font-fraunces)] text-3xl">
-              Privacy-first by design.
-            </h2>
-            <ul className="mt-5 space-y-3 text-sm text-[rgba(13,27,42,0.7)]">
-              <li>&bull; Automatic anonymization before cloud processing.</li>
-              <li>&bull; Consent checks before sharing or analysis.</li>
-              <li>&bull; You control who receives each update.</li>
-            </ul>
-          </div>
-          <div className="reveal stagger-1 rounded-[28px] bg-[var(--teal)]/10 p-8">
-            <p className="text-sm font-semibold uppercase tracking-[0.35em] text-[var(--teal-dark)]">
-              Designed for clarity
-            </p>
-            <h2 className="mt-3 font-[var(--font-fraunces)] text-3xl">
-              Senior-friendly by default.
-            </h2>
-            <p className="mt-4 text-sm text-[rgba(13,27,42,0.7)]">
-              Large text, calm contrast, and voice-first workflows keep the
-              experience simple without sacrificing depth.
-            </p>
+        <div className="mx-auto max-w-6xl">
+          <div className="grid gap-8 lg:grid-cols-2 lg:items-center">
+            <div className="reveal flex flex-col gap-8">
+              <div className="rounded-[28px] bg-white/85 p-8 shadow-sm">
+                <p className="text-sm font-semibold uppercase tracking-[0.35em] text-[var(--teal-dark)]">
+                  Privacy & trust
+                </p>
+                <h2 className="mt-3 font-[var(--font-fraunces)] text-3xl">
+                  Privacy-first by design.
+                </h2>
+                <ul className="mt-5 space-y-3 text-sm text-[rgba(13,27,42,0.7)]">
+                  <li>&bull; Automatic anonymization before cloud processing.</li>
+                  <li>&bull; Consent checks before sharing or analysis.</li>
+                  <li>&bull; You control who receives each update.</li>
+                </ul>
+              </div>
+              <div className="rounded-[28px] bg-[var(--teal)]/10 p-8">
+                <p className="text-sm font-semibold uppercase tracking-[0.35em] text-[var(--teal-dark)]">
+                  Designed for clarity
+                </p>
+                <h2 className="mt-3 font-[var(--font-fraunces)] text-3xl">
+                  Senior-friendly by default.
+                </h2>
+                <p className="mt-4 text-sm text-[rgba(13,27,42,0.7)]">
+                  Large text, calm contrast, and voice-first workflows keep the
+                  experience simple without sacrificing depth.
+                </p>
+              </div>
+            </div>
+            <div className="reveal stagger-1">
+              <div className="glass-card rounded-[28px] p-8 flex items-center justify-center min-h-[360px]">
+                <img src={illustrations.privacyEncryption} alt="Privacy and encryption" className="w-full max-w-[280px] object-contain" />
+              </div>
+            </div>
           </div>
         </div>
       </section>
