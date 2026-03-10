@@ -150,6 +150,9 @@ export default function Home() {
                   See How It Works
                 </Link>
               </div>
+              <p className="reveal stagger-4 text-xs italic text-[rgba(13,27,42,0.6)] max-w-lg leading-relaxed">
+                Studies show that 40-80% of medical information provided by healthcare practitioners is forgotten immediately. The greater the amount of information presented, the lower the proportion recalled correctly.
+              </p>
             </div>
 
             {/* Glass card mockup with dashboard screenshot */}
