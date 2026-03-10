@@ -158,7 +158,7 @@ export default function Home() {
             {/* Glass card mockup with dashboard screenshot */}
             <div className="relative">
               <div className="glass-card reveal rounded-[32px] p-2 flex items-center justify-center overflow-hidden min-h-[500px] lg:min-h-[600px]">
-                <img src={illustrations.dashboardScreen} alt="Dashboard screenshot" className="w-full h-full object-contain rounded-xl" />
+                <img src={illustrations.dashboardScreen} alt="Dashboard screenshot" className="w-full h-full object-contain rounded-xl scale-60" />
               </div>
               <div className="absolute -right-8 -top-8 hidden h-28 w-28 rounded-full bg-[var(--warm)]/50 blur-2xl lg:block" />
             </div>
