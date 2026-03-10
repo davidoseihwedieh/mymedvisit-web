@@ -133,7 +133,7 @@ export default function Home() {
               <h1 className="reveal stagger-1 font-[var(--font-fraunces)] text-[clamp(2.6rem,4vw,4.4rem)] leading-[1.05]">
                 <span className="text-gradient">Your health data finally makes sense.</span>
               </h1>
-              <p className="reveal stagger-2 max-w-xl text-lg text-[rgba(13,27,42,0.74)] leading-relaxed">
+              <p className="reveal stagger-2 max-w-[35rem] text-lg text-[rgba(13,27,42,0.74)] leading-relaxed">
                 Summarize your appointment. Get a searchable clinical note. Ask the note questions to medical insights. Share with family. Log your symptoms to share at your next visit. That's how you take control of your health.
               </p>
               <div className="reveal stagger-3 flex flex-wrap gap-4">
@@ -150,7 +150,7 @@ export default function Home() {
                   See How It Works
                 </Link>
               </div>
-              <p className="reveal stagger-4 text-base italic font-medium text-[#0891B2] max-w-xl leading-relaxed">
+              <p className="reveal stagger-4 text-base italic font-medium text-[#0891B2] max-w-[35rem] leading-relaxed">
                 Studies show that 40-80% of medical information provided by healthcare practitioners is forgotten immediately. The greater the amount of information presented, the lower the proportion recalled correctly.
               </p>
             </div>
