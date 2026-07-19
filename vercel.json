@@ -2,5 +2,11 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "npm run build",
   "regions": ["iad1"],
-  "installCommand": "npm install"
+  "installCommand": "npm install",
+  "rewrites": [
+    {
+      "source": "/googlea040472b24b4f54f.html",
+      "destination": "/googlea040472b24b4f54f"
+    }
+  ]
 }
