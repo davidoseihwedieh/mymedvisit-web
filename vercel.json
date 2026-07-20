@@ -8,5 +8,16 @@
       "source": "/googlea040472b24b4f54f.html",
       "destination": "/googlea040472b24b4f54f"
     }
+  ],
+  "headers": [
+    {
+      "source": "/.well-known/apple-app-site-association",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        }
+      ]
+    }
   ]
 }
