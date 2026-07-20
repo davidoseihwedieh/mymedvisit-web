@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Returning to MyMedVisit…</title>
+  <script>
+    // Fallback: bounce into the app via custom scheme, carrying the OAuth params
+    window.location.href = 'mymedvisit://callback' + window.location.search;
+  </script>
+</head>
+<body style="font-family: -apple-system, sans-serif; text-align: center; padding: 40px;">
+  <h2>Returning to MyMedVisit…</h2>
+  <p>If the app doesn't open automatically,
+     <a href="#" onclick="window.location.href='mymedvisit://callback' + window.location.search; return false;">tap here</a>.
+  </p>
+</body>
+</html>
