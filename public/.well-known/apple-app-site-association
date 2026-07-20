@@ -1,0 +1,11 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "M2JFYKTP8Q.com.sugarcanehayes.mymedvisit",
+        "paths": ["/callback"]
+      }
+    ]
+  }
+}
