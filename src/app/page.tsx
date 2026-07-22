@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { illustrations } from '@/assets/illustrations'
 import HeroSection from '@/components/HeroSection'
+import FAQProviderConsent from '@/components/FAQProviderConsent'
 
 const steps = [
   {
@@ -337,6 +338,7 @@ export default function Home() {
               </div>
             ))}
           </div>
+          <FAQProviderConsent />
         </div>
       </section>
 
