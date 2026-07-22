@@ -3,6 +3,7 @@ import './globals.css'
 import { Navbar } from '@/components/Navbar'
 import { Footer } from '@/components/Footer'
 import { RevealProvider } from '@/components/RevealProvider'
+import SchemaMarkup from '@/components/SchemaMarkup'
 
 export const metadata: Metadata = {
   title: 'MyMedVisit — Your health, remembered by voice',
@@ -16,20 +17,6 @@ export const metadata: Metadata = {
   },
 }
 
-const softwareApplicationSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'SoftwareApplication',
-  name: 'MyMedVisit',
-  operatingSystem: 'iOS, Android, Web',
-  applicationCategory: 'HealthApplication',
-  description: 'Voice-first health intelligence app that records doctor visits, generates searchable clinical notes, and allows AI-assisted Q&A.',
-  offers: {
-    '@type': 'Offer',
-    price: '0',
-    priceCurrency: 'USD',
-  },
-}
-
 export default function RootLayout({
   children,
 }: {
@@ -38,10 +25,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen">
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareApplicationSchema) }}
-        />
+        <SchemaMarkup />
         <RevealProvider>
           <Navbar />
           {children}
