@@ -1,6 +1,47 @@
+'use client'
+
+import { useState } from 'react'
 import Link from 'next/link'
 
 export default function Contact() {
+  const [submitted, setSubmitted] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setLoading(true)
+    setError(null)
+
+    const form = event.currentTarget
+    const formData = new FormData(form)
+    const name = [formData.get('firstName'), formData.get('lastName')].filter(Boolean).join(' ')
+
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          email: formData.get('email'),
+          role: formData.get('role'),
+          message: formData.get('message'),
+        }),
+      })
+      const data = await res.json()
+
+      if (data.success) {
+        setSubmitted(true)
+      } else {
+        setError(data.error || 'Something went wrong. Please try again.')
+      }
+    } catch {
+      setError('Something went wrong. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <main className="overflow-hidden">
       {/* Hero */}
@@ -56,80 +97,104 @@ export default function Contact() {
             {/* Right: form */}
             <div className="reveal">
               <div className="glass-card rounded-[28px] p-10">
-                <h2 className="font-[var(--font-fraunces)] text-2xl">Request early access</h2>
-                <p className="mt-2 text-sm text-[rgba(13,27,42,0.45)]">
-                  We&apos;ll reach out with next steps within 48 hours.
-                </p>
-                <form className="mt-8 space-y-5">
-                  <div className="grid gap-5 sm:grid-cols-2">
-                    <div>
-                      <label className="text-xs font-semibold uppercase tracking-[0.15em] text-[rgba(13,27,42,0.4)]">
-                        First name
-                      </label>
-                      <input
-                        type="text"
-                        className="mt-2 w-full rounded-2xl border border-[rgba(13,27,42,0.1)] bg-white/80 px-4 py-3 text-sm outline-none transition-colors focus:border-[var(--teal)]"
-                        placeholder="Jane"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-semibold uppercase tracking-[0.15em] text-[rgba(13,27,42,0.4)]">
-                        Last name
-                      </label>
-                      <input
-                        type="text"
-                        className="mt-2 w-full rounded-2xl border border-[rgba(13,27,42,0.1)] bg-white/80 px-4 py-3 text-sm outline-none transition-colors focus:border-[var(--teal)]"
-                        placeholder="Smith"
-                      />
-                    </div>
+                {submitted ? (
+                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-8 text-center">
+                    <h3 className="text-xl font-bold text-emerald-900">Request Received!</h3>
+                    <p className="mt-2 text-sm text-emerald-700">
+                      Thank you for your interest in MyMedVisit. We&apos;ve routed your request to our team and will be in touch shortly.
+                    </p>
                   </div>
-                  <div>
-                    <label className="text-xs font-semibold uppercase tracking-[0.15em] text-[rgba(13,27,42,0.4)]">
-                      Email address
-                    </label>
-                    <input
-                      type="email"
-                      className="mt-2 w-full rounded-2xl border border-[rgba(13,27,42,0.1)] bg-white/80 px-4 py-3 text-sm outline-none transition-colors focus:border-[var(--teal)]"
-                      placeholder="jane@example.com"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold uppercase tracking-[0.15em] text-[rgba(13,27,42,0.4)]">
-                      I am a...
-                    </label>
-                    <select className="mt-2 w-full appearance-none rounded-2xl border border-[rgba(13,27,42,0.1)] bg-white/80 px-4 py-3 text-sm text-[rgba(13,27,42,0.6)] outline-none transition-colors focus:border-[var(--teal)]">
-                      <option value="">Select your role</option>
-                      <option value="patient">Patient / Senior</option>
-                      <option value="family">Family member / Adult child</option>
-                      <option value="caregiver">Caregiver</option>
-                      <option value="provider">Healthcare provider</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold uppercase tracking-[0.15em] text-[rgba(13,27,42,0.4)]">
-                      Tell us more (optional)
-                    </label>
-                    <textarea
-                      rows={4}
-                      className="mt-2 w-full resize-none rounded-2xl border border-[rgba(13,27,42,0.1)] bg-white/80 px-4 py-3 text-sm outline-none transition-colors focus:border-[var(--teal)]"
-                      placeholder="What interests you most about MyMedVisit?"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    className="w-full rounded-full bg-[var(--teal)] px-6 py-4 text-sm font-semibold text-white shadow-[var(--shadow)] transition-all"
-                  >
-                    Request Early Access
-                  </button>
-                  <p className="text-center text-xs text-[rgba(13,27,42,0.3)]">
-                    By submitting, you agree to our{' '}
-                    <Link href="/privacy" className="underline transition-colors hover:text-[var(--teal)]">
-                      Privacy Policy
-                    </Link>
-                    .
-                  </p>
-                </form>
+                ) : (
+                  <>
+                    <h2 className="font-[var(--font-fraunces)] text-2xl">Request early access</h2>
+                    <p className="mt-2 text-sm text-[rgba(13,27,42,0.45)]">
+                      We&apos;ll reach out with next steps within 48 hours.
+                    </p>
+                    <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+                      <div className="grid gap-5 sm:grid-cols-2">
+                        <div>
+                          <label className="text-xs font-semibold uppercase tracking-[0.15em] text-[rgba(13,27,42,0.4)]">
+                            First name
+                          </label>
+                          <input
+                            name="firstName"
+                            type="text"
+                            required
+                            className="mt-2 w-full rounded-2xl border border-[rgba(13,27,42,0.1)] bg-white/80 px-4 py-3 text-sm outline-none transition-colors focus:border-[var(--teal)]"
+                            placeholder="Jane"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-semibold uppercase tracking-[0.15em] text-[rgba(13,27,42,0.4)]">
+                            Last name
+                          </label>
+                          <input
+                            name="lastName"
+                            type="text"
+                            className="mt-2 w-full rounded-2xl border border-[rgba(13,27,42,0.1)] bg-white/80 px-4 py-3 text-sm outline-none transition-colors focus:border-[var(--teal)]"
+                            placeholder="Smith"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold uppercase tracking-[0.15em] text-[rgba(13,27,42,0.4)]">
+                          Email address
+                        </label>
+                        <input
+                          name="email"
+                          type="email"
+                          required
+                          className="mt-2 w-full rounded-2xl border border-[rgba(13,27,42,0.1)] bg-white/80 px-4 py-3 text-sm outline-none transition-colors focus:border-[var(--teal)]"
+                          placeholder="jane@example.com"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold uppercase tracking-[0.15em] text-[rgba(13,27,42,0.4)]">
+                          I am a...
+                        </label>
+                        <select
+                          name="role"
+                          className="mt-2 w-full appearance-none rounded-2xl border border-[rgba(13,27,42,0.1)] bg-white/80 px-4 py-3 text-sm text-[rgba(13,27,42,0.6)] outline-none transition-colors focus:border-[var(--teal)]"
+                        >
+                          <option value="">Select your role</option>
+                          <option value="patient">Patient / Senior</option>
+                          <option value="family">Family member / Adult child</option>
+                          <option value="caregiver">Caregiver</option>
+                          <option value="provider">Healthcare provider</option>
+                          <option value="other">Other</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold uppercase tracking-[0.15em] text-[rgba(13,27,42,0.4)]">
+                          Tell us more (optional)
+                        </label>
+                        <textarea
+                          name="message"
+                          rows={4}
+                          className="mt-2 w-full resize-none rounded-2xl border border-[rgba(13,27,42,0.1)] bg-white/80 px-4 py-3 text-sm outline-none transition-colors focus:border-[var(--teal)]"
+                          placeholder="What interests you most about MyMedVisit?"
+                        />
+                      </div>
+                      {error && (
+                        <p className="text-center text-sm font-medium text-red-600">{error}</p>
+                      )}
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full rounded-full bg-[var(--teal)] px-6 py-4 text-sm font-semibold text-white shadow-[var(--shadow)] transition-all disabled:opacity-60"
+                      >
+                        {loading ? 'Sending...' : 'Request Early Access'}
+                      </button>
+                      <p className="text-center text-xs text-[rgba(13,27,42,0.3)]">
+                        By submitting, you agree to our{' '}
+                        <Link href="/privacy" className="underline transition-colors hover:text-[var(--teal)]">
+                          Privacy Policy
+                        </Link>
+                        .
+                      </p>
+                    </form>
+                  </>
+                )}
               </div>
             </div>
           </div>
