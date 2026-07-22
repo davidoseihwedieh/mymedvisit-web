@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { illustrations } from '@/assets/illustrations'
+import HeroSection from '@/components/HeroSection'
 
 const steps = [
   {
@@ -122,47 +123,7 @@ export default function Home() {
     <main className="relative overflow-hidden">
       <div className="absolute inset-0 hero-sheen" />
 
-      {/* Hero */}
-      <section className="relative px-6 pb-20 pt-16 sm:pt-20">
-        <div className="mx-auto flex max-w-6xl flex-col gap-14">
-          <div className="grid items-start gap-10 lg:grid-cols-[1.4fr_0.6fr]">
-            <div className="space-y-6">
-              <p className="reveal text-sm font-semibold uppercase tracking-[0.5em] text-[var(--teal-dark)]">
-                B E Y O N D<span style={{ letterSpacing: '1.5em' }} /> I N F O R M A T I O N —   C O N T E X T
-              </p>
-              <h1 className="reveal stagger-1 font-[var(--font-fraunces)] text-[clamp(2.6rem,4vw,4.4rem)] leading-[1.05]">
-                <span className="text-gradient">Your health data finally makes sense.</span>
-              </h1>
-              <p className="reveal stagger-2 max-w-[35rem] text-lg text-[rgba(13,27,42,0.74)] leading-relaxed">
-                Summarize your appointment. Get a searchable clinical note. Ask the note questions to medical insights. Share with family. Log your symptoms to share at your next visit. That's how you take control of your health.
-              </p>
-              <div className="reveal stagger-3 flex flex-wrap gap-4">
-                <Link
-                  href="/contact"
-                  className="rounded-full bg-[var(--ink)] px-6 py-3 text-sm font-semibold text-white shadow-[var(--shadow)]"
-                >
-                  Get Early Access
-                </Link>
-                <Link
-                  href="/how-it-works"
-                  className="rounded-full border border-[rgba(13,27,42,0.2)] px-6 py-3 text-sm font-semibold text-[var(--ink)]"
-                >
-                  See How It Works
-                </Link>
-              </div>
-              <p className="reveal stagger-4 text-base italic font-medium text-[#0891B2] max-w-[35rem] leading-relaxed">
-                Studies show that 40-80% of medical information provided by healthcare practitioners is forgotten immediately. The greater the amount of information presented, the lower the proportion recalled correctly.
-              </p>
-            </div>
-
-            {/* Dashboard screenshot */}
-            <div className="relative">
-              <img src={illustrations.dashboardScreen} alt="Dashboard screenshot" className="w-full object-contain rounded-xl scale-54 reveal" />
-              <div className="absolute -right-8 -top-8 hidden h-28 w-28 rounded-full bg-[var(--warm)]/50 blur-2xl lg:block" />
-            </div>
-          </div>
-        </div>
-      </section>
+      <HeroSection />
 
       {/* How It Works - 4 Steps */}
       <section className="px-6 py-20 bg-gradient-to-b from-transparent to-white/50">
