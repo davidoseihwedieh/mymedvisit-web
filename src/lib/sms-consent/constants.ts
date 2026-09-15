@@ -1,5 +1,7 @@
 export const SMS_OPT_IN_CANONICAL_URL = 'https://mymedvisit.app/sms-opt-in'
 
+export const SMS_CONSENT_ENDPOINT_PATH = '/api/v1/sms-consent' as const
+
 // These values must be replaced only after counsel/compliance approves the exact
 // disclosure and policy text. They intentionally do not imply an approval date.
 export const HUMAN_REVIEW_REQUIRED = 'PENDING_LEGAL_AND_COMPLIANCE_REVIEW' as const
@@ -29,7 +31,8 @@ export type TransactionalMessageCategory =
 export const SMS_CONSENT_SOURCE = 'mymedvisit_web_sms_opt_in' as const
 
 // This is deliberately a code-controlled safety switch. An environment variable
-// alone must not connect the form before the endpoint contract is approved.
+// alone must not connect the form before the remaining integration inputs are
+// approved.
 export const SMS_CONSENT_INTEGRATION_ENABLED = false as const
 
 export const SMS_CONSENT_PUBLIC_API_BASE_URL_ENV =

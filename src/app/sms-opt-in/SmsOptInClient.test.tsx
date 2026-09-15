@@ -16,8 +16,8 @@ const IDEMPOTENCY_KEY = 'test-idempotency-key'
 
 const durableReceipt: DurableSmsConsentReceipt = {
   status: 'persisted',
-  recordId: 'consent-record-1',
-  persistedAt: '2026-09-15T12:00:00.000Z',
+  evidenceId: 'consent-evidence-1',
+  recordedAt: '2026-09-15T12:00:00.000Z',
   idempotencyKey: IDEMPOTENCY_KEY,
 }
 
@@ -238,7 +238,7 @@ describe('SMS opt-in form', () => {
     const user = userEvent.setup()
     const submit = vi.fn().mockResolvedValue({
       status: 'accepted',
-      recordId: 'not-yet-persisted',
+      evidenceId: 'not-yet-persisted',
     })
     renderForm(createClient(submit as SmsConsentClient['submit']))
     await completeForm(user)

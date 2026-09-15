@@ -3,14 +3,20 @@ import {
   ConsentSubmissionError,
   createHttpSmsConsentClient,
   createSmsConsentSubmission,
+  disabledSmsConsentClient,
   isDurableSmsConsentReceipt,
+  productionSmsConsentClient,
 } from './client'
+import {
+  SMS_CONSENT_ENDPOINT_PATH,
+  SMS_CONSENT_INTEGRATION_ENABLED,
+} from './constants'
 
 const idempotencyKey = 'request-123'
 const durableReceipt = {
   status: 'persisted' as const,
-  recordId: 'record-123',
-  persistedAt: '2026-09-15T12:00:00.000Z',
+  evidenceId: 'evidence-123',
+  recordedAt: '2026-09-15T12:00:00.000Z',
   idempotencyKey,
 }
 
@@ -24,7 +30,6 @@ describe('SMS consent API boundary', () => {
     )
     const client = createHttpSmsConsentClient({
       baseUrl: 'https://api.example.com',
-      endpointPath: '/v1/sms-consents',
       fetcher,
     })
     const submission = createSmsConsentSubmission('5555550123')
@@ -35,7 +40,8 @@ describe('SMS consent API boundary', () => {
 
     expect(fetcher).toHaveBeenCalledTimes(1)
     const [url, options] = fetcher.mock.calls[0]
-    expect(url).toBe('https://api.example.com/v1/sms-consents')
+    expect(SMS_CONSENT_ENDPOINT_PATH).toBe('/api/v1/sms-consent')
+    expect(url).toBe('https://api.example.com/api/v1/sms-consent')
     expect(url).not.toContain(submission.phoneNumber)
     expect(options).toMatchObject({
       method: 'POST',
@@ -54,7 +60,6 @@ describe('SMS consent API boundary', () => {
   it('treats network ambiguity as failure', async () => {
     const client = createHttpSmsConsentClient({
       baseUrl: 'https://api.example.com',
-      endpointPath: '/v1/sms-consents',
       fetcher: vi.fn().mockRejectedValue(new TypeError('network failed')),
     })
 
@@ -82,14 +87,12 @@ describe('SMS consent API boundary', () => {
     expect(() =>
       createHttpSmsConsentClient({
         baseUrl: 'https://api.example.com?unexpected=value',
-        endpointPath: '/v1/sms-consents',
       }),
     ).toThrowError(ConsentSubmissionError)
-    expect(() =>
-      createHttpSmsConsentClient({
-        baseUrl: 'https://api.example.com',
-        endpointPath: '//unapproved.example.com/v1/sms-consents',
-      }),
-    ).toThrowError(ConsentSubmissionError)
+  })
+
+  it('keeps production submission code-disabled', () => {
+    expect(SMS_CONSENT_INTEGRATION_ENABLED).toBe(false)
+    expect(productionSmsConsentClient).toBe(disabledSmsConsentClient)
   })
 })

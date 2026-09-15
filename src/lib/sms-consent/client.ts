@@ -1,5 +1,6 @@
 import {
   SMS_CONSENT_DISCLOSURE_VERSION,
+  SMS_CONSENT_ENDPOINT_PATH,
   SMS_CONSENT_INTEGRATION_ENABLED,
   SMS_CONSENT_PRIVACY,
   SMS_CONSENT_SOURCE,
@@ -28,8 +29,8 @@ export interface SmsConsentSubmission {
 
 export interface DurableSmsConsentReceipt {
   status: 'persisted'
-  recordId: string
-  persistedAt: string
+  evidenceId: string
+  recordedAt: string
   idempotencyKey: string
 }
 
@@ -80,9 +81,9 @@ export function isDurableSmsConsentReceipt(
 
   if (
     value.status !== 'persisted' ||
-    !isNonEmptyString(value.recordId) ||
-    !isNonEmptyString(value.persistedAt) ||
-    !isUtcIsoTimestamp(value.persistedAt) ||
+    !isNonEmptyString(value.evidenceId) ||
+    !isNonEmptyString(value.recordedAt) ||
+    !isUtcIsoTimestamp(value.recordedAt) ||
     !isNonEmptyString(value.idempotencyKey)
   ) {
     return false
@@ -94,19 +95,16 @@ export function isDurableSmsConsentReceipt(
 interface HttpSmsConsentClientOptions {
   /** Public API origin/base only. Never put a phone number or consent data here. */
   baseUrl: string
-  /** Contract-approved POST path, supplied by the integration layer. */
-  endpointPath: `/${string}`
   fetcher?: typeof fetch
   timeoutMs?: number
 }
 
 export function createHttpSmsConsentClient({
   baseUrl,
-  endpointPath,
   fetcher = fetch,
   timeoutMs = 10_000,
 }: HttpSmsConsentClientOptions): SmsConsentClient {
-  const endpoint = getSafeEndpoint(baseUrl, endpointPath)
+  const endpoint = getSafeEndpoint(baseUrl, SMS_CONSENT_ENDPOINT_PATH)
 
   return {
     async submit(submission, idempotencyKey) {
@@ -183,7 +181,7 @@ export const disabledSmsConsentClient: SmsConsentClient = {
   async submit() {
     throw new ConsentSubmissionError(
       'disabled',
-      'SMS consent submission is disabled until the endpoint contract is approved.',
+      'SMS consent submission is disabled until the remaining integration inputs are approved.',
     )
   },
 }
