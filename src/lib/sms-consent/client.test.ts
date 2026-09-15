@@ -68,12 +68,46 @@ describe('SMS consent API boundary', () => {
     ).rejects.toMatchObject({ code: 'network' })
   })
 
-  it('rejects non-durable and idempotency-mismatched responses', async () => {
+  it.each([
+    '2024-02-29T00:00:00.000Z',
+    '2026-01-01T00:00:00.000Z',
+    '2026-12-31T23:59:59.999Z',
+  ])('accepts the canonical UTC timestamp %s', (recordedAt) => {
+    expect(
+      isDurableSmsConsentReceipt(
+        { ...durableReceipt, recordedAt },
+        idempotencyKey,
+      ),
+    ).toBe(true)
+  })
+
+  it.each([
+    '2026-02-30T12:00:00.000Z',
+    '2026-01-01T24:00:00.000Z',
+    '2026-02-29T12:00:00.000Z',
+    '2026-00-01T12:00:00.000Z',
+    '2026-13-01T12:00:00.000Z',
+    '2026-01-00T12:00:00.000Z',
+    '2026-01-32T12:00:00.000Z',
+    '2026-01-01T23:60:00.000Z',
+    '2026-01-01T23:59:60.000Z',
+    '2026-01-01T23:59:59Z',
+    '2026-01-01T23:59:59.000+00:00',
+  ])('rejects the non-canonical or impossible timestamp %s', (recordedAt) => {
+    expect(
+      isDurableSmsConsentReceipt(
+        { ...durableReceipt, recordedAt },
+        idempotencyKey,
+      ),
+    ).toBe(false)
+  })
+
+  it('rejects non-durable and idempotency-mismatched responses', () => {
     expect(
       isDurableSmsConsentReceipt({
         ...durableReceipt,
         status: 'accepted',
-      }),
+      }, idempotencyKey),
     ).toBe(false)
     expect(
       isDurableSmsConsentReceipt(durableReceipt, 'different-request'),
@@ -81,6 +115,36 @@ describe('SMS consent API boundary', () => {
     expect(
       isDurableSmsConsentReceipt(durableReceipt, idempotencyKey),
     ).toBe(true)
+  })
+
+  it('rejects an unexpected success-response property', () => {
+    expect(
+      isDurableSmsConsentReceipt(
+        { ...durableReceipt, unexpected: 'value' },
+        idempotencyKey,
+      ),
+    ).toBe(false)
+  })
+
+  it('rejects missing, inherited, array, null, and wrong-type values', () => {
+    const missingEvidenceId: Record<string, unknown> = { ...durableReceipt }
+    delete missingEvidenceId.evidenceId
+    const inheritedReceipt = Object.create(durableReceipt)
+
+    const invalidValues: unknown[] = [
+      missingEvidenceId,
+      inheritedReceipt,
+      Object.assign([], durableReceipt),
+      null,
+      { ...durableReceipt, status: true },
+      { ...durableReceipt, evidenceId: 123 },
+      { ...durableReceipt, recordedAt: 123 },
+      { ...durableReceipt, idempotencyKey: 123 },
+    ]
+
+    for (const value of invalidValues) {
+      expect(isDurableSmsConsentReceipt(value, idempotencyKey)).toBe(false)
+    }
   })
 
   it('rejects unsafe public endpoint configuration', () => {

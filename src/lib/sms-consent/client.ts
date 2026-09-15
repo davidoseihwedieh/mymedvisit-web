@@ -73,9 +73,18 @@ export function createSmsConsentSubmission(phoneNumber: string): SmsConsentSubmi
 
 export function isDurableSmsConsentReceipt(
   value: unknown,
-  expectedIdempotencyKey?: string,
+  expectedIdempotencyKey: string,
 ): value is DurableSmsConsentReceipt {
-  if (!isRecord(value)) {
+  if (
+    !isPlainRecord(value) ||
+    !hasExactOwnKeys(value, [
+      'status',
+      'evidenceId',
+      'recordedAt',
+      'idempotencyKey',
+    ]) ||
+    !isNonEmptyString(expectedIdempotencyKey)
+  ) {
     return false
   }
 
@@ -89,7 +98,7 @@ export function isDurableSmsConsentReceipt(
     return false
   }
 
-  return expectedIdempotencyKey === undefined || value.idempotencyKey === expectedIdempotencyKey
+  return value.idempotencyKey === expectedIdempotencyKey
 }
 
 interface HttpSmsConsentClientOptions {
@@ -237,8 +246,25 @@ function getSafeEndpoint(baseUrl: string, endpointPath: `/${string}`): string {
   return endpoint.toString()
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
+function isPlainRecord(value: unknown): value is Record<PropertyKey, unknown> {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value) &&
+    Object.getPrototypeOf(value) === Object.prototype
+  )
+}
+
+function hasExactOwnKeys(
+  value: Record<PropertyKey, unknown>,
+  expectedKeys: readonly string[],
+): boolean {
+  const ownKeys = Reflect.ownKeys(value)
+
+  return (
+    ownKeys.length === expectedKeys.length &&
+    expectedKeys.every((key) => Object.prototype.hasOwnProperty.call(value, key))
+  )
 }
 
 function isNonEmptyString(value: unknown): value is string {
@@ -246,10 +272,10 @@ function isNonEmptyString(value: unknown): value is string {
 }
 
 function isUtcIsoTimestamp(value: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/.test(value)) {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value)) {
     return false
   }
 
   const timestamp = Date.parse(value)
-  return Number.isFinite(timestamp)
+  return Number.isFinite(timestamp) && new Date(timestamp).toISOString() === value
 }

@@ -1,7 +1,13 @@
 'use client'
 
 import Link from 'next/link'
-import { FormEvent, useEffect, useRef, useState } from 'react'
+import {
+  FormEvent,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react'
 import {
   ConsentSubmissionError,
   createSmsConsentSubmission,
@@ -37,6 +43,11 @@ export function SmsOptInClient({
   client = productionSmsConsentClient,
   createIdempotencyKey = createBrowserIdempotencyKey,
 }: SmsOptInClientProps) {
+  const isHydrated = useSyncExternalStore(
+    subscribeToHydration,
+    getHydratedSnapshot,
+    getServerHydrationSnapshot,
+  )
   const [phone, setPhone] = useState('')
   const [consented, setConsented] = useState(false)
   const [errors, setErrors] = useState<FormErrors>({})
@@ -88,7 +99,7 @@ export function SmsOptInClient({
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    if (inFlightRef.current) {
+    if (!isHydrated || inFlightRef.current) {
       return
     }
 
@@ -334,12 +345,29 @@ export function SmsOptInClient({
                 </p>
               </div>
             ) : (
-              <form
-                className="mt-8 space-y-6"
-                onSubmit={submit}
-                noValidate
-                aria-busy={submitting}
-              >
+              <>
+                {!isHydrated && (
+                  <p
+                    id="sms-form-unavailable"
+                    role="status"
+                    aria-live="polite"
+                    className="mt-8 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-950"
+                  >
+                    SMS choices are unavailable until this page finishes loading.
+                    If JavaScript is disabled or unavailable, this form cannot
+                    submit consent. Enable JavaScript and reload to make a choice.
+                    No consent has been sent or recorded.
+                  </p>
+                )}
+                <form
+                  className="mt-8 space-y-6"
+                  onSubmit={submit}
+                  noValidate
+                  aria-busy={submitting}
+                  aria-describedby={
+                    isHydrated ? undefined : 'sms-form-unavailable'
+                  }
+                >
                 <div>
                   <label htmlFor="sms-phone" className="text-sm font-semibold">
                     Mobile phone number
@@ -347,12 +375,11 @@ export function SmsOptInClient({
                   <input
                     ref={phoneRef}
                     id="sms-phone"
-                    name="phone"
                     type="tel"
                     inputMode="tel"
                     autoComplete="tel"
                     required
-                    disabled={submitting}
+                    disabled={!isHydrated || submitting}
                     value={phone}
                     onChange={(event) => updatePhone(event.target.value)}
                     aria-invalid={Boolean(errors.phone)}
@@ -405,10 +432,9 @@ export function SmsOptInClient({
                     <input
                       ref={consentRef}
                       id="sms-consent"
-                      name="sms-consent"
                       type="checkbox"
                       checked={consented}
-                      disabled={submitting}
+                      disabled={!isHydrated || submitting}
                       onChange={(event) => updateConsent(event.target.checked)}
                       aria-invalid={Boolean(errors.consent)}
                       aria-describedby={
@@ -511,20 +537,26 @@ export function SmsOptInClient({
                   <button
                     type="button"
                     onClick={decline}
-                    disabled={submitting}
+                    disabled={!isHydrated || submitting}
                     className="min-h-12 flex-1 rounded-full border border-[var(--ink)] px-6 py-3 text-sm font-semibold transition-colors hover:bg-[var(--ink)] hover:text-white focus-visible:outline-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     No thanks
                   </button>
                   <button
                     type="submit"
-                    disabled={submitting || !isOnline || (phase === 'failure' && canRetry)}
+                    disabled={
+                      !isHydrated ||
+                      submitting ||
+                      !isOnline ||
+                      (phase === 'failure' && canRetry)
+                    }
                     className="min-h-12 flex-1 rounded-full bg-[var(--teal-dark)] px-6 py-3 text-sm font-semibold text-white shadow-[var(--shadow)] transition-colors hover:bg-[var(--ink)] focus-visible:outline-[var(--ink)] disabled:cursor-not-allowed disabled:bg-slate-500 disabled:shadow-none"
                   >
                     {submitting ? 'Submitting…' : 'Agree and continue'}
                   </button>
                 </div>
-              </form>
+                </form>
+              </>
             )}
 
             <p className="mt-6 text-center text-sm text-[rgba(13,27,42,0.65)]">
@@ -540,6 +572,18 @@ export function SmsOptInClient({
 
 function browserIsOnline(): boolean {
   return typeof navigator === 'undefined' || navigator.onLine
+}
+
+function subscribeToHydration() {
+  return () => {}
+}
+
+function getHydratedSnapshot() {
+  return true
+}
+
+function getServerHydrationSnapshot() {
+  return false
 }
 
 function createBrowserIdempotencyKey(): string {

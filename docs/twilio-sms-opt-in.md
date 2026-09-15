@@ -5,10 +5,11 @@
 - Public and canonical page URL: `https://mymedvisit.app/sms-opt-in`.
 - QR destination: exactly `https://mymedvisit.app/sms-opt-in`. Scanning it opens the page and is not consent.
 - The consent checkbox is controlled and initially unchecked. It is never preselected.
+- The server-rendered controls have no serializable names and remain disabled until React confirms hydration. If JavaScript is unavailable, the page explains that no consent can be submitted.
 - Entering a number, checking the box, scanning the QR code, leaving the page, or selecting **No thanks** does not submit consent.
 - The browser form is connected to `disabledSmsConsentClient`. It cannot contact a service or claim persistence.
 - The route is `noindex,follow` while the form is disconnected. This keeps the unfinished flow out of search results without preventing reviewers or users with the URL from opening it.
-- Route metadata declares exactly `https://mymedvisit.app/sms-opt-in` as canonical. Because this app uses Next.js static export, its source middleware is disabled in the exported artifact; the hosting/domain layer must be verified to ensure that exact canonical URL resolves without redirecting to `www`.
+- Route metadata declares exactly `https://mymedvisit.app/sms-opt-in` as canonical. Because this app uses Next.js static export and has no application middleware for host redirects, the hosting/domain layer must be verified to ensure that exact canonical URL resolves with the approved host behavior.
 
 Do not enable submission merely because an endpoint or environment variable exists. The contract, security controls, legal language, retention behavior, and production verification below must all be approved first.
 
@@ -47,7 +48,7 @@ Any category change requires corresponding disclosure, policy, message-template,
 
 ## Preliminary backend contract (not approved)
 
-The typed boundary in `src/lib/sms-consent/client.ts` is a proposed client contract, not authorization to connect it. The final endpoint method, path, authentication/abuse controls, request schema, and response schema remain backend decisions.
+The typed boundary in `src/lib/sms-consent/client.ts` is a proposed client contract, not authorization to connect it. The canonical endpoint is HTTPS `POST /api/v1/sms-consent`. Authentication and abuse controls, the public API origin, number normalization, persistence behavior, and final request/response approval remain backend decisions.
 
 ### Transport assumptions
 
@@ -92,13 +93,13 @@ The backend must decide whether the browser sends an E.164 number or an unnormal
 ```json
 {
   "status": "persisted",
-  "recordId": "opaque-nonempty-record-id",
-  "persistedAt": "server-generated-UTC-ISO-timestamp-ending-in-Z",
+  "evidenceId": "opaque-nonempty-evidence-id",
+  "recordedAt": "server-generated canonical UTC timestamp such as 2026-09-15T12:00:00.000Z",
   "idempotencyKey": "same-value-as-request-header"
 }
 ```
 
-All four fields are required by the current validator. The idempotency key must match the request. A generic `accepted`, queued, or 2xx response is not success. If durable persistence is asynchronous, the frontend contract must be redesigned so it does not display success before a durable record is confirmed.
+These are the only permitted fields, and all four are required by the current validator. The idempotency key must match the request. `recordedAt` must exactly round-trip through the canonical `YYYY-MM-DDTHH:mm:ss.sssZ` UTC format; normalized impossible dates, timezone offsets, and other formats are rejected. A generic `accepted`, queued, or 2xx response is not success. If durable persistence is asynchronous, the frontend contract must be redesigned so it does not display success before a durable record is confirmed.
 
 ### Persistence and security assumptions requiring confirmation
 
@@ -125,11 +126,11 @@ If security review approves a separate public API origin, use the non-secret bui
 NEXT_PUBLIC_SMS_CONSENT_API_BASE_URL
 ```
 
-This must contain only an approved HTTPS public base/origin—never credentials, tokens, a Cloud Run service URL chosen ad hoc, path parameters, query parameters, or sensitive data. The exact endpoint path remains part of the unconfirmed contract and is passed separately to `createHttpSmsConsentClient`.
+This must contain only an approved HTTPS public base/origin—never credentials, tokens, a Cloud Run service URL chosen ad hoc, path parameters, query parameters, or sensitive data. The canonical endpoint path is `/api/v1/sms-consent` and is passed separately to `createHttpSmsConsentClient`.
 
 Before connecting the route, a developer must make a reviewed code change that:
 
-1. supplies the approved endpoint path and the public base URL;
+1. supplies the approved public base URL for the canonical `/api/v1/sms-consent` endpoint;
 2. replaces `disabledSmsConsentClient` in the rendered component with the configured HTTP client;
 3. changes the code-controlled `SMS_CONSENT_INTEGRATION_ENABLED` safety switch only after all approvals (an environment variable alone must not enable submission);
 4. replaces every pending version constant with counsel-approved identifiers;
@@ -167,18 +168,19 @@ Use test numbers only, such as `(555) 555-0123`, and no PHI.
    files that predate this track; the SMS files retain the full
    `next/core-web-vitals` rules. Existing legacy `<img>` optimization warnings
    remain visible and should be handled in their own website-maintenance track.
-   The production dependency audit must also pass before release. At the time of
-   this handoff, the current Next.js 14 dependency tree reports high/critical
-   advisories whose complete npm-recommended remediation is a breaking framework
-   upgrade; that upgrade is outside this SMS-only track and has not been applied.
+   The production dependency audit must also pass before release. This branch
+   retains Next.js `16.3.3`, React/React DOM `19.2.8`, PostCSS `8.5.23`, and
+   nanoid `3.3.19`; rerun the audit from a clean lockfile install rather than
+   relying on these recorded versions alone. Development-only findings remain a
+   separate dependency-maintenance concern and must not be suppressed.
 
 2. Serve the static export locally without changing platform configuration:
 
    ```sh
-   python3 -m http.server 3000 --directory out
+   npx --yes serve@14.2.5 out --listen 3000 --no-clipboard
    ```
 
-3. Open `http://localhost:3000/sms-opt-in/` and verify at 320, 375, 768, 1024, and 1440 CSS pixels, portrait and landscape where relevant. Confirm there is no horizontal scrolling, clipped disclosure, overlapping content, or undersized control.
+3. Open `http://localhost:3000/sms-opt-in` without a trailing slash. Confirm the routing-aware static server returns the SMS page rather than the exported React Server Component directory, then verify at 320, 375, 768, 1024, and 1440 CSS pixels, portrait and landscape where relevant. Confirm there is no horizontal scrolling, clipped disclosure, overlapping content, or undersized control.
 4. At 200% browser zoom, confirm the layout reflows and all controls/text remain available.
 5. Keyboard only: tab through the QR link, phone field, checkbox, Terms, Privacy, decline, and submit controls. Confirm the focus ring is always visible; Space toggles the checkbox; Enter submits only from the submit control/form; and focus moves to the first invalid field.
 6. With a screen reader, confirm headings/landmarks, phone help/error association, checkbox disclosure, alert announcements, loading status, offline status, decline status, and durable-success status.
@@ -191,7 +193,7 @@ Use test numbers only, such as `(555) 555-0123`, and no PHI.
 ## Production verification after approvals (not performed here)
 
 1. Confirm the approved release artifact, environment, endpoint origin/path, versions, and indexing choice with two reviewers.
-2. Confirm `https://mymedvisit.app/sms-opt-in` returns the page without redirecting to `www`, while unrelated apex routes retain existing redirect behavior.
+2. Confirm `https://mymedvisit.app/sms-opt-in` returns the page and that apex/`www` behavior matches the separately approved hosting policy; do not assume application middleware provides a redirect.
 3. Repeat the viewport, zoom, keyboard, screen-reader, QR, metadata, and offline checks above on the production URL.
 4. Submit once with an approved reserved/test number. Confirm the UI remains loading until durable persistence is returned.
 5. Through an approved, access-controlled backend verification path, confirm exactly one record has the normalized test number/reference, categories, exact versions, server UTC timestamp, source, page URL, correlation/idempotency data, and revocation state.

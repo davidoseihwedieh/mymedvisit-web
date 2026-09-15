@@ -1,7 +1,7 @@
 import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { axe } from 'jest-axe'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { SmsOptInClient } from './SmsOptInClient'
 import {
   type DurableSmsConsentReceipt,
@@ -21,6 +21,8 @@ const durableReceipt: DurableSmsConsentReceipt = {
   idempotencyKey: IDEMPOTENCY_KEY,
 }
 
+let liveFetch = vi.fn()
+
 function createClient(
   implementation: SmsConsentClient['submit'] = vi.fn().mockResolvedValue(durableReceipt),
 ): SmsConsentClient {
@@ -39,6 +41,10 @@ function renderForm(client = createClient()) {
   }
 }
 
+async function expectNoAxeViolations(container: HTMLElement) {
+  expect((await axe(container)).violations).toEqual([])
+}
+
 async function completeForm(user: ReturnType<typeof userEvent.setup>) {
   await user.type(
     screen.getByRole('textbox', { name: /mobile phone number/i }),
@@ -52,10 +58,16 @@ async function completeForm(user: ReturnType<typeof userEvent.setup>) {
 }
 
 beforeEach(() => {
+  liveFetch = vi.fn()
+  vi.stubGlobal('fetch', liveFetch)
   Object.defineProperty(window.navigator, 'onLine', {
     configurable: true,
     value: true,
   })
+})
+
+afterEach(() => {
+  vi.unstubAllGlobals()
 })
 
 describe('SMS opt-in form', () => {
@@ -251,6 +263,24 @@ describe('SMS opt-in form', () => {
     expect(screen.queryByText('Your SMS consent was saved.')).not.toBeInTheDocument()
   })
 
+  it('never displays success for a normalized but impossible timestamp', async () => {
+    const user = userEvent.setup()
+    const submit = vi.fn().mockResolvedValue({
+      ...durableReceipt,
+      recordedAt: '2026-02-30T12:00:00.000Z',
+    })
+    renderForm(createClient(submit))
+    await completeForm(user)
+
+    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'treated as not recorded',
+    )
+    expect(screen.queryByText('Your SMS consent was saved.')).not.toBeInTheDocument()
+    expect(liveFetch).not.toHaveBeenCalled()
+  })
+
   it('shows success only for a confirmed durable-persistence response', async () => {
     const user = userEvent.setup()
     const submit = vi.fn().mockResolvedValue(durableReceipt)
@@ -293,8 +323,132 @@ describe('SMS opt-in form', () => {
   it('has no detectable axe violations in its initial state', async () => {
     const { container } = renderForm()
 
-    const results = await axe(container)
+    await expectNoAxeViolations(container)
+    expect(liveFetch).not.toHaveBeenCalled()
+  })
 
-    expect(results.violations).toEqual([])
+  it('has no detectable axe violations with validation errors', async () => {
+    const user = userEvent.setup()
+    const submit = vi.fn().mockResolvedValue(durableReceipt)
+    const { container } = renderForm(createClient(submit))
+
+    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+    await screen.findByRole('alert')
+
+    await expectNoAxeViolations(container)
+    expect(submit).not.toHaveBeenCalled()
+    expect(liveFetch).not.toHaveBeenCalled()
+  })
+
+  it('has no detectable axe violations while loading', async () => {
+    const user = userEvent.setup()
+    let resolveRequest!: (receipt: DurableSmsConsentReceipt) => void
+    const submit = vi.fn(
+      () =>
+        new Promise<DurableSmsConsentReceipt>((resolve) => {
+          resolveRequest = resolve
+        }),
+    )
+    const { container } = renderForm(createClient(submit))
+    await completeForm(user)
+
+    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+    await screen.findByText(/waiting for durable-persistence confirmation/i)
+
+    await expectNoAxeViolations(container)
+    expect(submit).toHaveBeenCalledTimes(1)
+    expect(liveFetch).not.toHaveBeenCalled()
+
+    await act(async () => {
+      resolveRequest(durableReceipt)
+    })
+  })
+
+  it('has no detectable axe violations while offline', async () => {
+    Object.defineProperty(window.navigator, 'onLine', {
+      configurable: true,
+      value: false,
+    })
+    const submit = vi.fn().mockResolvedValue(durableReceipt)
+    const { container } = renderForm(createClient(submit))
+
+    await screen.findByText('You are offline. Reconnect before submitting. No consent has been sent or recorded.')
+
+    await expectNoAxeViolations(container)
+    expect(submit).not.toHaveBeenCalled()
+    expect(liveFetch).not.toHaveBeenCalled()
+  })
+
+  it('has no detectable axe violations after a generic failure', async () => {
+    const user = userEvent.setup()
+    const submit = vi.fn().mockRejectedValue(new TypeError('network failed'))
+    const { container } = renderForm(createClient(submit))
+    await completeForm(user)
+
+    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+    await screen.findByRole('alert')
+
+    await expectNoAxeViolations(container)
+    expect(submit).toHaveBeenCalledTimes(1)
+    expect(liveFetch).not.toHaveBeenCalled()
+  })
+
+  it('has no detectable axe violations during an ambiguous retry', async () => {
+    const user = userEvent.setup()
+    let resolveRetry!: (receipt: DurableSmsConsentReceipt) => void
+    const submit = vi
+      .fn()
+      .mockRejectedValueOnce(new TypeError('network failed'))
+      .mockImplementationOnce(
+        () =>
+          new Promise<DurableSmsConsentReceipt>((resolve) => {
+            resolveRetry = resolve
+          }),
+      )
+    const { container } = renderForm(createClient(submit))
+    await completeForm(user)
+    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+    await screen.findByRole('alert')
+
+    await user.click(screen.getByRole('button', { name: /try again/i }))
+    await screen.findByText(/waiting for durable-persistence confirmation/i)
+
+    await expectNoAxeViolations(container)
+    expect(submit).toHaveBeenCalledTimes(2)
+    expect(submit.mock.calls[0][1]).toBe(IDEMPOTENCY_KEY)
+    expect(submit.mock.calls[1][1]).toBe(IDEMPOTENCY_KEY)
+    expect(liveFetch).not.toHaveBeenCalled()
+
+    await act(async () => {
+      resolveRetry(durableReceipt)
+    })
+  })
+
+  it('has no detectable axe violations after decline', async () => {
+    const user = userEvent.setup()
+    const submit = vi.fn().mockResolvedValue(durableReceipt)
+    const { container } = renderForm(createClient(submit))
+    await completeForm(user)
+
+    await user.click(screen.getByRole('button', { name: /no thanks/i }))
+    await screen.findByText('You have not opted in.')
+
+    await expectNoAxeViolations(container)
+    expect(submit).not.toHaveBeenCalled()
+    expect(liveFetch).not.toHaveBeenCalled()
+  })
+
+  it('has no detectable axe violations after durable success', async () => {
+    const user = userEvent.setup()
+    const submit = vi.fn().mockResolvedValue(durableReceipt)
+    const { container } = renderForm(createClient(submit))
+    await completeForm(user)
+
+    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+    await screen.findByText('Your SMS consent was saved.')
+
+    await expectNoAxeViolations(container)
+    expect(submit).toHaveBeenCalledTimes(1)
+    expect(liveFetch).not.toHaveBeenCalled()
   })
 })
