@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.sugarcanehayes.mymedvisit",
+      "sha256_cert_fingerprints": [
+        "CF:42:2F:1E:37:96:DA:DF:92:94:04:D5:3A:BA:65:BA:72:89:82:87:D1:57:97:33:C7:D1:58:8E:52:7E:2C:C6",
+        "AC:0B:95:8F:B5:23:A7:11:12:F8:98:D9:26:C4:77:B8:6F:34:90:5C:00:1D:D3:F7:CF:50:38:AB:0A:DD:99:60"
+      ]
+    }
+  }
+]
