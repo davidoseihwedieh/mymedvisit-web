@@ -68,6 +68,16 @@ export default function PrivacyPolicy() {
           </section>
 
           <section>
+            <h2 className="text-2xl font-bold text-white mb-4">Transactional SMS</h2>
+            <p>
+              If you separately opt in, MyMedVisit may use your mobile number to send transactional text messages only: one-time verification codes, account-security messages, and requested service notifications. Message frequency varies and message and data rates may apply. Reply STOP to opt out or HELP for help. SMS consent is not a condition of purchase.
+            </p>
+            <p className="mt-4">
+              We do not sell or share SMS consent with third parties for their own marketing. Twilio processes the phone number as our service provider to deliver these messages, as described in the Third-Party Services section.
+            </p>
+          </section>
+
+          <section>
             <h2 className="text-2xl font-bold text-white mb-4">Voice Data Processing</h2>
             <p className="mb-4">Your voice recordings are:</p>
             <ul className="list-disc list-inside space-y-2 ml-4">

@@ -135,6 +135,13 @@ export default function TermsAndConditions() {
           </section>
 
           <section>
+            <h2 className="text-2xl font-bold text-white mb-4">Transactional SMS</h2>
+            <p>
+              If you separately opt in through our SMS opt-in page, MyMedVisit may send transactional text messages for one-time verification codes, account security, and requested service notifications. Message frequency varies and message and data rates may apply. Reply STOP to opt out and HELP for help. SMS consent is not a condition of purchase and does not authorize advertising or promotional messages.
+            </p>
+          </section>
+
+          <section>
             <h2 className="text-2xl font-bold text-white mb-4">Limitation of Liability</h2>
             <p>
               To the maximum extent permitted by law, MyMedVisit shall not be liable for any indirect, 
