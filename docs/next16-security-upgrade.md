@@ -14,12 +14,16 @@ Next.js 16.3.3. It does not add the SMS opt-in page or connect any consent API.
 - nanoid: 3.3.19 in the resolved transitive graph.
 - ESLint: 9.39.5 with `eslint-config-next` 16.3.3 and flat configuration.
 
-Use the repository's lockfile-driven installation method for CI and local
+Use the lockfile-driven clean installation method for reproducible CI and local
 verification:
 
 ```sh
 npm ci
 ```
+
+Repository `vercel.json` currently specifies `npm install` for preview and
+production builds. That exact command was also verified against this branch;
+it completed without changing `package.json` or `package-lock.json`.
 
 The local verification environment used Node.js 26.8.1. The existing
 development-only `@vercel/node` graph emitted an engine warning because one of
