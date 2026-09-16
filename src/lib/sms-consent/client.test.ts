@@ -32,7 +32,7 @@ const durableReceipt = {
   recordedAt: '2026-09-15T12:00:00.000Z',
   idempotencyKey,
 }
-const logicalRequest = createSmsConsentSubmission(phoneNumber)
+const logicalRequest = createSmsConsentSubmission(phoneNumber, true)
 const wireRequest = createSmsConsentWireRequest(logicalRequest, recaptchaToken)
 
 function jsonResponse(
@@ -86,6 +86,9 @@ describe('SMS consent closed request boundary', () => {
       authorizedNumberAttestation: true,
       recaptchaToken,
     })
+    expect(wireRequest.transactionalMessageCategories).toEqual([
+      'one_time_verification_codes',
+    ])
     expect(isSmsConsentWireRequest(wireRequest)).toBe(true)
   })
 

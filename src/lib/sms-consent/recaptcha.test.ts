@@ -19,7 +19,7 @@ import {
 
 const siteKey = 'synthetic-public-site-key'
 const idempotencyKey = '11111111-1111-4111-8111-111111111111'
-const logicalRequest = createSmsConsentSubmission('5555550123')
+const logicalRequest = createSmsConsentSubmission('5555550123', true)
 const receipt = {
   status: 'persisted' as const,
   evidenceId: 'sce_22222222-2222-4222-8222-222222222222',

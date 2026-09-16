@@ -27,6 +27,9 @@ describe('SMS opt-in route', () => {
     const form = staticDocument.querySelector('form')
     const phone = staticDocument.querySelector<HTMLInputElement>('#sms-phone')
     const consent = staticDocument.querySelector<HTMLInputElement>('#sms-consent')
+    const attestation = staticDocument.querySelector<HTMLInputElement>(
+      '#authorized-number-attestation',
+    )
     const submit = staticDocument.querySelector<HTMLButtonElement>(
       'button[type="submit"]',
     )
@@ -34,12 +37,15 @@ describe('SMS opt-in route', () => {
     expect(form).not.toBeNull()
     expect(phone).not.toBeNull()
     expect(consent).not.toBeNull()
+    expect(attestation).not.toBeNull()
     expect(submit).not.toBeNull()
     expect(form?.hasAttribute('action')).toBe(false)
     expect(phone?.hasAttribute('name')).toBe(false)
     expect(consent?.hasAttribute('name')).toBe(false)
+    expect(attestation?.hasAttribute('name')).toBe(false)
     expect(phone?.disabled).toBe(true)
     expect(consent?.disabled).toBe(true)
+    expect(attestation?.disabled).toBe(true)
     expect(submit?.disabled).toBe(true)
     expect(
       staticDocument.getElementById('sms-form-unavailable')?.textContent,
@@ -49,6 +55,8 @@ describe('SMS opt-in route', () => {
     phone!.value = '+15555550123'
     consent!.disabled = false
     consent!.checked = true
+    attestation!.disabled = false
+    attestation!.checked = true
     submit!.disabled = false
 
     const params = new URLSearchParams()
@@ -62,6 +70,9 @@ describe('SMS opt-in route', () => {
     expect(nativeSubmissionUrl.search).toBe('')
     expect(nativeSubmissionUrl.href).not.toContain('phone=')
     expect(nativeSubmissionUrl.href).not.toContain('sms-consent=')
+    expect(nativeSubmissionUrl.href).not.toContain(
+      'authorized-number-attestation=',
+    )
     expect(nativeSubmissionUrl.href).not.toContain('15555550123')
     expect(nativeSubmissionUrl.href).not.toContain('=on')
   })

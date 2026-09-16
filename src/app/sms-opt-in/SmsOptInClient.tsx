@@ -27,6 +27,7 @@ type FormPhase = 'idle' | 'submitting' | 'failure' | 'success' | 'declined'
 interface FormErrors {
   phone?: string
   consent?: string
+  attestation?: string
 }
 
 interface SubmissionAttempt {
@@ -50,6 +51,8 @@ export function SmsOptInClient({
   )
   const [phone, setPhone] = useState('')
   const [consented, setConsented] = useState(false)
+  const [authorizedNumberAttestation, setAuthorizedNumberAttestation] =
+    useState(false)
   const [errors, setErrors] = useState<FormErrors>({})
   const [phase, setPhase] = useState<FormPhase>('idle')
   const [failureMessage, setFailureMessage] = useState('')
@@ -58,6 +61,7 @@ export function SmsOptInClient({
   const [isOnline, setIsOnline] = useState(true)
   const phoneRef = useRef<HTMLInputElement>(null)
   const consentRef = useRef<HTMLInputElement>(null)
+  const attestationRef = useRef<HTMLInputElement>(null)
   const inFlightRef = useRef(false)
   const lastAttemptRef = useRef<SubmissionAttempt | null>(null)
   const retryDelayRef = useRef(false)
@@ -125,6 +129,12 @@ export function SmsOptInClient({
     resetSubmissionFeedback()
   }
 
+  function updateAttestation(value: boolean) {
+    setAuthorizedNumberAttestation(value)
+    setErrors((current) => ({ ...current, attestation: undefined }))
+    resetSubmissionFeedback()
+  }
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
@@ -141,6 +151,10 @@ export function SmsOptInClient({
     if (!consented) {
       nextErrors.consent = 'Check the consent box to agree before continuing.'
     }
+    if (!authorizedNumberAttestation) {
+      nextErrors.attestation =
+        'Check the authorization box to confirm you may consent for this number.'
+    }
 
     setErrors(nextErrors)
     setFailureMessage('')
@@ -153,6 +167,10 @@ export function SmsOptInClient({
     }
     if (nextErrors.consent) {
       requestAnimationFrame(() => consentRef.current?.focus())
+      return
+    }
+    if (nextErrors.attestation) {
+      requestAnimationFrame(() => attestationRef.current?.focus())
       return
     }
 
@@ -176,7 +194,9 @@ export function SmsOptInClient({
     }
 
     const attempt = {
-      submission: createSmsConsentSubmission(trimmedPhone),
+      // The literal true reaches the request only after the independent control
+      // has been affirmatively checked and validated above.
+      submission: createSmsConsentSubmission(trimmedPhone, true),
       idempotencyKey,
     }
     lastAttemptRef.current = attempt
@@ -219,6 +239,7 @@ export function SmsOptInClient({
       clearRetryDelayTimer()
       setPhone('')
       setConsented(false)
+      setAuthorizedNumberAttestation(false)
       setPhase('success')
     } catch (error) {
       const disabled = isDisabledSubmissionError(error)
@@ -264,6 +285,7 @@ export function SmsOptInClient({
     lastAttemptRef.current = null
     setPhone('')
     setConsented(false)
+    setAuthorizedNumberAttestation(false)
     setErrors({})
     setFailureMessage('')
     setCanRetry(false)
@@ -277,6 +299,11 @@ export function SmsOptInClient({
   }
 
   const submitting = phase === 'submitting'
+  const validationErrorCount = [
+    errors.phone,
+    errors.consent,
+    errors.attestation,
+  ].filter(Boolean).length
 
   return (
     <main className="overflow-hidden">
@@ -289,13 +316,14 @@ export function SmsOptInClient({
                 MyMedVisit SMS preferences
               </p>
               <h1 className="mt-4 max-w-3xl font-[var(--font-fraunces)] text-[clamp(2.35rem,8vw,4.8rem)] leading-[1.05]">
-                Stay in the loop about your account and requested care.
+                Choose whether to receive one-time verification codes.
               </h1>
+              {/* Proposed OTP-only language; not approved for production use. */}
               <p className="mt-6 max-w-2xl text-base leading-relaxed text-[rgba(13,27,42,0.7)] sm:text-lg">
-                MyMedVisit may send transactional text messages for
-                authentication, account security, and service notifications you
-                request. This page is not an enrollment for advertising or
-                promotional messages.
+                MyMedVisit may send one-time verification codes that you request
+                for authentication, account recovery, or confirmation of a
+                sensitive action. This page is not an enrollment for advertising
+                or promotional messages.
               </p>
               <p className="mt-4 text-sm font-medium text-[var(--teal-dark)]">
                 MyMedVisit is the sender.
@@ -351,9 +379,10 @@ export function SmsOptInClient({
               Choose whether to receive SMS
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-[rgba(13,27,42,0.68)]">
-              Enter your mobile number and affirmatively check the box only if
-              you want these transactional messages. You can decline or leave
-              this page without opting in.
+              Enter your mobile number and affirmatively check both boxes only if
+              you want the described verification-code messages and may consent
+              for this number. You can decline or leave this page without opting
+              in.
             </p>
 
             {phase === 'declined' ? (
@@ -464,12 +493,14 @@ export function SmsOptInClient({
                     id="sms-disclosure"
                     className="text-sm leading-relaxed text-[rgba(13,27,42,0.82)]"
                   >
-                    MyMedVisit may send one-time verification codes,
-                    account-security messages, and requested service
-                    notifications. Message frequency varies. Message and data
-                    rates may apply. Reply STOP to opt out and HELP for help.
-                    Consent is not a condition of purchase and does not authorize
-                    advertising or promotional messages.
+                    {/* Proposed OTP-only language; not approved for production use. */}
+                    MyMedVisit may send one-time verification codes that you
+                    request for authentication, account recovery, or confirmation
+                    of a sensitive action. Message frequency varies based on the
+                    verification requests you initiate. Message and data rates may
+                    apply. Reply STOP to opt out and HELP for help. Consent is not
+                    a condition of purchase and does not authorize advertising or
+                    promotional messages.
                   </p>
                   <div className="mt-4 flex items-start gap-3">
                     <input
@@ -491,8 +522,9 @@ export function SmsOptInClient({
                       htmlFor="sms-consent"
                       className="cursor-pointer text-sm font-semibold leading-relaxed"
                     >
-                      I agree to receive the transactional text messages
-                      described above at the mobile number I provided.
+                      I agree to receive the one-time verification-code text
+                      messages described above from MyMedVisit at the mobile
+                      number I provided.
                     </label>
                   </div>
                   {errors.consent && (
@@ -503,6 +535,53 @@ export function SmsOptInClient({
                       {errors.consent}
                     </p>
                   )}
+
+                  <div className="mt-6 border-t border-[rgba(13,27,42,0.12)] pt-5">
+                    <div className="flex items-start gap-3">
+                      <input
+                        ref={attestationRef}
+                        id="authorized-number-attestation"
+                        type="checkbox"
+                        checked={authorizedNumberAttestation}
+                        disabled={!isHydrated || submitting}
+                        onChange={(event) =>
+                          updateAttestation(event.target.checked)
+                        }
+                        aria-invalid={Boolean(errors.attestation)}
+                        aria-describedby={
+                          errors.attestation
+                            ? 'attestation-description attestation-error'
+                            : 'attestation-description'
+                        }
+                        className="mt-0.5 h-6 w-6 shrink-0 cursor-pointer accent-[var(--teal-dark)] focus-visible:outline-[var(--teal-dark)] disabled:cursor-not-allowed"
+                      />
+                      <label
+                        htmlFor="authorized-number-attestation"
+                        className="cursor-pointer text-sm font-semibold leading-relaxed"
+                      >
+                        {/* Proposed attestation; counsel has not approved it. */}
+                        I confirm that I am the subscriber for this mobile number,
+                        or that the subscriber has authorized me to consent to
+                        receive the one-time verification-code messages described
+                        above at this number.
+                      </label>
+                    </div>
+                    <p
+                      id="attestation-description"
+                      className="mt-2 pl-9 text-xs text-[rgba(13,27,42,0.65)]"
+                    >
+                      This statement records an attestation; it does not verify
+                      ownership or possession of the number.
+                    </p>
+                    {errors.attestation && (
+                      <p
+                        id="attestation-error"
+                        className="mt-3 text-sm font-semibold text-red-800"
+                      >
+                        {errors.attestation}
+                      </p>
+                    )}
+                  </div>
                   <p className="mt-4 text-sm text-[rgba(13,27,42,0.72)]">
                     Review the{' '}
                     <Link
@@ -522,15 +601,14 @@ export function SmsOptInClient({
                   </p>
                 </fieldset>
 
-                {(errors.phone || errors.consent) && (
+                {validationErrorCount > 0 && (
                   <div
                     role="alert"
                     aria-live="assertive"
                     className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-900"
                   >
                     Please correct the highlighted field
-                    {errors.phone && errors.consent ? 's' : ''} before
-                    continuing.
+                    {validationErrorCount === 1 ? '' : 's'} before continuing.
                   </div>
                 )}
 
@@ -603,7 +681,7 @@ export function SmsOptInClient({
             )}
 
             <p className="mt-6 text-center text-sm text-[rgba(13,27,42,0.65)]">
-              Entering a number or checking the box alone does not opt you in.
+              Entering a number or checking either box alone does not opt you in.
               Consent is requested only when you select Agree and continue.
             </p>
           </div>

@@ -21,14 +21,20 @@ export const SMS_CONSENT_PRIVACY = {
   version: HUMAN_REVIEW_REQUIRED,
 } as const
 
-export const TRANSACTIONAL_MESSAGE_CATEGORIES = [
+export const TRANSACTIONAL_MESSAGE_CATEGORY_TAXONOMY = [
   'one_time_verification_codes',
   'account_security_messages',
   'requested_service_notifications',
 ] as const
 
 export type TransactionalMessageCategory =
-  (typeof TRANSACTIONAL_MESSAGE_CATEGORIES)[number]
+  (typeof TRANSACTIONAL_MESSAGE_CATEGORY_TAXONOMY)[number]
+
+// Proposed initial scope only. It remains inactive and unapproved while the
+// literal integration gate below is false.
+export const TRANSACTIONAL_MESSAGE_CATEGORIES = [
+  'one_time_verification_codes',
+] as const satisfies readonly TransactionalMessageCategory[]
 
 export const SMS_CONSENT_SOURCE = 'mymedvisit_web_sms_opt_in' as const
 

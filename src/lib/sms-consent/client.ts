@@ -7,6 +7,7 @@ import {
   SMS_CONSENT_TERMS,
   SMS_OPT_IN_CANONICAL_URL,
   SMS_OPT_IN_PAGE_VERSION,
+  TRANSACTIONAL_MESSAGE_CATEGORY_TAXONOMY,
   TRANSACTIONAL_MESSAGE_CATEGORIES,
   type TransactionalMessageCategory,
 } from './constants'
@@ -39,7 +40,7 @@ const EXACT_RECEIPT_KEYS = [
 ] as const
 
 const KNOWN_CATEGORIES = new Set<TransactionalMessageCategory>(
-  TRANSACTIONAL_MESSAGE_CATEGORIES,
+  TRANSACTIONAL_MESSAGE_CATEGORY_TAXONOMY,
 )
 
 export interface SmsConsentLogicalRequest {
@@ -122,6 +123,7 @@ export class ConsentSubmissionError extends Error {
 
 export function createSmsConsentSubmission(
   phoneNumber: string,
+  authorizedNumberAttestation: true,
 ): SmsConsentLogicalRequest {
   return {
     phoneNumber,
@@ -132,9 +134,7 @@ export function createSmsConsentSubmission(
     source: SMS_CONSENT_SOURCE,
     terms: SMS_CONSENT_TERMS,
     transactionalMessageCategories: TRANSACTIONAL_MESSAGE_CATEGORIES,
-    // Production submission remains disabled. Commit 4 will require this value
-    // to come from its own affirmative, initially-unchecked control.
-    authorizedNumberAttestation: true,
+    authorizedNumberAttestation,
   }
 }
 

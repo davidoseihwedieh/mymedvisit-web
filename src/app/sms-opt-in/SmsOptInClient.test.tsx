@@ -63,7 +63,12 @@ async function completeForm(user: ReturnType<typeof userEvent.setup>) {
   )
   await user.click(
     screen.getByRole('checkbox', {
-      name: /i agree to receive the transactional text messages/i,
+      name: /i agree to receive the one-time verification-code/i,
+    }),
+  )
+  await user.click(
+    screen.getByRole('checkbox', {
+      name: /i confirm that i am the subscriber/i,
     }),
   )
 }
@@ -83,12 +88,17 @@ afterEach(() => {
 })
 
 describe('SMS opt-in form', () => {
-  it('starts with consent unchecked', () => {
+  it('starts with consent and number attestation independently unchecked', () => {
     renderForm()
 
     expect(
       screen.getByRole('checkbox', {
-        name: /i agree to receive the transactional text messages/i,
+        name: /i agree to receive the one-time verification-code/i,
+      }),
+    ).not.toBeChecked()
+    expect(
+      screen.getByRole('checkbox', {
+        name: /i confirm that i am the subscriber/i,
       }),
     ).not.toBeChecked()
   })
@@ -119,6 +129,11 @@ describe('SMS opt-in form', () => {
     expect(
       screen.getByText('Check the consent box to agree before continuing.'),
     ).toBeVisible()
+    expect(
+      screen.getByText(
+        'Check the authorization box to confirm you may consent for this number.',
+      ),
+    ).toBeVisible()
     expect(screen.getByRole('alert')).toHaveTextContent(
       'Please correct the highlighted fields before continuing.',
     )
@@ -145,7 +160,42 @@ describe('SMS opt-in form', () => {
       screen.getByText('Check the consent box to agree before continuing.'),
     ).toBeVisible()
     await waitFor(() => {
-      expect(screen.getByRole('checkbox')).toHaveFocus()
+      expect(
+        screen.getByRole('checkbox', {
+          name: /i agree to receive the one-time verification-code/i,
+        }),
+      ).toHaveFocus()
+    })
+    expect(submit).not.toHaveBeenCalled()
+  })
+
+  it('validates missing number authorization independently and focuses it third', async () => {
+    const user = userEvent.setup()
+    const submit = vi.fn().mockResolvedValue(durableReceipt)
+    renderForm(createClient(submit))
+
+    await user.type(
+      screen.getByRole('textbox', { name: /mobile phone number/i }),
+      '5555550123',
+    )
+    await user.click(
+      screen.getByRole('checkbox', {
+        name: /i agree to receive the one-time verification-code/i,
+      }),
+    )
+    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+
+    expect(
+      screen.getByText(
+        'Check the authorization box to confirm you may consent for this number.',
+      ),
+    ).toBeVisible()
+    await waitFor(() => {
+      expect(
+        screen.getByRole('checkbox', {
+          name: /i confirm that i am the subscriber/i,
+        }),
+      ).toHaveFocus()
     })
     expect(submit).not.toHaveBeenCalled()
   })
@@ -169,7 +219,16 @@ describe('SMS opt-in form', () => {
     const submit = vi.fn().mockResolvedValue(durableReceipt)
     renderForm(createClient(submit))
 
-    await user.click(screen.getByRole('checkbox'))
+    await user.click(
+      screen.getByRole('checkbox', {
+        name: /i agree to receive the one-time verification-code/i,
+      }),
+    )
+    await user.click(
+      screen.getByRole('checkbox', {
+        name: /i confirm that i am the subscriber/i,
+      }),
+    )
 
     expect(submit).not.toHaveBeenCalled()
   })
@@ -183,7 +242,18 @@ describe('SMS opt-in form', () => {
     phone.focus()
     await user.keyboard('5555550123')
     await user.tab()
-    expect(screen.getByRole('checkbox')).toHaveFocus()
+    expect(
+      screen.getByRole('checkbox', {
+        name: /i agree to receive the one-time verification-code/i,
+      }),
+    ).toHaveFocus()
+    await user.keyboard(' ')
+    await user.tab()
+    expect(
+      screen.getByRole('checkbox', {
+        name: /i confirm that i am the subscriber/i,
+      }),
+    ).toHaveFocus()
     await user.keyboard(' ')
     await user.tab()
     expect(screen.getByRole('link', { name: /terms of service/i })).toHaveFocus()
@@ -363,7 +433,9 @@ describe('SMS opt-in form', () => {
     await user.click(screen.getByRole('button', { name: /agree and continue/i }))
     await screen.findByRole('alert')
 
-    const consent = screen.getByRole('checkbox')
+    const consent = screen.getByRole('checkbox', {
+      name: /i agree to receive the one-time verification-code/i,
+    })
     await user.click(consent)
     await user.click(consent)
     await user.click(screen.getByRole('button', { name: /agree and continue/i }))
@@ -373,6 +445,44 @@ describe('SMS opt-in form', () => {
       IDEMPOTENCY_KEY,
       SECOND_IDEMPOTENCY_KEY,
     ])
+  })
+
+  it('invalidates a retained attempt when the number attestation changes', async () => {
+    const user = userEvent.setup()
+    const submit = vi
+      .fn<SmsConsentClient['submit']>()
+      .mockRejectedValueOnce(
+        new ConsentSubmissionError(
+          'network',
+          'The consent request could not be confirmed.',
+        ),
+      )
+      .mockResolvedValueOnce({
+        ...durableReceipt,
+        idempotencyKey: SECOND_IDEMPOTENCY_KEY,
+      })
+    const createIdempotencyKey = vi
+      .fn()
+      .mockReturnValueOnce(IDEMPOTENCY_KEY)
+      .mockReturnValueOnce(SECOND_IDEMPOTENCY_KEY)
+    renderForm(createClient(submit), createIdempotencyKey)
+    await completeForm(user)
+    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+    await screen.findByRole('alert')
+
+    const attestation = screen.getByRole('checkbox', {
+      name: /i confirm that i am the subscriber/i,
+    })
+    await user.click(attestation)
+    await user.click(attestation)
+    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+
+    expect(await screen.findByText('Your SMS consent was saved.')).toBeVisible()
+    expect(submit.mock.calls.map((call) => call[1])).toEqual([
+      IDEMPOTENCY_KEY,
+      SECOND_IDEMPOTENCY_KEY,
+    ])
+    expect(submit.mock.calls[1][0].authorizedNumberAttestation).toBe(true)
   })
 
   it('preserves the retained attempt while offline and retries after recovery', async () => {
