@@ -1,22 +1,30 @@
-import { act, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { axe } from 'jest-axe'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { SmsOptInClient } from './SmsOptInClient'
 import {
+  ConsentSubmissionError,
   type DurableSmsConsentReceipt,
   type SmsConsentClient,
+  type SmsConsentTransport,
+  type SmsConsentWireRequest,
 } from '@/lib/sms-consent/client'
 import {
   SMS_CONSENT_PRIVACY,
   SMS_CONSENT_TERMS,
 } from '@/lib/sms-consent/constants'
+import {
+  createRecaptchaSmsConsentClient,
+  type RecaptchaTokenProvider,
+} from '@/lib/sms-consent/recaptcha'
 
-const IDEMPOTENCY_KEY = 'test-idempotency-key'
+const IDEMPOTENCY_KEY = '11111111-1111-4111-8111-111111111111'
+const SECOND_IDEMPOTENCY_KEY = '33333333-3333-4333-8333-333333333333'
 
 const durableReceipt: DurableSmsConsentReceipt = {
   status: 'persisted',
-  evidenceId: 'consent-evidence-1',
+  evidenceId: 'sce_22222222-2222-4222-8222-222222222222',
   recordedAt: '2026-09-15T12:00:00.000Z',
   idempotencyKey: IDEMPOTENCY_KEY,
 }
@@ -29,13 +37,16 @@ function createClient(
   return { submit: implementation }
 }
 
-function renderForm(client = createClient()) {
+function renderForm(
+  client = createClient(),
+  createIdempotencyKey = () => IDEMPOTENCY_KEY,
+) {
   return {
     client,
     ...render(
       <SmsOptInClient
         client={client}
-        createIdempotencyKey={() => IDEMPOTENCY_KEY}
+        createIdempotencyKey={createIdempotencyKey}
       />,
     ),
   }
@@ -67,6 +78,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  vi.useRealTimers()
   vi.unstubAllGlobals()
 })
 
@@ -244,6 +256,265 @@ describe('SMS opt-in form', () => {
     expect(submit.mock.calls[0][1]).toBe(IDEMPOTENCY_KEY)
     expect(submit.mock.calls[1][1]).toBe(IDEMPOTENCY_KEY)
     expect(submit.mock.calls[1][0]).toEqual(submit.mock.calls[0][0])
+  })
+
+  it('uses a fresh CAPTCHA token while preserving the logical payload and key after a lost response', async () => {
+    const user = userEvent.setup()
+    const getToken = vi
+      .fn<RecaptchaTokenProvider['getToken']>()
+      .mockResolvedValueOnce('fresh-token-one')
+      .mockResolvedValueOnce('fresh-token-two')
+    const requests: SmsConsentWireRequest[] = []
+    const keys: string[] = []
+    const transport: SmsConsentTransport = {
+      submit: vi
+        .fn<SmsConsentTransport['submit']>()
+        .mockImplementationOnce(async (request, key) => {
+          requests.push(request)
+          keys.push(key)
+          throw new ConsentSubmissionError(
+            'network',
+            'The consent request could not be confirmed.',
+          )
+        })
+        .mockImplementationOnce(async (request, key) => {
+          requests.push(request)
+          keys.push(key)
+          return durableReceipt
+        }),
+    }
+    const client = createRecaptchaSmsConsentClient({
+      transport,
+      tokenProvider: { getToken },
+    })
+    renderForm(client)
+    await completeForm(user)
+
+    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+    await screen.findByRole('alert')
+    await user.click(screen.getByRole('button', { name: /try again/i }))
+
+    expect(await screen.findByText('Your SMS consent was saved.')).toBeVisible()
+    expect(getToken).toHaveBeenCalledTimes(2)
+    expect(keys).toEqual([IDEMPOTENCY_KEY, IDEMPOTENCY_KEY])
+    expect(requests[0].recaptchaToken).toBe('fresh-token-one')
+    expect(requests[1].recaptchaToken).toBe('fresh-token-two')
+    const { recaptchaToken: firstToken, ...firstLogical } = requests[0]
+    const { recaptchaToken: secondToken, ...secondLogical } = requests[1]
+    expect(firstToken).not.toBe(secondToken)
+    expect(secondLogical).toEqual(firstLogical)
+  })
+
+  it('invalidates a retained attempt when the phone changes and creates a new UUID', async () => {
+    const user = userEvent.setup()
+    const submit = vi
+      .fn<SmsConsentClient['submit']>()
+      .mockRejectedValueOnce(
+        new ConsentSubmissionError(
+          'network',
+          'The consent request could not be confirmed.',
+        ),
+      )
+      .mockResolvedValueOnce({
+        ...durableReceipt,
+        idempotencyKey: SECOND_IDEMPOTENCY_KEY,
+      })
+    const createIdempotencyKey = vi
+      .fn()
+      .mockReturnValueOnce(IDEMPOTENCY_KEY)
+      .mockReturnValueOnce(SECOND_IDEMPOTENCY_KEY)
+    renderForm(createClient(submit), createIdempotencyKey)
+    await completeForm(user)
+    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+    await screen.findByRole('alert')
+
+    const phone = screen.getByRole('textbox', { name: /mobile phone number/i })
+    await user.clear(phone)
+    await user.type(phone, '5555550199')
+    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+
+    expect(await screen.findByText('Your SMS consent was saved.')).toBeVisible()
+    expect(createIdempotencyKey).toHaveBeenCalledTimes(2)
+    expect(submit.mock.calls[0][1]).toBe(IDEMPOTENCY_KEY)
+    expect(submit.mock.calls[1][1]).toBe(SECOND_IDEMPOTENCY_KEY)
+    expect(submit.mock.calls[1][0].phoneNumber).toBe('5555550199')
+  })
+
+  it('invalidates a retained attempt when SMS consent changes', async () => {
+    const user = userEvent.setup()
+    const submit = vi
+      .fn<SmsConsentClient['submit']>()
+      .mockRejectedValueOnce(
+        new ConsentSubmissionError(
+          'network',
+          'The consent request could not be confirmed.',
+        ),
+      )
+      .mockResolvedValueOnce({
+        ...durableReceipt,
+        idempotencyKey: SECOND_IDEMPOTENCY_KEY,
+      })
+    const createIdempotencyKey = vi
+      .fn()
+      .mockReturnValueOnce(IDEMPOTENCY_KEY)
+      .mockReturnValueOnce(SECOND_IDEMPOTENCY_KEY)
+    renderForm(createClient(submit), createIdempotencyKey)
+    await completeForm(user)
+    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+    await screen.findByRole('alert')
+
+    const consent = screen.getByRole('checkbox')
+    await user.click(consent)
+    await user.click(consent)
+    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+
+    expect(await screen.findByText('Your SMS consent was saved.')).toBeVisible()
+    expect(submit.mock.calls.map((call) => call[1])).toEqual([
+      IDEMPOTENCY_KEY,
+      SECOND_IDEMPOTENCY_KEY,
+    ])
+  })
+
+  it('preserves the retained attempt while offline and retries after recovery', async () => {
+    const user = userEvent.setup()
+    const submit = vi
+      .fn<SmsConsentClient['submit']>()
+      .mockRejectedValueOnce(
+        new ConsentSubmissionError(
+          'network',
+          'The consent request could not be confirmed.',
+        ),
+      )
+      .mockResolvedValueOnce(durableReceipt)
+    renderForm(createClient(submit))
+    await completeForm(user)
+    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+    await screen.findByRole('alert')
+
+    Object.defineProperty(window.navigator, 'onLine', {
+      configurable: true,
+      value: false,
+    })
+    window.dispatchEvent(new Event('offline'))
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /try again/i })).toBeDisabled(),
+    )
+
+    Object.defineProperty(window.navigator, 'onLine', {
+      configurable: true,
+      value: true,
+    })
+    window.dispatchEvent(new Event('online'))
+    const retry = screen.getByRole('button', { name: /try again/i })
+    await waitFor(() => expect(retry).toBeEnabled())
+    await user.click(retry)
+
+    expect(await screen.findByText('Your SMS consent was saved.')).toBeVisible()
+    expect(submit.mock.calls.map((call) => call[1])).toEqual([
+      IDEMPOTENCY_KEY,
+      IDEMPOTENCY_KEY,
+    ])
+  })
+
+  it('honors the fixed five-second retry delay for an unavailable response', async () => {
+    const user = userEvent.setup()
+    const submit = vi
+      .fn<SmsConsentClient['submit']>()
+      .mockRejectedValueOnce(
+        new ConsentSubmissionError(
+          'unavailable',
+          'The consent request could not be completed.',
+          5_000,
+        ),
+      )
+      .mockResolvedValueOnce(durableReceipt)
+    renderForm(createClient(submit))
+    await completeForm(user)
+    vi.useFakeTimers()
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /agree and continue/i }))
+      await Promise.resolve()
+    })
+
+    const retry = screen.getByRole('button', { name: /try again/i })
+    expect(retry).toBeDisabled()
+    await act(async () => vi.advanceTimersByTimeAsync(4_999))
+    expect(retry).toBeDisabled()
+    await act(async () => vi.advanceTimersByTimeAsync(1))
+    expect(retry).toBeEnabled()
+    vi.useRealTimers()
+    await user.click(retry)
+
+    expect(await screen.findByText('Your SMS consent was saved.')).toBeVisible()
+  })
+
+  it.each([
+    'captcha-unavailable',
+    'network',
+    'invalid-response',
+    'bot-check-failed',
+    'rate-limited',
+    'internal-error',
+    'unavailable',
+  ] as const)('offers an explicit retry for %s', async (code) => {
+    const user = userEvent.setup()
+    const submit = vi.fn().mockRejectedValue(
+      new ConsentSubmissionError(code, 'The consent request could not be completed.'),
+    )
+    renderForm(createClient(submit))
+    await completeForm(user)
+    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+
+    expect(await screen.findByRole('button', { name: /try again/i })).toBeVisible()
+  })
+
+  it.each([
+    'invalid-request',
+    'request-not-allowed',
+    'method-not-allowed',
+    'idempotency-conflict',
+    'request-too-large',
+    'unsupported-media-type',
+  ] as const)('does not retry the definitive %s response', async (code) => {
+    const user = userEvent.setup()
+    const submit = vi.fn().mockRejectedValue(
+      new ConsentSubmissionError(code, 'The consent request could not be completed.'),
+    )
+    renderForm(createClient(submit))
+    await completeForm(user)
+    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+
+    await screen.findByRole('alert')
+    expect(screen.queryByRole('button', { name: /try again/i })).not.toBeInTheDocument()
+    expect(submit).toHaveBeenCalledTimes(1)
+  })
+
+  it('prevents duplicate token acquisition and transport calls', async () => {
+    const user = userEvent.setup()
+    let resolveToken!: (token: string) => void
+    const getToken = vi.fn(
+      () =>
+        new Promise<string>((resolve) => {
+          resolveToken = resolve
+        }),
+    )
+    const transport: SmsConsentTransport = {
+      submit: vi.fn().mockResolvedValue(durableReceipt),
+    }
+    const client = createRecaptchaSmsConsentClient({
+      transport,
+      tokenProvider: { getToken },
+    })
+    renderForm(client)
+    await completeForm(user)
+    const submit = screen.getByRole('button', { name: /agree and continue/i })
+
+    await user.dblClick(submit)
+
+    expect(getToken).toHaveBeenCalledTimes(1)
+    expect(transport.submit).not.toHaveBeenCalled()
+    await act(async () => resolveToken('fresh-token'))
+    expect(transport.submit).toHaveBeenCalledTimes(1)
   })
 
   it('requires a validated durable-persistence receipt before success', async () => {

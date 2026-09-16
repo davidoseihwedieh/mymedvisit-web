@@ -54,11 +54,14 @@ export function SmsOptInClient({
   const [phase, setPhase] = useState<FormPhase>('idle')
   const [failureMessage, setFailureMessage] = useState('')
   const [canRetry, setCanRetry] = useState(false)
+  const [retryDelayActive, setRetryDelayActive] = useState(false)
   const [isOnline, setIsOnline] = useState(true)
   const phoneRef = useRef<HTMLInputElement>(null)
   const consentRef = useRef<HTMLInputElement>(null)
   const inFlightRef = useRef(false)
   const lastAttemptRef = useRef<SubmissionAttempt | null>(null)
+  const retryDelayRef = useRef(false)
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     function updateOnlineState() {
@@ -72,14 +75,40 @@ export function SmsOptInClient({
     return () => {
       window.removeEventListener('online', updateOnlineState)
       window.removeEventListener('offline', updateOnlineState)
+      if (retryTimerRef.current !== null) {
+        clearTimeout(retryTimerRef.current)
+      }
+      retryTimerRef.current = null
+      retryDelayRef.current = false
     }
   }, [])
+
+  function clearRetryDelayTimer() {
+    if (retryTimerRef.current !== null) {
+      clearTimeout(retryTimerRef.current)
+      retryTimerRef.current = null
+    }
+    retryDelayRef.current = false
+    setRetryDelayActive(false)
+  }
+
+  function enforceRetryDelay(milliseconds: number) {
+    clearRetryDelayTimer()
+    retryDelayRef.current = true
+    setRetryDelayActive(true)
+    retryTimerRef.current = setTimeout(() => {
+      retryTimerRef.current = null
+      retryDelayRef.current = false
+      setRetryDelayActive(false)
+    }, milliseconds)
+  }
 
   function resetSubmissionFeedback() {
     if (phase === 'failure') {
       setPhase('idle')
       setFailureMessage('')
       setCanRetry(false)
+      clearRetryDelayTimer()
       lastAttemptRef.current = null
     }
   }
@@ -116,6 +145,7 @@ export function SmsOptInClient({
     setErrors(nextErrors)
     setFailureMessage('')
     setCanRetry(false)
+    clearRetryDelayTimer()
 
     if (nextErrors.phone) {
       requestAnimationFrame(() => phoneRef.current?.focus())
@@ -186,15 +216,27 @@ export function SmsOptInClient({
       }
 
       lastAttemptRef.current = null
+      clearRetryDelayTimer()
       setPhone('')
       setConsented(false)
       setPhase('success')
     } catch (error) {
-      const disabled =
-        error instanceof ConsentSubmissionError && error.code === 'disabled'
+      const disabled = isDisabledSubmissionError(error)
+      const retryable = isRetryableSubmissionError(error)
+
+      if (!retryable) {
+        lastAttemptRef.current = null
+      }
+      if (
+        retryable &&
+        error instanceof ConsentSubmissionError &&
+        error.retryAfterMs !== undefined
+      ) {
+        enforceRetryDelay(error.retryAfterMs)
+      }
 
       setPhase('failure')
-      setCanRetry(!disabled)
+      setCanRetry(retryable)
       setFailureMessage(
         disabled
           ? 'Consent submission is not available yet. No consent was sent or recorded.'
@@ -207,7 +249,7 @@ export function SmsOptInClient({
 
   async function retry() {
     const attempt = lastAttemptRef.current
-    if (!attempt || inFlightRef.current) {
+    if (!attempt || inFlightRef.current || retryDelayRef.current) {
       return
     }
 
@@ -225,6 +267,7 @@ export function SmsOptInClient({
     setErrors({})
     setFailureMessage('')
     setCanRetry(false)
+    clearRetryDelayTimer()
     setPhase('declined')
   }
 
@@ -524,7 +567,7 @@ export function SmsOptInClient({
                       <button
                         type="button"
                         onClick={retry}
-                        disabled={submitting || !isOnline}
+                        disabled={submitting || !isOnline || retryDelayActive}
                         className="mt-4 rounded-full border border-red-800 px-5 py-2.5 font-semibold transition-colors hover:bg-red-900 hover:text-white focus-visible:outline-red-900 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         Try again
@@ -592,4 +635,26 @@ function createBrowserIdempotencyKey(): string {
   }
 
   return globalThis.crypto.randomUUID()
+}
+
+function isDisabledSubmissionError(error: unknown): boolean {
+  return error instanceof ConsentSubmissionError && error.code === 'disabled'
+}
+
+function isRetryableSubmissionError(error: unknown): boolean {
+  if (!(error instanceof ConsentSubmissionError)) {
+    // An unexpected client failure can still follow an ambiguous network send.
+    // Preserve the attempt, but never retry it automatically.
+    return true
+  }
+
+  return [
+    'captcha-unavailable',
+    'network',
+    'invalid-response',
+    'bot-check-failed',
+    'rate-limited',
+    'internal-error',
+    'unavailable',
+  ].includes(error.code)
 }
