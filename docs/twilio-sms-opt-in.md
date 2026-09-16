@@ -25,6 +25,14 @@ Do not enable submission merely because an endpoint or environment variable exis
 
 The page clears the entered phone number after success or decline. It never puts the number or consent data in a URL and the client/API boundary contains no logging calls.
 
+The page also invalidates and aborts active work on `pagehide`, unmount,
+decline, reset, and persisted `pageshow`. A lifecycle generation prevents a
+token or client promise created before navigation from changing restored UI.
+A persisted restore always returns the phone and both controls to an empty,
+unchecked, enabled post-hydration state and discards validation, feedback,
+retry identity, timers, and loading state. Pre-hydration and no-JavaScript
+controls remain inert.
+
 ## Central consent constants
 
 Client-safe, non-secret values live in `src/lib/sms-consent/constants.ts`:
@@ -193,7 +201,7 @@ These examples contain no patient symptoms, diagnoses, appointment details, real
 
 ## Local and preview verification
 
-Use test numbers only, such as `(555) 555-0123`, and no PHI.
+Use only synthetic reserved numbers supplied by the test fixtures, and no PHI.
 
 1. From a clean dependency install, run:
 
@@ -201,9 +209,15 @@ Use test numbers only, such as `(555) 555-0123`, and no PHI.
    npm ci
    npm run typecheck
    npm test
+   npm run format:check:sms
    npm run lint:sms
    npm run build
-   npm audit --omit=dev --audit-level=high
+   npm run verify:sms-artifacts
+   npm run verify:qr
+   npm run audit:production
+   npm run audit:development
+   npm run test:browser
+   npm run test:bfcache
    git diff --check
    ```
 
@@ -216,7 +230,19 @@ Use test numbers only, such as `(555) 555-0123`, and no PHI.
    retains Next.js `16.3.3`, React/React DOM `19.2.8`, PostCSS `8.5.23`, and
    nanoid `3.3.19`; rerun the audit from a clean lockfile install rather than
    relying on these recorded versions alone. Development-only findings remain a
-   separate dependency-maintenance concern and must not be suppressed.
+   separately enforced through the exact, expiring
+   `security/development-audit-policy.json`; new, changed, or expired
+   advisories fail CI. The production audit remains a zero-finding gate.
+
+   Playwright 1.63 disables BFCache by default and its documented
+   `page.goBack()`/`page.goForward()` helpers are not proof of BFCache. The
+   regular three-engine suite therefore enforces lifecycle behavior with real
+   `PageTransitionEvent` instances and separately checks back/forward
+   navigation for hydration/runtime failures. The dedicated headed Chromium
+   config removes Playwright's `--disable-back-forward-cache` default, blocks
+   external DNS, and passes only after the browser itself emits
+   `pageshow.persisted === true`; CI supplies a virtual display. It does not
+   substitute a reload result.
 
 2. Serve the static export locally without changing platform configuration:
 

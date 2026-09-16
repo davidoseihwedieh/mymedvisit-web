@@ -1,0 +1,99 @@
+{
+  "expiresOn": "2026-10-31",
+  "vulnerablePackages": [
+    "@vercel/node",
+    "@vercel/static-config",
+    "@vitest/mocker",
+    "ajv",
+    "path-to-regexp",
+    "undici",
+    "vitest"
+  ],
+  "advisories": [
+    {
+      "id": "GHSA-82fw-gwwq-j7x9",
+      "package": "vitest",
+      "rationale": "Development-only test runner; the available fix requires a separately reviewed major upgrade. Tests never consume untrusted remote mock modules."
+    },
+    {
+      "id": "GHSA-2g4f-4pwh-qvx6",
+      "package": "ajv",
+      "rationale": "Transitive Vercel development tooling; production dependencies are audited separately at zero findings and no untrusted schemas are compiled in CI."
+    },
+    {
+      "id": "GHSA-9wv6-86v2-598j",
+      "package": "path-to-regexp",
+      "rationale": "Transitive Vercel development tooling; the available npm fix changes the direct Vercel package across a major boundary."
+    },
+    {
+      "id": "GHSA-c76h-2ccp-4975",
+      "package": "undici",
+      "rationale": "Transitive Vercel development tooling only; no production runtime dependency is affected."
+    },
+    {
+      "id": "GHSA-g9mf-h72j-4rw9",
+      "package": "undici",
+      "rationale": "Transitive Vercel development tooling only; no production runtime dependency is affected."
+    },
+    {
+      "id": "GHSA-cxrh-j4jr-qwg3",
+      "package": "undici",
+      "rationale": "Transitive Vercel development tooling only; no production runtime dependency is affected."
+    },
+    {
+      "id": "GHSA-2mjp-6q6p-2qxm",
+      "package": "undici",
+      "rationale": "Transitive Vercel development tooling only; no production runtime dependency is affected."
+    },
+    {
+      "id": "GHSA-vrm6-8vpv-qv8q",
+      "package": "undici",
+      "rationale": "Transitive Vercel development tooling only; no production runtime dependency is affected."
+    },
+    {
+      "id": "GHSA-v9p9-hfj2-hcw8",
+      "package": "undici",
+      "rationale": "Transitive Vercel development tooling only; no production runtime dependency is affected."
+    },
+    {
+      "id": "GHSA-4992-7rv2-5pvq",
+      "package": "undici",
+      "rationale": "Transitive Vercel development tooling only; no production runtime dependency is affected."
+    },
+    {
+      "id": "GHSA-p88m-4jfj-68fv",
+      "package": "undici",
+      "rationale": "Transitive Vercel development tooling only; no production runtime dependency is affected."
+    },
+    {
+      "id": "GHSA-vxpw-j846-p89q",
+      "package": "undici",
+      "rationale": "Transitive Vercel development tooling only; no production runtime dependency is affected."
+    },
+    {
+      "id": "GHSA-g8m3-5g58-fq7m",
+      "package": "undici",
+      "rationale": "Transitive Vercel development tooling only; no production runtime dependency is affected."
+    },
+    {
+      "id": "GHSA-8xcm-r25x-g524",
+      "package": "undici",
+      "rationale": "Transitive Vercel development tooling only; no production runtime dependency is affected."
+    },
+    {
+      "id": "GHSA-m8rv-5g2x-5cg5",
+      "package": "undici",
+      "rationale": "Transitive Vercel development tooling only; no production runtime dependency is affected."
+    },
+    {
+      "id": "GHSA-v3r7-h72x-cjcm",
+      "package": "undici",
+      "rationale": "Transitive Vercel development tooling only; no production runtime dependency is affected."
+    },
+    {
+      "id": "GHSA-35p6-xmwp-9g52",
+      "package": "undici",
+      "rationale": "Transitive Vercel development tooling only; no production runtime dependency is affected."
+    }
+  ]
+}

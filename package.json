@@ -3,18 +3,25 @@
   "version": "1.0.0",
   "private": true,
   "engines": {
-    "node": ">=20.9.0"
+    "node": ">=22.11.0 <25"
   },
   "scripts": {
     "dev": "next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint .",
-    "lint:sms": "eslint src/app/sms-opt-in/page.tsx src/app/sms-opt-in/SmsOptInClient.tsx src/lib/sms-consent/client.ts src/lib/sms-consent/constants.ts src/lib/sms-consent/recaptcha.ts src/lib/sms-consent/browserTestClient.ts",
+    "lint:sms": "eslint src/app/sms-opt-in src/lib/sms-consent tests/browser tests/bfcache playwright.config.ts playwright.bfcache.config.ts scripts/check-development-audit.mjs scripts/scan-sms-artifacts.mjs scripts/serve-static.mjs",
+    "format:check:sms": "prettier --check .github/workflows/sms-consent-ci.yml .prettierrc.json docs/twilio-sms-opt-in.md next.config.mjs package.json package-lock.json playwright.config.ts playwright.bfcache.config.ts scripts/check-development-audit.mjs scripts/scan-sms-artifacts.mjs scripts/serve-static.mjs security/development-audit-policy.json src/app/sms-opt-in src/lib/sms-consent tests/bfcache tests/browser vercel.json vitest.config.ts",
     "test": "vitest run",
+    "test:sms": "vitest run src/app/sms-opt-in src/lib/sms-consent",
     "test:browser": "playwright test",
+    "test:bfcache": "playwright test --config=playwright.bfcache.config.ts",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit --incremental false"
+    "typecheck": "tsc --noEmit --incremental false",
+    "verify:sms-artifacts": "node scripts/scan-sms-artifacts.mjs",
+    "verify:qr": "vitest run src/app/sms-opt-in/page.test.ts -t 'encodes only the exact canonical URL'",
+    "audit:production": "npm audit --omit=dev --audit-level=low",
+    "audit:development": "node scripts/check-development-audit.mjs"
   },
   "dependencies": {
     "next": "16.3.3",
@@ -38,6 +45,7 @@
     "jsdom": "^26.1.0",
     "jsqr": "^1.4.0",
     "postcss": "8.5.23",
+    "prettier": "3.6.2",
     "tailwindcss": "^3.4.4",
     "typescript": "^5.4.5",
     "vitest": "^3.2.7"

@@ -6,7 +6,8 @@ export const SMS_CONSENT_RECAPTCHA_ACTION = 'sms_consent_submit' as const
 
 // These values must be replaced only after counsel/compliance approves the exact
 // disclosure and policy text. They intentionally do not imply an approval date.
-export const HUMAN_REVIEW_REQUIRED = 'PENDING_LEGAL_AND_COMPLIANCE_REVIEW' as const
+export const HUMAN_REVIEW_REQUIRED =
+  'PENDING_LEGAL_AND_COMPLIANCE_REVIEW' as const
 
 export const SMS_CONSENT_DISCLOSURE_VERSION = HUMAN_REVIEW_REQUIRED
 export const SMS_OPT_IN_PAGE_VERSION = HUMAN_REVIEW_REQUIRED

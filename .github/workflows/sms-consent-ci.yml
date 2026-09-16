@@ -1,0 +1,73 @@
+name: SMS consent safety
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate, build, and audit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Use declared Node version
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - name: Clean dependency install
+        run: npm ci
+      - name: Check SMS and changed-file formatting
+        run: npm run format:check:sms
+      - name: Type-check
+        run: npm run typecheck
+      - name: Lint full repository
+        run: npm run lint
+      - name: Lint SMS security scope
+        run: npm run lint:sms -- --max-warnings=0
+      - name: Run unit, component, and axe tests
+        run: npm test
+      - name: Build static production output
+        run: npm run build
+      - name: Scan generated SMS artifacts for privacy and test leakage
+        run: npm run verify:sms-artifacts
+      - name: Decode and verify SMS QR payload
+        run: npm run verify:qr
+      - name: Require zero production dependency advisories
+        run: npm run audit:production
+      - name: Enforce exact expiring development advisory policy
+        run: npm run audit:development
+
+  browser:
+    name: Browser (${{ matrix.browser }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Use declared Node version
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - name: Clean dependency install
+        run: npm ci
+      - name: Install selected Playwright browser
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Run security browser suite with zero skips
+        run: npm run test:browser -- --project=${{ matrix.browser }}
+      - name: Build for real BFCache observation
+        if: matrix.browser == 'chromium'
+        run: npm run build
+      - name: Require a genuinely persisted pageshow in Chromium
+        if: matrix.browser == 'chromium'
+        run: xvfb-run -a npm run test:bfcache
