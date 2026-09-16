@@ -95,6 +95,7 @@ export interface SmsConsentTransport {
 export type ConsentSubmissionFailureCode =
   | 'disabled'
   | 'invalid-configuration'
+  | 'captcha-unavailable'
   | 'network'
   | 'invalid-response'
   | 'invalid-request'

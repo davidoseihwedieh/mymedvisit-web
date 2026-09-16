@@ -2,6 +2,8 @@ export const SMS_OPT_IN_CANONICAL_URL = 'https://mymedvisit.app/sms-opt-in'
 
 export const SMS_CONSENT_ENDPOINT_PATH = '/api/v1/sms-consent' as const
 
+export const SMS_CONSENT_RECAPTCHA_ACTION = 'sms_consent_submit' as const
+
 // These values must be replaced only after counsel/compliance approves the exact
 // disclosure and policy text. They intentionally do not imply an approval date.
 export const HUMAN_REVIEW_REQUIRED = 'PENDING_LEGAL_AND_COMPLIANCE_REVIEW' as const
@@ -37,3 +39,6 @@ export const SMS_CONSENT_INTEGRATION_ENABLED = false as const
 
 export const SMS_CONSENT_PUBLIC_API_BASE_URL_ENV =
   'NEXT_PUBLIC_SMS_CONSENT_API_BASE_URL' as const
+
+export const SMS_CONSENT_RECAPTCHA_SITE_KEY_ENV =
+  'NEXT_PUBLIC_SMS_CONSENT_RECAPTCHA_SITE_KEY' as const
