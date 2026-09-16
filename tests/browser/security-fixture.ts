@@ -1,21 +1,58 @@
-import { expect, test as base, type Page, type Request } from '@playwright/test'
+import { test as base, type Page, type Request } from '@playwright/test'
 
-interface ExpectedRequestFailure {
-  remaining: number
-  url: string
+export interface ConsoleAllowance {
+  locationUrl: string
+  text: string
+  type: 'error'
 }
 
-interface ExpectedConsoleError {
-  remaining: number
-  url: string
+export interface RequestFailureAllowance {
+  id: string
+  origin: string
+  pathname: string
+  query: ''
+  fragment: ''
+  method: string
+  resourceType: string
+  failureReason: string
+  consoleErrors?: readonly ConsoleAllowance[]
+}
+
+interface TrackedRequestFailure extends RequestFailureAllowance {
+  consumed: boolean
+}
+
+interface TrackedConsoleError extends ConsoleAllowance {
+  consumed: boolean
+  requestAllowanceId: string
+}
+
+interface ProtectedEndpoint {
+  origin: string
+  pathname: string
+}
+
+const defaultProtectedEndpoints: readonly ProtectedEndpoint[] = [
+  { origin: 'https://capture.invalid', pathname: '/api/v1/sms-consent' },
+  { origin: 'https://recaptcha.invalid', pathname: '/token' },
+]
+
+export class BrowserSecurityError extends Error {
+  constructor(readonly rules: readonly string[]) {
+    super(rules.join('\n'))
+    this.name = 'BrowserSecurityError'
+  }
 }
 
 export class BrowserSecurityMonitor {
-  private readonly expectedRequestFailures: ExpectedRequestFailure[] = []
-  private readonly expectedConsoleErrors: ExpectedConsoleError[] = []
-  private readonly unexpectedFailures: string[] = []
+  private readonly expectedRequestFailures: TrackedRequestFailure[] = []
+  private readonly expectedConsoleErrors: TrackedConsoleError[] = []
+  private readonly violations: string[] = []
 
-  constructor(private readonly page: Page) {}
+  constructor(
+    private readonly page: Page,
+    private readonly protectedEndpoints = defaultProtectedEndpoints,
+  ) {}
 
   async install(): Promise<void> {
     await this.page.addInitScript(() => {
@@ -24,101 +61,144 @@ export class BrowserSecurityMonitor {
       })
     })
 
+    this.page.on('request', (request) => this.inspectRequest(request))
     this.page.on('console', (message) => {
       const text = message.text()
-      if (/hydration/i.test(text)) {
-        this.unexpectedFailures.push(
-          `hydration console output at ${message.location().url || 'unknown location'}`,
-        )
+      if (text === 'MMV_BROWSER_UNHANDLED_REJECTION') {
+        this.violations.push('BROWSER_UNHANDLED_REJECTION [page]')
+      } else if (/hydration/i.test(text)) {
+        this.violations.push('BROWSER_HYDRATION_CONSOLE [page]')
       } else if (
         message.type() === 'error' &&
-        !this.consumeExpectedConsoleError(message.location().url)
+        !this.consumeExpectedConsoleError({
+          locationUrl: message.location().url,
+          text,
+          type: 'error',
+        })
       ) {
-        this.unexpectedFailures.push(
-          `console error at ${message.location().url || 'unknown location'}`,
+        this.violations.push(
+          `BROWSER_CONSOLE_ERROR ${safePath(message.location().url)}`,
         )
       }
     })
     this.page.on('pageerror', () => {
-      this.unexpectedFailures.push('uncaught page error or rejected promise')
+      this.violations.push('BROWSER_PAGE_ERROR [page]')
     })
     this.page.on('crash', () => {
-      this.unexpectedFailures.push('page crash')
+      this.violations.push('BROWSER_PAGE_CRASH [page]')
     })
     this.page.on('requestfailed', (request) => {
       if (!this.consumeExpectedRequestFailure(request)) {
-        this.unexpectedFailures.push(
-          `unexpected failed ${request.method()} request to ${safeRequestLabel(request.url())}`,
+        this.violations.push(
+          `BROWSER_REQUEST_FAILURE ${safePath(request.url())}`,
         )
       }
     })
   }
 
-  expectRequestFailure(url: string): void {
-    this.expectedRequestFailures.push({ remaining: 1, url })
-  }
-
-  allowConsoleErrorAt(url: string, count = 1): void {
-    this.expectedConsoleErrors.push({ remaining: count, url })
+  expectRequestFailure(allowance: RequestFailureAllowance): void {
+    if (
+      !allowance.id ||
+      allowance.query !== '' ||
+      allowance.fragment !== '' ||
+      this.expectedRequestFailures.some(({ id }) => id === allowance.id)
+    ) {
+      throw new BrowserSecurityError(['BROWSER_ALLOWANCE_INVALID [request]'])
+    }
+    this.expectedRequestFailures.push({ ...allowance, consumed: false })
+    for (const consoleError of allowance.consoleErrors ?? []) {
+      this.expectedConsoleErrors.push({
+        ...consoleError,
+        consumed: false,
+        requestAllowanceId: allowance.id,
+      })
+    }
   }
 
   assertClean(): void {
-    expect(this.unexpectedFailures, 'browser runtime failures').toEqual([])
-    expect(
-      this.expectedRequestFailures.filter(({ remaining }) => remaining !== 0),
-      'declared request-failure expectations must be exact and consumed',
-    ).toEqual([])
+    const rules = [...this.violations]
+    for (const request of this.expectedRequestFailures) {
+      if (!request.consumed) {
+        rules.push('BROWSER_REQUEST_ALLOWANCE_UNUSED [request]')
+      }
+    }
+    for (const consoleError of this.expectedConsoleErrors) {
+      if (!consoleError.consumed) {
+        rules.push('BROWSER_CONSOLE_ALLOWANCE_UNUSED [console]')
+      }
+    }
+    if (rules.length > 0) {
+      throw new BrowserSecurityError(rules)
+    }
+  }
+
+  private inspectRequest(request: Request): void {
+    let url
+    try {
+      url = new URL(request.url())
+    } catch {
+      this.violations.push('BROWSER_REQUEST_URL_INVALID [request]')
+      return
+    }
+    if (
+      this.protectedEndpoints.some(
+        ({ origin, pathname }) =>
+          url.origin === origin && url.pathname === pathname,
+      ) &&
+      (url.search !== '' || url.hash !== '')
+    ) {
+      this.violations.push(`BROWSER_ENDPOINT_QUERY_OR_FRAGMENT ${url.pathname}`)
+    }
   }
 
   private consumeExpectedRequestFailure(request: Request): boolean {
-    const expected = this.expectedRequestFailures.find(
-      (entry) =>
-        entry.remaining > 0 &&
-        exactOriginAndPath(entry.url) === exactOriginAndPath(request.url()),
-    )
-    if (!expected) {
+    let url
+    try {
+      url = new URL(request.url())
+    } catch {
       return false
     }
-    expected.remaining -= 1
+    const failureReason = request.failure()?.errorText ?? ''
+    const candidates = this.expectedRequestFailures.filter(
+      (entry) =>
+        !entry.consumed &&
+        entry.origin === url.origin &&
+        entry.pathname === url.pathname &&
+        entry.query === url.search &&
+        entry.fragment === url.hash &&
+        entry.method === request.method() &&
+        entry.resourceType === request.resourceType() &&
+        entry.failureReason === failureReason,
+    )
+    if (candidates.length === 0) return false
+    candidates[0].consumed = true
     return true
   }
 
-  private consumeExpectedConsoleError(url: string): boolean {
-    const expected = this.expectedConsoleErrors.find((entry) => {
-      if (entry.remaining <= 0) {
-        return false
-      }
-      if (entry.url === url) {
-        return true
-      }
+  private consumeExpectedConsoleError(actual: ConsoleAllowance): boolean {
+    const candidates = this.expectedConsoleErrors.filter((entry) => {
+      const request = this.expectedRequestFailures.find(
+        ({ id }) => id === entry.requestAllowanceId,
+      )
       return (
-        url === '' &&
-        this.expectedRequestFailures.some(
-          (failure) =>
-            failure.remaining === 0 &&
-            exactOriginAndPath(failure.url) === exactOriginAndPath(entry.url),
-        )
+        !entry.consumed &&
+        request?.consumed === true &&
+        entry.type === actual.type &&
+        entry.text === actual.text &&
+        entry.locationUrl === actual.locationUrl
       )
     })
-    if (!expected) {
-      return false
-    }
-    expected.remaining -= 1
+    if (candidates.length !== 1) return false
+    candidates[0].consumed = true
     return true
   }
 }
 
-function exactOriginAndPath(url: string): string {
-  const parsed = new URL(url)
-  return `${parsed.origin}${parsed.pathname}`
-}
-
-function safeRequestLabel(url: string): string {
+function safePath(value: string): string {
   try {
-    const parsed = new URL(url)
-    return `${parsed.origin}${parsed.pathname}`
+    return new URL(value).pathname || '[page]'
   } catch {
-    return 'an invalid URL'
+    return '[page]'
   }
 }
 
@@ -136,4 +216,4 @@ export const test = base.extend<{
   ],
 })
 
-export { expect }
+export { expect } from '@playwright/test'

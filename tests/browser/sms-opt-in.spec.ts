@@ -30,10 +30,7 @@ interface MockOptions {
   ) => Promise<boolean>
 }
 
-test('pre-hydration and no-JavaScript markup is inert', async ({
-  browser,
-  browserName,
-}) => {
+test('pre-hydration and no-JavaScript markup is inert', async ({ browser }) => {
   const context = await browser.newContext({
     javaScriptEnabled: false,
     baseURL: localOrigin,
@@ -41,12 +38,7 @@ test('pre-hydration and no-JavaScript markup is inert', async ({
   const page = await context.newPage()
   const monitor = new BrowserSecurityMonitor(page)
   await monitor.install()
-  if (browserName === 'chromium') {
-    monitor.expectRequestFailure(
-      `${localOrigin}/_next/static/chunks/webpack.js`,
-    )
-  }
-  await installNoLiveNetworkGuard(page)
+  await installNoLiveNetworkGuard(page, { stripScripts: true })
 
   await page.goto('/sms-opt-in')
 
@@ -211,10 +203,12 @@ test('accepts an exact mocked 200 idempotent replay receipt', async ({
 
 test('retries a lost response with a fresh token and stable payload/key', async ({
   page,
+  browserName,
   securityMonitor,
 }) => {
-  securityMonitor.expectRequestFailure(`${captureOrigin}/api/v1/sms-consent`)
-  securityMonitor.allowConsoleErrorAt(`${captureOrigin}/api/v1/sms-consent`)
+  securityMonitor.expectRequestFailure(
+    expectedSyntheticFailure(browserName, 'capture-timeout'),
+  )
   const state = await installSyntheticBoundaries(page, {
     captureAttempt: async (route, request, attemptNumber) => {
       if (attemptNumber === 1) {
@@ -248,10 +242,12 @@ test('retries a lost response with a fresh token and stable payload/key', async 
 
 test('fails safely when CAPTCHA is blocked or execution is rejected', async ({
   page,
+  browserName,
   securityMonitor,
 }) => {
-  securityMonitor.expectRequestFailure(`${recaptchaOrigin}/token`)
-  securityMonitor.allowConsoleErrorAt(`${recaptchaOrigin}/token`)
+  securityMonitor.expectRequestFailure(
+    expectedSyntheticFailure(browserName, 'recaptcha-blocked'),
+  )
   const blocked = await installSyntheticBoundaries(page, {
     tokenFailure: 'script-blocked',
   })
@@ -555,10 +551,38 @@ async function installSyntheticBoundaries(
   return state
 }
 
-async function installNoLiveNetworkGuard(page: Page): Promise<void> {
+async function installNoLiveNetworkGuard(
+  page: Page,
+  { stripScripts = false }: { stripScripts?: boolean } = {},
+): Promise<void> {
+  const inertDocument = stripScripts
+    ? await fetch(`${localOrigin}/sms-opt-in`)
+        .then((response) => response.text())
+        .then((body) =>
+          body
+            .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
+            .replace(/<link\b[^>]*\bas=["']script["'][^>]*>/gi, ''),
+        )
+    : null
   await page.route('**/*', async (route) => {
     const url = new URL(route.request().url())
     if (url.origin === localOrigin) {
+      if (
+        stripScripts &&
+        url.pathname === '/sms-opt-in' &&
+        route.request().resourceType() === 'document'
+      ) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'text/html; charset=utf-8',
+          headers: {
+            'Cache-Control': 'no-store',
+            'Referrer-Policy': 'no-referrer',
+          },
+          body: inertDocument ?? '',
+        })
+        return
+      }
       await route.continue()
     } else if (url.origin === 'https://fonts.googleapis.com') {
       await route.fulfill({ status: 200, contentType: 'text/css', body: '' })
@@ -657,4 +681,53 @@ async function completeForm(page: Page): Promise<void> {
       name: /i confirm that i am the subscriber/i,
     })
     .check()
+}
+
+function expectedSyntheticFailure(
+  browserName: string,
+  kind: 'capture-timeout' | 'recaptcha-blocked',
+) {
+  const capture = kind === 'capture-timeout'
+  const origin = capture ? captureOrigin : recaptchaOrigin
+  const pathname = capture ? '/api/v1/sms-consent' : '/token'
+  const chromiumReason = capture
+    ? 'net::ERR_TIMED_OUT'
+    : 'net::ERR_BLOCKED_BY_CLIENT.Inspector'
+  const firefoxReason = capture ? 'NS_ERROR_NET_TIMEOUT' : 'NS_ERROR_FAILURE'
+  const failureReason =
+    browserName === 'chromium'
+      ? chromiumReason
+      : browserName === 'firefox'
+        ? firefoxReason
+        : 'Blocked by Web Inspector'
+  const consoleErrors =
+    browserName === 'chromium'
+      ? [
+          {
+            type: 'error' as const,
+            text: `Failed to load resource: ${chromiumReason}`,
+            locationUrl: `${origin}${pathname}`,
+          },
+        ]
+      : browserName === 'firefox'
+        ? [
+            {
+              type: 'error' as const,
+              text: `[JavaScript Error: "Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at ${origin}${pathname}. (Reason: CORS request did not succeed). Status code: (null)."]`,
+              locationUrl: '',
+            },
+          ]
+        : []
+
+  return {
+    id: kind,
+    origin,
+    pathname,
+    query: '' as const,
+    fragment: '' as const,
+    method: 'POST',
+    resourceType: 'fetch',
+    failureReason,
+    consoleErrors,
+  }
 }

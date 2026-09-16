@@ -1,4 +1,6 @@
 import { expect, test } from '@playwright/test'
+import { BrowserSecurityMonitor } from '../browser/security-fixture'
+import { disableSpeculativeLinkPrefetch } from './browser-environment'
 
 declare global {
   interface Window {
@@ -10,46 +12,14 @@ test('observes a real persisted pageshow before accepting BFCache restoration', 
   page,
   context,
 }) => {
-  const runtimeFailures: string[] = []
   const notRestoredReasons: unknown[] = []
+  const monitor = new BrowserSecurityMonitor(page)
+  await monitor.install()
+  await disableSpeculativeLinkPrefetch(page)
   const cdp = await context.newCDPSession(page)
   await cdp.send('Page.enable')
   cdp.on('Page.backForwardCacheNotUsed', (event) => {
     notRestoredReasons.push(event)
-  })
-  page.on('console', (message) => {
-    if (message.type() === 'error' || /hydration/i.test(message.text())) {
-      runtimeFailures.push(`console ${message.type()}`)
-    }
-  })
-  page.on('pageerror', () => runtimeFailures.push('pageerror'))
-  page.on('requestfailed', (request) => {
-    const url = new URL(request.url())
-    // Next's production Link prefetcher cancels these exact same-origin HEAD
-    // probes during navigation. No other method, resource type, route, origin,
-    // query, fragment, or failure reason is allowed through this exception.
-    const expectedNextPrefetchCancellation =
-      request.method() === 'HEAD' &&
-      request.resourceType() === 'fetch' &&
-      url.origin === 'http://127.0.0.1:4180' &&
-      url.search === '' &&
-      url.hash === '' &&
-      new Set([
-        '/',
-        '/about',
-        '/contact',
-        '/how-it-works',
-        '/privacy',
-        '/technology',
-        '/terms',
-      ]).has(url.pathname) &&
-      request.failure()?.errorText === 'net::ERR_ABORTED'
-    if (expectedNextPrefetchCancellation) {
-      return
-    }
-    runtimeFailures.push(
-      `requestfailed ${request.method()} ${request.resourceType()} ${url.origin}${url.pathname} search=${JSON.stringify(url.search)} ${request.failure()?.errorText ?? 'unknown'}`,
-    )
   })
   await page.addInitScript(() => {
     window.__mmvPersistedPageShows = 0
@@ -104,5 +74,5 @@ test('observes a real persisted pageshow before accepting BFCache restoration', 
   await expect(
     page.getByRole('button', { name: /agree and continue/i }),
   ).toBeEnabled()
-  expect(runtimeFailures).toEqual([])
+  monitor.assertClean()
 })

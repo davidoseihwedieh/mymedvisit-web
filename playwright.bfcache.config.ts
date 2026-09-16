@@ -18,12 +18,27 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium-bfcache-observation',
+      testMatch: /sms-opt-in-bfcache\.spec\.ts/,
       use: {
         ...devices['Desktop Chrome'],
         headless: false,
         launchOptions: {
           ignoreDefaultArgs: ['--disable-back-forward-cache'],
           args: ['--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1'],
+        },
+      },
+    },
+    {
+      name: 'chromium-bfcache-disabled-control',
+      testMatch: /sms-opt-in-bfcache-disabled\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        headless: false,
+        launchOptions: {
+          args: [
+            '--disable-back-forward-cache',
+            '--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1',
+          ],
         },
       },
     },

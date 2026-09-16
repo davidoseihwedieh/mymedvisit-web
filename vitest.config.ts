@@ -17,6 +17,7 @@ export default defineConfig({
       ...configDefaults.exclude,
       'tests/browser/**',
       'tests/bfcache/**',
+      'tests/enforcement/**',
     ],
   },
 })

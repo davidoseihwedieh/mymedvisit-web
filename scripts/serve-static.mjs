@@ -51,6 +51,10 @@ createServer((request, response) => {
     'X-Content-Type-Options': 'nosniff',
   }
   response.writeHead(200, headers)
+  if (request.method === 'HEAD') {
+    response.end()
+    return
+  }
   createReadStream(file).pipe(response)
 }).listen(port, '127.0.0.1', () => {
   process.stdout.write(

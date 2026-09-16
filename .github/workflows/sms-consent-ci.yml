@@ -20,8 +20,12 @@ jobs:
         with:
           node-version-file: .node-version
           cache: npm
+      - name: Assert exact Node runtime
+        run: node scripts/assert-node-version.mjs
       - name: Clean dependency install
         run: npm ci
+      - name: Validate workflow safety structure
+        run: npm run verify:workflow
       - name: Check SMS and changed-file formatting
         run: npm run format:check:sms
       - name: Type-check
@@ -32,6 +36,8 @@ jobs:
         run: npm run lint:sms -- --max-warnings=0
       - name: Run unit, component, and axe tests
         run: npm test
+      - name: Run enforcement adversarial fixtures
+        run: npm run test:enforcement
       - name: Build static production output
         run: npm run build
       - name: Scan generated SMS artifacts for privacy and test leakage
@@ -59,6 +65,8 @@ jobs:
         with:
           node-version-file: .node-version
           cache: npm
+      - name: Assert exact Node runtime
+        run: node scripts/assert-node-version.mjs
       - name: Clean dependency install
         run: npm ci
       - name: Install selected Playwright browser
