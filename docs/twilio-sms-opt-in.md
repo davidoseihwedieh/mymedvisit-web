@@ -194,13 +194,40 @@ Do not store secrets in `NEXT_PUBLIC_*`; Next.js embeds these values in browser 
 ### Production graph and artifact enforcement
 
 The production Webpack compilation applies a fail-closed module-graph plugin to
-the client and server graphs. It classifies canonical resolved resource paths,
-rejects the browser-test client, disabled HTTP transport, reCAPTCHA boundary,
-and test/fixture/support modules, and emits deterministic machine-checked graph
-reports under `.next/sms-consent-module-graph`. The intercepted browser-test
-adapter is selected only through a development-only alias; it is never a
-production import. This compiler graph is the authoritative module-absence
-control.
+the client and server graphs. It classifies canonical resolved resource paths
+and inspects Webpack `ExternalModule` request metadata even when `resource` is
+absent. External request, user request, identifier, readable identifier,
+external type, and exposed dependency request metadata are normalized without
+invoking getters. The accepted Webpack external types are `commonjs`,
+`commonjs2`, `module`, `import`, and `node-commonjs`; other or ambiguous types
+fail the compilation. Traversal, loader, query, fragment, encoded, whitespace,
+control-character, case-alias, and normalization-ambiguous requests fail
+closed. A relative Webpack `userRequest` containing traversal is accepted only
+when canonical resolution proves it stays inside the same approved production
+package as its external package request.
+Package externals are closed against `dependencies` in `package.json`; every
+`devDependencies` package and a small explicit transitive test-tool denylist is
+forbidden. The policy also rejects Jest, Vitest, Testing Library, Playwright,
+axe adapters, test runners, and mock tooling (including their test-tool
+namespaces). A package duplicated across production and development dependency
+sets invalidates the policy. Only the five listed Webpack external types,
+recognized Node built-ins, and approved production dependencies are accepted;
+unknown bare package externals fail closed. Reports include sorted external
+identities, external type, and classification, and the verifier reclassifies
+each entry under the same policy.
+
+The plugin rejects the browser-test client, disabled HTTP transport, reCAPTCHA
+boundary, and test/fixture/support modules whether resolved locally or
+externalized. The intercepted browser-test adapter is selected only through a
+development-only alias; it is never a production import. Reports are cleared
+before each required `npm run build` sequence, and the production compilation
+itself fails for a forbidden module before report verification. The reports
+are deterministic consistency evidence, not a cryptographic attestation of
+which compiler produced them: standalone report verification can validate a
+fabricated safe report. Therefore CI and release builds must use the mandatory
+`npm run build` sequence (preparation, both client/server production
+compilations, then verification), not the verifier alone. The compiler graph
+is the authoritative module-absence control.
 
 The generated-artifact scanner has a different purpose: it enumerates every
 regular output artifact and detects literal or supported encoded privacy leaks

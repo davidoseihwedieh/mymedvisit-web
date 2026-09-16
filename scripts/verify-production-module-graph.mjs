@@ -3,6 +3,7 @@ import { opendir, readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import {
   classifyProductionModule,
+  classifyExternalReportEntry,
   moduleGraphReportSchema,
 } from './production-module-graph-plugin.mjs'
 
@@ -64,6 +65,7 @@ function verifyReport(report, target) {
     'repositoryModuleCount',
     'repositoryModulePathDigest',
     'repositoryModules',
+    'externalModules',
     'forbiddenModuleCount',
   ]
   if (
@@ -76,9 +78,22 @@ function verifyReport(report, target) {
     !Number.isSafeInteger(report.moduleCount) ||
     report.moduleCount < (requiredTargets.has(target) ? 1 : 0) ||
     !Array.isArray(report.repositoryModules) ||
+    !Array.isArray(report.externalModules) ||
     !report.repositoryModules.every(isApprovedRepositoryPath) ||
     report.repositoryModuleCount !== report.repositoryModules.length ||
     !isStrictlySortedUnique(report.repositoryModules) ||
+    !isStrictlySortedUnique(
+      report.externalModules.map(
+        ({ kind, externalType, identity }) =>
+          `${kind}:${externalType}:${identity}`,
+      ),
+    ) ||
+    report.externalModules.some((entry) => {
+      const policy = classifyExternalReportEntry(entry)
+      return (
+        !policy || policy !== entry.kind || !isApprovedExternalKind(entry.kind)
+      )
+    }) ||
     report.repositoryModulePathDigest !==
       digestPaths(report.repositoryModules) ||
     report.repositoryModules.some(
@@ -90,6 +105,10 @@ function verifyReport(report, target) {
   ) {
     throw new Error('MODULE_GRAPH_REPORT_INVALID')
   }
+}
+
+function isApprovedExternalKind(kind) {
+  return ['approved-local', 'node-builtin', 'production-package'].includes(kind)
 }
 
 function isApprovedRepositoryPath(value) {
