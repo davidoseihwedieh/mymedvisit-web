@@ -10,8 +10,9 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint .",
-    "lint:sms": "eslint src/app/sms-opt-in/page.tsx src/app/sms-opt-in/SmsOptInClient.tsx src/lib/sms-consent/client.ts src/lib/sms-consent/constants.ts",
+    "lint:sms": "eslint src/app/sms-opt-in/page.tsx src/app/sms-opt-in/SmsOptInClient.tsx src/lib/sms-consent/client.ts src/lib/sms-consent/constants.ts src/lib/sms-consent/recaptcha.ts src/lib/sms-consent/browserTestClient.ts",
     "test": "vitest run",
+    "test:browser": "playwright test",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit --incremental false"
   },
@@ -22,6 +23,7 @@
     "resend": "^6.18.0"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.7",

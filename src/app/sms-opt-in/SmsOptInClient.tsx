@@ -16,6 +16,7 @@ import {
   type SmsConsentClient,
   type SmsConsentSubmission,
 } from '@/lib/sms-consent/client'
+import { createLocalBrowserTestClient } from '@/lib/sms-consent/browserTestClient'
 import {
   SMS_CONSENT_PRIVACY,
   SMS_CONSENT_TERMS,
@@ -41,9 +42,11 @@ interface SmsOptInClientProps {
 }
 
 export function SmsOptInClient({
-  client = productionSmsConsentClient,
+  client,
   createIdempotencyKey = createBrowserIdempotencyKey,
 }: SmsOptInClientProps) {
+  const activeClient =
+    client ?? createLocalBrowserTestClient() ?? productionSmsConsentClient
   const isHydrated = useSyncExternalStore(
     subscribeToHydration,
     getHydratedSnapshot,
@@ -223,7 +226,7 @@ export function SmsOptInClient({
     setCanRetry(false)
 
     try {
-      const receipt = await client.submit(
+      const receipt = await activeClient.submit(
         attempt.submission,
         attempt.idempotencyKey,
       )

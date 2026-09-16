@@ -26,7 +26,8 @@ describe('SMS opt-in route', () => {
     )
     const form = staticDocument.querySelector('form')
     const phone = staticDocument.querySelector<HTMLInputElement>('#sms-phone')
-    const consent = staticDocument.querySelector<HTMLInputElement>('#sms-consent')
+    const consent =
+      staticDocument.querySelector<HTMLInputElement>('#sms-consent')
     const attestation = staticDocument.querySelector<HTMLInputElement>(
       '#authorized-number-attestation',
     )
@@ -110,7 +111,38 @@ describe('SMS opt-in route', () => {
 
     const decoded = jsQR(pixels, moduleWidth * scale, moduleHeight * scale)
 
-    expect(svg).toContain(`<desc id="desc">Encodes ${SMS_OPT_IN_CANONICAL_URL}</desc>`)
+    expect(svg).toContain(
+      `<desc id="desc">Encodes ${SMS_OPT_IN_CANONICAL_URL}</desc>`,
+    )
     expect(decoded?.data).toBe(SMS_OPT_IN_CANONICAL_URL)
+  })
+
+  it('declares safe route headers without guessing a reCAPTCHA CSP host', () => {
+    const vercelConfig = JSON.parse(
+      fs.readFileSync(path.resolve(process.cwd(), 'vercel.json'), 'utf8'),
+    ) as {
+      headers: Array<{
+        source: string
+        headers: Array<{ key: string; value: string }>
+      }>
+    }
+    const routeHeaders = vercelConfig.headers.find(
+      (entry) => entry.source === '/sms-opt-in',
+    )?.headers
+
+    expect(routeHeaders).toEqual(
+      expect.arrayContaining([
+        { key: 'Referrer-Policy', value: 'no-referrer' },
+        { key: 'X-Content-Type-Options', value: 'nosniff' },
+        { key: 'Cache-Control', value: 'no-store' },
+        { key: 'X-Frame-Options', value: 'DENY' },
+        {
+          key: 'Content-Security-Policy',
+          value: "base-uri 'none'; frame-ancestors 'none'; object-src 'none'",
+        },
+      ]),
+    )
+    const serialized = JSON.stringify(routeHeaders)
+    expect(serialized).not.toMatch(/google|recaptcha|\*/i)
   })
 })
