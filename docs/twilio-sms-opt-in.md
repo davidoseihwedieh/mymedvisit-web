@@ -191,6 +191,24 @@ Before connecting the route, a developer must make a reviewed code change that:
 
 Do not store secrets in `NEXT_PUBLIC_*`; Next.js embeds these values in browser assets.
 
+### Production graph and artifact enforcement
+
+The production Webpack compilation applies a fail-closed module-graph plugin to
+the client and server graphs. It classifies canonical resolved resource paths,
+rejects the browser-test client, disabled HTTP transport, reCAPTCHA boundary,
+and test/fixture/support modules, and emits deterministic machine-checked graph
+reports under `.next/sms-consent-module-graph`. The intercepted browser-test
+adapter is selected only through a development-only alias; it is never a
+production import. This compiler graph is the authoritative module-absence
+control.
+
+The generated-artifact scanner has a different purpose: it enumerates every
+regular output artifact and detects literal or supported encoded privacy leaks
+in text, JavaScript constants, inline executable scripts, structured data, and
+approved binary types. Its finite decoding and constant-folding checks are
+defense in depth; they do not claim to determine arbitrary JavaScript behavior
+or replace the compiler graph.
+
 ## Sample transactional messages
 
 - `MyMedVisit verification code: 123456. This code expires soon. Reply STOP to opt out. HELP for help.`
@@ -212,6 +230,7 @@ Use only synthetic reserved numbers supplied by the test fixtures, and no PHI.
    npm run format:check:sms
    npm run lint:sms
    npm run build
+   npm run verify:module-graph
    npm run verify:sms-artifacts
    npm run verify:qr
    npm run audit:production

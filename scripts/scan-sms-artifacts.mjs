@@ -33,13 +33,6 @@ const forbiddenRules = [
   },
 ]
 
-const forbiddenModuleIdentifiers = new Map([
-  ['createLocalBrowserTestClient', 'MODULE_GRAPH_BROWSER_TEST_CLIENT'],
-  ['createHttpSmsConsentTransport', 'MODULE_GRAPH_HTTP_TRANSPORT'],
-  ['createRecaptchaEnterpriseTokenProvider', 'MODULE_GRAPH_RECAPTCHA_LOADER'],
-  ['createRecaptchaSmsConsentClient', 'MODULE_GRAPH_RECAPTCHA_BOUNDARY'],
-])
-
 export class ArtifactScanError extends Error {
   constructor(violations) {
     const sorted = violations.sort()
@@ -120,6 +113,7 @@ export async function scanArtifacts({
       artifact.relativePath,
       violations,
     )
+    inspectEmbeddedContent(text, artifact.relativePath, violations)
 
     const astResult = inspectJavaScript(text, artifact.relativePath, violations)
     if (astResult.parsed) {
@@ -258,24 +252,50 @@ function inspectJavaScript(source, relativePath, violations) {
     },
   })
   walk.full(ast, (node) => {
-    if (node.type === 'Identifier') {
-      const rule = forbiddenModuleIdentifiers.get(node.name)
-      if (rule) {
-        violations.push(`${rule} ${relativePath}`)
-      }
-    }
     const value = evaluateConstant(node, bindings, new Set())
-    if (typeof value === 'string') {
-      constants.push(value)
-    }
+    collectStrings(value, constants)
   })
   return { constants, parsed: true }
 }
 
 function evaluateConstant(node, bindings, seen) {
   if (!node) return undefined
-  if (node.type === 'Literal' && typeof node.value === 'string') {
+  if (
+    node.type === 'Literal' &&
+    (typeof node.value === 'string' ||
+      typeof node.value === 'number' ||
+      typeof node.value === 'boolean' ||
+      node.value === null)
+  ) {
     return node.value
+  }
+  if (node.type === 'ArrayExpression') {
+    const values = node.elements.map((element) =>
+      element ? evaluateConstant(element, bindings, seen) : undefined,
+    )
+    return values.some((value) => value === undefined) ? undefined : values
+  }
+  if (node.type === 'ObjectExpression') {
+    const result = {}
+    for (const property of node.properties) {
+      if (
+        property.type !== 'Property' ||
+        property.kind !== 'init' ||
+        property.method ||
+        property.shorthand
+      ) {
+        return undefined
+      }
+      const key = property.computed
+        ? evaluateConstant(property.key, bindings, seen)
+        : property.key.type === 'Identifier'
+          ? property.key.name
+          : property.key.value
+      const value = evaluateConstant(property.value, bindings, seen)
+      if (typeof key !== 'string' || value === undefined) return undefined
+      result[key] = value
+    }
+    return result
   }
   if (node.type === 'TemplateLiteral') {
     let value = ''
@@ -338,6 +358,43 @@ function evaluateConstant(node, bindings, seen) {
       node.callee.type === 'MemberExpression' &&
       !node.callee.computed &&
       node.callee.object.type === 'Identifier' &&
+      node.callee.object.name === 'JSON' &&
+      node.callee.property.type === 'Identifier' &&
+      node.callee.property.name === 'parse' &&
+      typeof args[0] === 'string'
+    ) {
+      try {
+        return JSON.parse(args[0])
+      } catch {
+        return undefined
+      }
+    }
+    if (
+      node.callee.type === 'MemberExpression' &&
+      !node.callee.computed &&
+      node.callee.property.type === 'Identifier' &&
+      node.callee.property.name === 'join'
+    ) {
+      const object = evaluateConstant(node.callee.object, bindings, seen)
+      const separator = args.length === 0 ? ',' : args[0]
+      if (
+        Array.isArray(object) &&
+        typeof separator === 'string' &&
+        object.every(
+          (value) =>
+            typeof value === 'string' ||
+            typeof value === 'number' ||
+            typeof value === 'boolean' ||
+            value === null,
+        )
+      ) {
+        return object.join(separator)
+      }
+    }
+    if (
+      node.callee.type === 'MemberExpression' &&
+      !node.callee.computed &&
+      node.callee.object.type === 'Identifier' &&
       node.callee.object.name === 'String' &&
       node.callee.property.type === 'Identifier' &&
       node.callee.property.name === 'fromCharCode' &&
@@ -346,10 +403,93 @@ function evaluateConstant(node, bindings, seen) {
       return String.fromCharCode(...args)
     }
   }
-  if (node.type === 'Literal' && typeof node.value === 'number') {
-    return node.value
+  if (node.type === 'MemberExpression') {
+    const object = evaluateConstant(node.object, bindings, seen)
+    const property = node.computed
+      ? evaluateConstant(node.property, bindings, seen)
+      : node.property.type === 'Identifier'
+        ? node.property.name
+        : undefined
+    if (
+      (Array.isArray(object) || isPlainObject(object)) &&
+      (typeof property === 'string' || typeof property === 'number')
+    ) {
+      return object[property]
+    }
   }
   return undefined
+}
+
+function inspectEmbeddedContent(source, relativePath, violations) {
+  for (const match of source.matchAll(
+    /<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi,
+  )) {
+    const attributes = match[1]
+    const body = match[2]
+    const typeMatch = attributes.match(
+      /\btype\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i,
+    )
+    const type = (typeMatch?.[1] ?? typeMatch?.[2] ?? typeMatch?.[3] ?? '')
+      .trim()
+      .toLowerCase()
+    if (type === 'application/json' || type === 'application/ld+json') {
+      inspectJson(body, relativePath, violations)
+    } else if (
+      type === '' ||
+      type === 'module' ||
+      type === 'text/javascript' ||
+      type === 'application/javascript'
+    ) {
+      const result = inspectJavaScript(body, relativePath, violations)
+      inspectStrings(
+        expandEncodedStrings(result.constants),
+        relativePath,
+        violations,
+      )
+    }
+  }
+
+  const trimmed = source.trim()
+  if (
+    (trimmed.startsWith('{') && trimmed.endsWith('}')) ||
+    (trimmed.startsWith('[') && trimmed.endsWith(']'))
+  ) {
+    inspectJson(trimmed, relativePath, violations)
+  }
+}
+
+function inspectJson(source, relativePath, violations) {
+  try {
+    const values = []
+    collectStrings(JSON.parse(source), values)
+    inspectStrings(expandEncodedStrings(values), relativePath, violations)
+  } catch {
+    // Invalid embedded JSON is not interpreted as trusted structured data. Its
+    // literal text remains covered by the complete-artifact string scan.
+  }
+}
+
+function collectStrings(value, output, seen = new Set()) {
+  if (typeof value === 'string') {
+    output.push(value)
+    return
+  }
+  if (value === null || typeof value !== 'object' || seen.has(value)) return
+  seen.add(value)
+  if (Array.isArray(value)) {
+    for (const item of value) collectStrings(item, output, seen)
+  } else {
+    for (const item of Object.values(value)) collectStrings(item, output, seen)
+  }
+}
+
+function isPlainObject(value) {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value) &&
+    Object.getPrototypeOf(value) === Object.prototype
+  )
 }
 
 function expandEncodedStrings(initialValues) {
@@ -422,6 +562,6 @@ const isCli =
 if (isCli) {
   const result = await scanArtifacts()
   process.stdout.write(
-    `Structural artifact scan passed: ${result.fileCount} files (${result.textCount} text, ${result.binaryCount} approved binary), ${result.javascriptCount} AST-parsed; disabled module graph absent.\n`,
+    `Structural privacy artifact scan passed: ${result.fileCount} files (${result.textCount} text, ${result.binaryCount} approved binary), ${result.javascriptCount} top-level JavaScript artifacts AST-parsed.\n`,
   )
 }

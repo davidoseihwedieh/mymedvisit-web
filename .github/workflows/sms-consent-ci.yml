@@ -40,6 +40,8 @@ jobs:
         run: npm run test:enforcement
       - name: Build static production output
         run: npm run build
+      - name: Verify authoritative production module graphs
+        run: npm run verify:module-graph
       - name: Scan generated SMS artifacts for privacy and test leakage
         run: npm run verify:sms-artifacts
       - name: Decode and verify SMS QR payload

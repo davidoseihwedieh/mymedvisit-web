@@ -10,17 +10,10 @@ declare global {
 
 test('observes a real persisted pageshow before accepting BFCache restoration', async ({
   page,
-  context,
 }) => {
-  const notRestoredReasons: unknown[] = []
   const monitor = new BrowserSecurityMonitor(page)
   await monitor.install()
   await disableSpeculativeLinkPrefetch(page)
-  const cdp = await context.newCDPSession(page)
-  await cdp.send('Page.enable')
-  cdp.on('Page.backForwardCacheNotUsed', (event) => {
-    notRestoredReasons.push(event)
-  })
   await page.addInitScript(() => {
     window.__mmvPersistedPageShows = 0
     window.addEventListener('pageshow', (event) => {
@@ -56,7 +49,7 @@ test('observes a real persisted pageshow before accepting BFCache restoration', 
 
   expect(
     await page.evaluate(() => window.__mmvPersistedPageShows),
-    `Chromium did not restore from BFCache: ${JSON.stringify(notRestoredReasons)}`,
+    'BFCACHE_PERSISTED_EVENT_NOT_OBSERVED',
   ).toBe(1)
   await expect(
     page.getByRole('textbox', { name: /mobile phone number/i }),

@@ -37,10 +37,29 @@ const defaultProtectedEndpoints: readonly ProtectedEndpoint[] = [
   { origin: 'https://recaptcha.invalid', pathname: '/token' },
 ]
 
+const approvedDiagnostics = new Set([
+  'BROWSER_ALLOWANCE_INVALID [request]',
+  'BROWSER_CONSOLE_ALLOWANCE_UNUSED [console]',
+  'BROWSER_CONSOLE_ERROR [page]',
+  'BROWSER_DIAGNOSTIC_REDACTED [page]',
+  'BROWSER_ENDPOINT_QUERY_OR_FRAGMENT [request]',
+  'BROWSER_HYDRATION_CONSOLE [page]',
+  'BROWSER_PAGE_CRASH [page]',
+  'BROWSER_PAGE_ERROR [page]',
+  'BROWSER_REQUEST_ALLOWANCE_UNUSED [request]',
+  'BROWSER_REQUEST_FAILURE [request]',
+  'BROWSER_REQUEST_URL_INVALID [request]',
+  'BROWSER_UNHANDLED_REJECTION [page]',
+])
+
 export class BrowserSecurityError extends Error {
-  constructor(readonly rules: readonly string[]) {
-    super(rules.join('\n'))
+  readonly rules: readonly string[]
+
+  constructor(rules: readonly string[]) {
+    const redactedRules = rules.map(redactDiagnostic)
+    super(redactedRules.join('\n'))
     this.name = 'BrowserSecurityError'
+    this.rules = redactedRules
   }
 }
 
@@ -76,9 +95,7 @@ export class BrowserSecurityMonitor {
           type: 'error',
         })
       ) {
-        this.violations.push(
-          `BROWSER_CONSOLE_ERROR ${safePath(message.location().url)}`,
-        )
+        this.violations.push('BROWSER_CONSOLE_ERROR [page]')
       }
     })
     this.page.on('pageerror', () => {
@@ -89,9 +106,7 @@ export class BrowserSecurityMonitor {
     })
     this.page.on('requestfailed', (request) => {
       if (!this.consumeExpectedRequestFailure(request)) {
-        this.violations.push(
-          `BROWSER_REQUEST_FAILURE ${safePath(request.url())}`,
-        )
+        this.violations.push('BROWSER_REQUEST_FAILURE [request]')
       }
     })
   }
@@ -147,7 +162,7 @@ export class BrowserSecurityMonitor {
       ) &&
       (url.search !== '' || url.hash !== '')
     ) {
-      this.violations.push(`BROWSER_ENDPOINT_QUERY_OR_FRAGMENT ${url.pathname}`)
+      this.violations.push('BROWSER_ENDPOINT_QUERY_OR_FRAGMENT [request]')
     }
   }
 
@@ -194,12 +209,10 @@ export class BrowserSecurityMonitor {
   }
 }
 
-function safePath(value: string): string {
-  try {
-    return new URL(value).pathname || '[page]'
-  } catch {
-    return '[page]'
-  }
+function redactDiagnostic(value: string): string {
+  return approvedDiagnostics.has(value)
+    ? value
+    : 'BROWSER_DIAGNOSTIC_REDACTED [page]'
 }
 
 export const test = base.extend<{

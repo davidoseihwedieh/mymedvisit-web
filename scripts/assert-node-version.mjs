@@ -1,12 +1,15 @@
-import { readFile } from 'node:fs/promises'
+import {
+  EXPECTED_NODE_VERSION,
+  readAndValidateNodeMetadata,
+} from './node-version-policy.mjs'
 
-const pin = (await readFile('.node-version', 'utf8')).trim()
+const metadata = await readAndValidateNodeMetadata()
 const running = process.version.replace(/^v/, '')
 
-if (!/^\d+\.\d+\.\d+$/.test(pin) || running !== pin) {
+if (running !== EXPECTED_NODE_VERSION) {
   throw new Error('NODE_VERSION_MISMATCH')
 }
 
 process.stdout.write(
-  `Node runtime matches the exact repository pin (${pin}).\n`,
+  `Node runtime and repository metadata match the exact pin (${metadata.pin}).\n`,
 )

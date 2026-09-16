@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
   ConsentSubmissionError,
-  createHttpSmsConsentTransport,
   createSmsConsentSubmission,
   createSmsConsentWireRequest,
   disabledSmsConsentClient,
@@ -13,6 +12,7 @@ import {
   type ConsentSubmissionFailureCode,
   type SmsConsentPublicErrorCode,
 } from './client'
+import { createHttpSmsConsentTransport } from './httpTransport'
 import {
   SMS_CONSENT_ENDPOINT_PATH,
   SMS_CONSENT_INTEGRATION_ENABLED,

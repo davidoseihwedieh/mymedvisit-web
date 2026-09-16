@@ -17,7 +17,7 @@ import {
   type SmsConsentClient,
   type SmsConsentSubmission,
 } from '@/lib/sms-consent/client'
-import { createLocalBrowserTestClient } from '@/lib/sms-consent/browserTestClient'
+import { createBrowserInjectedSmsConsentClient } from '../../lib/sms-consent/browserClientBoundary'
 import {
   SMS_CONSENT_PRIVACY,
   SMS_CONSENT_TERMS,
@@ -47,7 +47,9 @@ export function SmsOptInClient({
   createIdempotencyKey = createBrowserIdempotencyKey,
 }: SmsOptInClientProps) {
   const activeClient =
-    client ?? createLocalBrowserTestClient() ?? productionSmsConsentClient
+    client ??
+    createBrowserInjectedSmsConsentClient() ??
+    productionSmsConsentClient
   const isHydrated = useSyncExternalStore(
     subscribeToHydration,
     getHydratedSnapshot,

@@ -1,9 +1,6 @@
-import {
-  ConsentSubmissionError,
-  createHttpSmsConsentTransport,
-  type SmsConsentClient,
-} from './client'
+import { ConsentSubmissionError, type SmsConsentClient } from './client'
 import { SMS_CONSENT_RECAPTCHA_ACTION } from './constants'
+import { createHttpSmsConsentTransport } from './httpTransport'
 import { createRecaptchaSmsConsentClient } from './recaptcha'
 
 const LOCAL_CAPTURE_ORIGIN = 'https://capture.invalid'
@@ -78,6 +75,9 @@ export function createLocalBrowserTestClient(): SmsConsentClient | null {
     },
   })
 }
+
+export const createBrowserInjectedSmsConsentClient =
+  createLocalBrowserTestClient
 
 function isLoopbackHostname(hostname: string): boolean {
   return (

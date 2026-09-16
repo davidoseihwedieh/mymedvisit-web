@@ -37,6 +37,23 @@ describe('structural production artifact scanner', () => {
       'template literal',
       'const host="capture";const x=`https://${host}.invalid`',
     ],
+    [
+      'array join',
+      "const x=['ht','tps',':/','/cap','ture','.inv','alid'].join('')",
+    ],
+    [
+      'computed JSON',
+      `const raw=['{"origin":"https://cap','ture.inv','alid"}'].join('');const x=JSON.parse(raw).origin`,
+    ],
+    [
+      'nested reconstruction',
+      `const x={a:{b:['ht','tps://cap','ture.inv','alid'].join('')}}.a.b`,
+    ],
+    [
+      'computed forbidden identifier',
+      `const a='createLocal';const x=a+'BrowserTestClient'`,
+    ],
+    ['split phone-shaped data', `const x=['+1','202','555','0123'].join('')`],
   ])('rejects %s reconstructed values', async (_label, source) => {
     const root = await safeRoot()
     await writeFile(join(root, 'chunk'), source)
@@ -84,10 +101,22 @@ describe('structural production artifact scanner', () => {
     })
   })
 
-  it('rejects disabled production modules by AST identifier', async () => {
+  it('parses executable inline HTML scripts', async () => {
     const root = await safeRoot()
-    await writeFile(join(root, 'chunk'), 'createHttpSmsConsentTransport()')
-    await expectScanRule(root, /MODULE_GRAPH_HTTP_TRANSPORT/)
+    await writeFile(
+      join(root, 'inline.html'),
+      `<script>const x=['ht','tps://cap','ture.inv','alid'].join('')</script>`,
+    )
+    await expectScanRule(root, /ARTIFACT_INVALID_HOSTNAME/)
+  })
+
+  it('parses structured data embedded in generated HTML', async () => {
+    const root = await safeRoot()
+    await writeFile(
+      join(root, 'structured.html'),
+      `<script type="application/ld+json">{"nested":{"origin":"https://capture.invalid"}}</script>`,
+    )
+    await expectScanRule(root, /ARTIFACT_INVALID_HOSTNAME/)
   })
 })
 

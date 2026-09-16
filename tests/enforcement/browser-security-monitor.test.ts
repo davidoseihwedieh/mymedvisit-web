@@ -24,6 +24,17 @@ const exactAllowance: RequestFailureAllowance = {
   ],
 }
 
+const diagnosticCanaries = [
+  '+12025550123',
+  'token_secret_abc',
+  'patient@example.test',
+  'oncology follow-up',
+  '%2B12025550123',
+  'query-secret',
+  'fragment-secret',
+  '/patients/private-record',
+]
+
 describe('exact browser security monitor allowances', () => {
   it('consumes one exact request and its exact console allowance once', async () => {
     const { monitor, page } = await harness()
@@ -90,15 +101,52 @@ describe('exact browser security monitor allowances', () => {
 
   it('rejects unhandled rejections', async () => {
     const { monitor, page } = await harness()
-    page.emit('console', consoleMessage('MMV_BROWSER_UNHANDLED_REJECTION', ''))
+    page.triggerUnhandledRejection(diagnosticCanaries.join(' '))
     expectRule(monitor, /BROWSER_UNHANDLED_REJECTION/)
+  })
+
+  it('fully redacts browser-provided diagnostics and sensitive locations', async () => {
+    const { monitor, page } = await harness()
+    page.failedRequest({
+      failureReason: diagnosticCanaries.join('|'),
+      url: `https://unknown.invalid/${diagnosticCanaries[7]}?value=${diagnosticCanaries[5]}#${diagnosticCanaries[6]}`,
+    })
+    page.emit(
+      'console',
+      consoleMessage(
+        diagnosticCanaries.join(' '),
+        `https://example.test/${diagnosticCanaries[0]}/${diagnosticCanaries[1]}`,
+      ),
+    )
+    page.emit(
+      'pageerror',
+      new Error(`${diagnosticCanaries[2]} ${diagnosticCanaries[3]}`),
+    )
+    page.emit('crash', { reason: diagnosticCanaries[4] })
+    page.emit(
+      'console',
+      consoleMessage('MMV_BROWSER_UNHANDLED_REJECTION', diagnosticCanaries[7]),
+    )
+
+    expectRedactedFailure(monitor)
+  })
+
+  it('redacts arbitrary values passed to the diagnostic error boundary', () => {
+    const error = new BrowserSecurityError([
+      `BROWSER_PAGE_ERROR [page] ${diagnosticCanaries.join(' ')}`,
+    ])
+    expect(error.message).toBe('BROWSER_DIAGNOSTIC_REDACTED [page]')
+    assertNoCanaries(error.message)
   })
 })
 
 class FakePage {
   private readonly listeners = new Map<string, Array<(value?: never) => void>>()
+  private readonly initScripts: Array<() => void> = []
 
-  async addInitScript(): Promise<void> {}
+  async addInitScript(script: () => void): Promise<void> {
+    this.initScripts.push(script)
+  }
 
   on(name: string, listener: (value?: never) => void): this {
     const listeners = this.listeners.get(name) ?? []
@@ -143,6 +191,40 @@ class FakePage {
       ),
     )
   }
+
+  triggerUnhandledRejection(reason: unknown): void {
+    const windowDescriptor = Object.getOwnPropertyDescriptor(
+      globalThis,
+      'window',
+    )
+    const originalConsoleError = console.error
+    let rejectionHandler: ((event: { reason: unknown }) => void) | undefined
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      value: {
+        addEventListener: (
+          name: string,
+          listener: (event: { reason: unknown }) => void,
+        ) => {
+          if (name === 'unhandledrejection') rejectionHandler = listener
+        },
+      },
+    })
+    console.error = (...values: unknown[]) => {
+      this.emit('console', consoleMessage(String(values[0] ?? ''), ''))
+    }
+    try {
+      for (const script of this.initScripts) script()
+      rejectionHandler?.({ reason })
+    } finally {
+      console.error = originalConsoleError
+      if (windowDescriptor) {
+        Object.defineProperty(globalThis, 'window', windowDescriptor)
+      } else {
+        Reflect.deleteProperty(globalThis, 'window')
+      }
+    }
+  }
 }
 
 function consoleMessage(text: string, locationUrl: string) {
@@ -173,5 +255,39 @@ function expectRule(monitor: BrowserSecurityMonitor, rule: RegExp): void {
     expect((error as Error).message).not.toContain('https://')
     expect((error as Error).message).not.toContain('phone=x')
     expect((error as Error).message).not.toContain('#token')
+    assertNoCanaries((error as Error).message)
+  }
+}
+
+function expectRedactedFailure(monitor: BrowserSecurityMonitor): void {
+  try {
+    monitor.assertClean()
+    throw new Error('expected monitor failure')
+  } catch (error) {
+    expect(error).toBeInstanceOf(BrowserSecurityError)
+    const message = (error as Error).message
+    expect(message.split('\n')).toEqual(
+      expect.arrayContaining([
+        'BROWSER_REQUEST_FAILURE [request]',
+        'BROWSER_CONSOLE_ERROR [page]',
+        'BROWSER_PAGE_ERROR [page]',
+        'BROWSER_PAGE_CRASH [page]',
+        'BROWSER_UNHANDLED_REJECTION [page]',
+      ]),
+    )
+    expect(
+      message
+        .split('\n')
+        .every((line) =>
+          /^BROWSER_[A-Z_]+ \[(?:page|request|console)\]$/.test(line),
+        ),
+    ).toBe(true)
+    assertNoCanaries(message)
+  }
+}
+
+function assertNoCanaries(value: string): void {
+  for (const canary of diagnosticCanaries) {
+    expect(value).not.toContain(canary)
   }
 }

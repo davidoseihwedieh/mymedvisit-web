@@ -3,15 +3,15 @@
   "version": "1.0.0",
   "private": true,
   "engines": {
-    "node": ">=22.22.1 <23"
+    "node": "22.22.1"
   },
   "scripts": {
     "dev": "next dev --webpack",
-    "build": "next build --webpack",
+    "build": "node scripts/prepare-production-module-graph.mjs && next build --webpack && node scripts/verify-production-module-graph.mjs",
     "start": "next start",
     "lint": "eslint .",
-    "lint:sms": "eslint src/app/sms-opt-in src/lib/sms-consent tests/browser tests/bfcache tests/enforcement playwright.config.ts playwright.bfcache.config.ts scripts/assert-node-version.mjs scripts/check-development-audit.mjs scripts/scan-sms-artifacts.mjs scripts/serve-static.mjs scripts/validate-workflow.mjs",
-    "format:check:sms": "prettier --check .github/workflows/sms-consent-ci.yml .prettierrc.json docs/twilio-sms-opt-in.md next.config.mjs package.json package-lock.json playwright.config.ts playwright.bfcache.config.ts scripts/assert-node-version.mjs scripts/check-development-audit.mjs scripts/scan-sms-artifacts.mjs scripts/serve-static.mjs scripts/validate-workflow.mjs security/development-audit-policy.json src/app/privacy/page.tsx src/app/sms-opt-in src/app/terms/page.tsx src/lib/sms-consent src/types/jest-axe.d.ts tests/bfcache tests/browser tests/enforcement vercel.json vitest.config.ts vitest.enforcement.config.ts vitest.setup.ts",
+    "lint:sms": "eslint src/app/sms-opt-in src/lib/sms-consent tests/browser tests/bfcache tests/enforcement playwright.config.ts playwright.bfcache.config.ts scripts/assert-node-version.mjs scripts/check-development-audit.mjs scripts/node-version-policy.mjs scripts/prepare-production-module-graph.mjs scripts/production-module-graph-plugin.mjs scripts/scan-sms-artifacts.mjs scripts/serve-static.mjs scripts/validate-workflow.mjs scripts/verify-production-module-graph.mjs",
+    "format:check:sms": "prettier --check .github/workflows/sms-consent-ci.yml .prettierrc.json docs/twilio-sms-opt-in.md next.config.mjs package.json package-lock.json playwright.config.ts playwright.bfcache.config.ts scripts/assert-node-version.mjs scripts/check-development-audit.mjs scripts/node-version-policy.mjs scripts/prepare-production-module-graph.mjs scripts/production-module-graph-plugin.mjs scripts/scan-sms-artifacts.mjs scripts/serve-static.mjs scripts/validate-workflow.mjs scripts/verify-production-module-graph.mjs security/development-audit-policy.json src/app/privacy/page.tsx src/app/sms-opt-in src/app/terms/page.tsx src/lib/sms-consent src/types/jest-axe.d.ts tests/bfcache tests/browser tests/enforcement vercel.json vitest.config.ts vitest.enforcement.config.ts vitest.setup.ts",
     "test": "vitest run",
     "test:sms": "vitest run src/app/sms-opt-in src/lib/sms-consent",
     "test:enforcement": "vitest run --config vitest.enforcement.config.ts",
@@ -21,6 +21,7 @@
     "typecheck": "tsc --noEmit --incremental false",
     "verify:node-version": "node scripts/assert-node-version.mjs",
     "verify:sms-artifacts": "node scripts/scan-sms-artifacts.mjs",
+    "verify:module-graph": "node scripts/verify-production-module-graph.mjs",
     "verify:qr": "vitest run src/app/sms-opt-in/page.test.ts -t 'encodes only the exact canonical URL'",
     "audit:production": "npm audit --omit=dev --audit-level=low",
     "audit:development": "node scripts/check-development-audit.mjs",
