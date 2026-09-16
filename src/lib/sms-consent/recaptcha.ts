@@ -10,7 +10,7 @@ import { SMS_CONSENT_RECAPTCHA_ACTION } from './constants'
 const DEFAULT_READY_TIMEOUT_MS = 10_000
 
 export interface RecaptchaTokenProvider {
-  getToken(): Promise<string>
+  getToken(signal?: AbortSignal): Promise<string>
 }
 
 export interface RecaptchaEnterpriseApi {
@@ -45,13 +45,17 @@ export function createRecaptchaEnterpriseTokenProvider({
   }
 
   return {
-    async getToken() {
+    async getToken(signal) {
       try {
+        throwIfAborted(signal)
         const api = await loadApi()
-        await waitUntilReady(api, readyTimeoutMs)
+        throwIfAborted(signal)
+        await waitUntilReady(api, readyTimeoutMs, signal)
+        throwIfAborted(signal)
         const token = await api.execute(siteKey, {
           action: SMS_CONSENT_RECAPTCHA_ACTION,
         })
+        throwIfAborted(signal)
 
         if (
           typeof token !== 'string' ||
@@ -83,12 +87,15 @@ export function createRecaptchaSmsConsentClient({
     async submit(
       logicalRequest: SmsConsentLogicalRequest,
       idempotencyKey: string,
+      signal?: AbortSignal,
     ) {
       let attemptLocalToken: string | undefined
 
       try {
         try {
-          attemptLocalToken = await tokenProvider.getToken()
+          throwIfAborted(signal)
+          attemptLocalToken = await tokenProvider.getToken(signal)
+          throwIfAborted(signal)
         } catch {
           throw captchaUnavailable()
         }
@@ -96,7 +103,7 @@ export function createRecaptchaSmsConsentClient({
           logicalRequest,
           attemptLocalToken,
         )
-        return await transport.submit(wireRequest, idempotencyKey)
+        return await transport.submit(wireRequest, idempotencyKey, signal)
       } finally {
         // JavaScript strings cannot be zeroized. Dropping the only local
         // reference ensures retry state and component state never retain it.
@@ -109,23 +116,59 @@ export function createRecaptchaSmsConsentClient({
 function waitUntilReady(
   api: RecaptchaEnterpriseApi,
   timeoutMs: number,
+  signal?: AbortSignal,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
-    const timeout = setTimeout(
-      () => reject(new Error('reCAPTCHA readiness timed out')),
-      timeoutMs,
-    )
+    let settled = false
+
+    const cleanup = () => {
+      clearTimeout(timeout)
+      signal?.removeEventListener('abort', abort)
+    }
+    const abort = () => {
+      if (settled) {
+        return
+      }
+      settled = true
+      cleanup()
+      reject(new DOMException('Aborted', 'AbortError'))
+    }
+    const timeout = setTimeout(() => {
+      if (settled) {
+        return
+      }
+      settled = true
+      cleanup()
+      reject(new Error('reCAPTCHA readiness timed out'))
+    }, timeoutMs)
+
+    if (signal?.aborted) {
+      abort()
+      return
+    }
+    signal?.addEventListener('abort', abort, { once: true })
 
     try {
       api.ready(() => {
-        clearTimeout(timeout)
+        if (settled) {
+          return
+        }
+        settled = true
+        cleanup()
         resolve()
       })
     } catch {
-      clearTimeout(timeout)
+      settled = true
+      cleanup()
       reject(new Error('reCAPTCHA readiness failed'))
     }
   })
+}
+
+function throwIfAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) {
+    throw new DOMException('Aborted', 'AbortError')
+  }
 }
 
 function captchaUnavailable(): ConsentSubmissionError {

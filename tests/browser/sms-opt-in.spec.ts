@@ -1,4 +1,5 @@
-import { expect, test, type Page, type Route } from '@playwright/test'
+import { type Page, type Route } from '@playwright/test'
+import { BrowserSecurityMonitor, expect, test } from './security-fixture'
 
 const phoneNumber = '+12025550123'
 const recaptchaOrigin = 'https://recaptcha.invalid'
@@ -29,12 +30,22 @@ interface MockOptions {
   ) => Promise<boolean>
 }
 
-test('pre-hydration and no-JavaScript markup is inert', async ({ browser }) => {
+test('pre-hydration and no-JavaScript markup is inert', async ({
+  browser,
+  browserName,
+}) => {
   const context = await browser.newContext({
     javaScriptEnabled: false,
     baseURL: localOrigin,
   })
   const page = await context.newPage()
+  const monitor = new BrowserSecurityMonitor(page)
+  await monitor.install()
+  if (browserName === 'chromium') {
+    monitor.expectRequestFailure(
+      `${localOrigin}/_next/static/chunks/webpack.js`,
+    )
+  }
   await installNoLiveNetworkGuard(page)
 
   await page.goto('/sms-opt-in')
@@ -56,6 +67,7 @@ test('pre-hydration and no-JavaScript markup is inert', async ({ browser }) => {
     page.locator('#authorized-number-attestation'),
   ).not.toHaveAttribute('name')
   expect(page.url()).toBe(`${localOrigin}/sms-opt-in`)
+  monitor.assertClean()
   await context.close()
 })
 
@@ -199,7 +211,10 @@ test('accepts an exact mocked 200 idempotent replay receipt', async ({
 
 test('retries a lost response with a fresh token and stable payload/key', async ({
   page,
+  securityMonitor,
 }) => {
+  securityMonitor.expectRequestFailure(`${captureOrigin}/api/v1/sms-consent`)
+  securityMonitor.allowConsoleErrorAt(`${captureOrigin}/api/v1/sms-consent`)
   const state = await installSyntheticBoundaries(page, {
     captureAttempt: async (route, request, attemptNumber) => {
       if (attemptNumber === 1) {
@@ -233,7 +248,10 @@ test('retries a lost response with a fresh token and stable payload/key', async 
 
 test('fails safely when CAPTCHA is blocked or execution is rejected', async ({
   page,
+  securityMonitor,
 }) => {
+  securityMonitor.expectRequestFailure(`${recaptchaOrigin}/token`)
+  securityMonitor.allowConsoleErrorAt(`${recaptchaOrigin}/token`)
   const blocked = await installSyntheticBoundaries(page, {
     tokenFailure: 'script-blocked',
   })
@@ -296,6 +314,53 @@ test('synchronous duplicate clicks acquire one token and send one request', asyn
   await expect(page.getByText('Your SMS consent was saved.')).toBeVisible()
   expect(state.recaptchaRequests).toHaveLength(1)
   expect(state.captureRequests).toHaveLength(1)
+})
+
+test('persisted PageTransitionEvent lifecycle harness clears all consent state', async ({
+  page,
+}) => {
+  const state = await installSyntheticBoundaries(page)
+  await page.goto('/sms-opt-in')
+  await completeForm(page)
+
+  const observed = await page.evaluate(() => {
+    const seen: Array<{ persisted: boolean; type: string }> = []
+    const observe = (event: PageTransitionEvent) => {
+      seen.push({ persisted: event.persisted, type: event.type })
+    }
+    window.addEventListener('pagehide', observe, { once: true })
+    window.addEventListener('pageshow', observe, { once: true })
+    window.dispatchEvent(
+      new PageTransitionEvent('pagehide', { persisted: true }),
+    )
+    window.dispatchEvent(
+      new PageTransitionEvent('pageshow', { persisted: true }),
+    )
+    return seen
+  })
+
+  expect(observed).toEqual([
+    { persisted: true, type: 'pagehide' },
+    { persisted: true, type: 'pageshow' },
+  ])
+  await expect(
+    page.getByRole('textbox', { name: /mobile phone number/i }),
+  ).toHaveValue('')
+  await expect(
+    page.getByRole('checkbox', {
+      name: /i agree to receive the one-time verification-code/i,
+    }),
+  ).not.toBeChecked()
+  await expect(
+    page.getByRole('checkbox', {
+      name: /i confirm that i am the subscriber/i,
+    }),
+  ).not.toBeChecked()
+  await expect(
+    page.getByRole('button', { name: /agree and continue/i }),
+  ).toBeEnabled()
+  expect(state.recaptchaRequests).toHaveLength(0)
+  expect(state.captureRequests).toHaveLength(0)
 })
 
 test('reflows at mobile, 200%, and 400% zoom-equivalent widths', async ({
@@ -365,6 +430,11 @@ test('Terms and Privacy links navigate only to their exact canonical paths', asy
     }),
   ).not.toBeChecked()
 
+  await page.goForward()
+  await expect(page).toHaveURL('https://mymedvisit.app/terms')
+  await page.goBack()
+  await expect(page).toHaveURL(`${localOrigin}/sms-opt-in`)
+
   await privacy.click()
   await expect(page).toHaveURL('https://mymedvisit.app/privacy')
 })
@@ -395,6 +465,15 @@ async function installSyntheticBoundaries(
       return
     }
 
+    if (url.origin === 'https://fonts.googleapis.com') {
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/css',
+        body: '',
+      })
+      return
+    }
+
     if (url.origin === recaptchaOrigin) {
       state.recaptchaRequests.push(captured)
       if (options.tokenFailure === 'script-blocked') {
@@ -409,7 +488,7 @@ async function installSyntheticBoundaries(
       state.tokenCount += 1
       if (options.tokenFailure === 'execution-rejection') {
         await route.fulfill({
-          status: 503,
+          status: 200,
           headers: {
             'Access-Control-Allow-Origin': localOrigin,
             'Cache-Control': 'no-store',
@@ -481,6 +560,8 @@ async function installNoLiveNetworkGuard(page: Page): Promise<void> {
     const url = new URL(route.request().url())
     if (url.origin === localOrigin) {
       await route.continue()
+    } else if (url.origin === 'https://fonts.googleapis.com') {
+      await route.fulfill({ status: 200, contentType: 'text/css', body: '' })
     } else {
       await route.abort('blockedbyclient')
     }

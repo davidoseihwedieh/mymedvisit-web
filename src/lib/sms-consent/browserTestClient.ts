@@ -31,7 +31,7 @@ export function createLocalBrowserTestClient(): SmsConsentClient | null {
   return createRecaptchaSmsConsentClient({
     transport,
     tokenProvider: {
-      async getToken() {
+      async getToken(signal) {
         let response: Response
         try {
           response = await fetch(LOCAL_RECAPTCHA_URL, {
@@ -42,6 +42,7 @@ export function createLocalBrowserTestClient(): SmsConsentClient | null {
             credentials: 'omit',
             redirect: 'error',
             referrerPolicy: 'no-referrer',
+            signal,
           })
         } catch {
           throw unavailable()

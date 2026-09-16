@@ -13,6 +13,10 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
-    exclude: [...configDefaults.exclude, 'tests/browser/**'],
+    exclude: [
+      ...configDefaults.exclude,
+      'tests/browser/**',
+      'tests/bfcache/**',
+    ],
   },
 })

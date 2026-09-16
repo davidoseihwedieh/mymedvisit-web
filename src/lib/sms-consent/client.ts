@@ -14,10 +14,11 @@ import {
 
 const UUID_V4_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
-const EVIDENCE_ID_PATTERN = new RegExp(`^sce_${UUID_V4_PATTERN.source.slice(1, -1)}$`)
+const EVIDENCE_ID_PATTERN = new RegExp(
+  `^sce_${UUID_V4_PATTERN.source.slice(1, -1)}$`,
+)
 const VERSION_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/
-const UTC_MILLISECOND_PATTERN =
-  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/
+const UTC_MILLISECOND_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/
 
 const EXACT_REQUEST_KEYS = [
   'phoneNumber',
@@ -82,6 +83,7 @@ export interface SmsConsentClient {
   submit(
     submission: SmsConsentLogicalRequest,
     idempotencyKey: string,
+    signal?: AbortSignal,
   ): Promise<DurableSmsConsentReceipt>
 }
 
@@ -90,6 +92,7 @@ export interface SmsConsentTransport {
   submit(
     request: SmsConsentWireRequest,
     idempotencyKey: string,
+    signal?: AbortSignal,
   ): Promise<DurableSmsConsentReceipt>
 }
 
@@ -180,10 +183,7 @@ export function isSmsConsentWireRequest(
     }
 
     if (
-      !isVersionedReference(
-        value.privacy,
-        SMS_CONSENT_PRIVACY.reference,
-      ) ||
+      !isVersionedReference(value.privacy, SMS_CONSENT_PRIVACY.reference) ||
       !isVersionedReference(value.terms, SMS_CONSENT_TERMS.reference)
     ) {
       return false
@@ -245,7 +245,9 @@ interface SmsConsentErrorEnvelope {
   }
 }
 
-const ERROR_CODE_BY_STATUS: Readonly<Record<number, readonly SmsConsentPublicErrorCode[]>> = {
+const ERROR_CODE_BY_STATUS: Readonly<
+  Record<number, readonly SmsConsentPublicErrorCode[]>
+> = {
   400: ['invalid_request'],
   403: ['request_not_allowed', 'bot_check_failed'],
   405: ['method_not_allowed'],
@@ -273,9 +275,11 @@ export function isSmsConsentErrorEnvelope(
       return false
     }
 
-    return ERROR_CODE_BY_STATUS[status]?.includes(
-      value.error.code as SmsConsentPublicErrorCode,
-    ) === true
+    return (
+      ERROR_CODE_BY_STATUS[status]?.includes(
+        value.error.code as SmsConsentPublicErrorCode,
+      ) === true
+    )
   } catch {
     return false
   }
@@ -296,7 +300,7 @@ export function createHttpSmsConsentTransport({
   const endpoint = getSafeEndpoint(baseUrl, SMS_CONSENT_ENDPOINT_PATH)
 
   return {
-    async submit(request, idempotencyKey) {
+    async submit(request, idempotencyKey, signal) {
       if (
         !isLowercaseUuidV4(idempotencyKey) ||
         !isSmsConsentWireRequest(request)
@@ -308,6 +312,12 @@ export function createHttpSmsConsentTransport({
       }
 
       const controller = new AbortController()
+      const abortFromLifecycle = () => controller.abort()
+      if (signal?.aborted) {
+        controller.abort()
+      } else {
+        signal?.addEventListener('abort', abortFromLifecycle, { once: true })
+      }
       const timeout = setTimeout(() => controller.abort(), timeoutMs)
 
       try {
@@ -368,6 +378,7 @@ export function createHttpSmsConsentTransport({
         throw safeSubmissionError(body.error.code)
       } finally {
         clearTimeout(timeout)
+        signal?.removeEventListener('abort', abortFromLifecycle)
       }
     },
   }
@@ -491,7 +502,9 @@ function hasExactOwnKeys(
 
   return (
     ownKeys.length === expectedKeys.length &&
-    expectedKeys.every((key) => Object.prototype.hasOwnProperty.call(value, key))
+    expectedKeys.every((key) =>
+      Object.prototype.hasOwnProperty.call(value, key),
+    )
   )
 }
 
@@ -586,5 +599,7 @@ function isUtcIsoTimestamp(value: string): boolean {
   }
 
   const timestamp = Date.parse(value)
-  return Number.isFinite(timestamp) && new Date(timestamp).toISOString() === value
+  return (
+    Number.isFinite(timestamp) && new Date(timestamp).toISOString() === value
+  )
 }

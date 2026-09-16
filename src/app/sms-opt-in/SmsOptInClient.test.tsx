@@ -32,7 +32,9 @@ const durableReceipt: DurableSmsConsentReceipt = {
 let liveFetch = vi.fn()
 
 function createClient(
-  implementation: SmsConsentClient['submit'] = vi.fn().mockResolvedValue(durableReceipt),
+  implementation: SmsConsentClient['submit'] = vi
+    .fn()
+    .mockResolvedValue(durableReceipt),
 ): SmsConsentClient {
   return { submit: implementation }
 }
@@ -73,6 +75,20 @@ async function completeForm(user: ReturnType<typeof userEvent.setup>) {
   )
 }
 
+function dispatchPersistedTransition(type: 'pagehide' | 'pageshow') {
+  const event = new PageTransitionEvent(type, { persisted: true })
+  expect(event).toBeInstanceOf(PageTransitionEvent)
+  expect(event.persisted).toBe(true)
+  window.dispatchEvent(event)
+}
+
+async function restoreFromBfcache() {
+  await act(async () => {
+    dispatchPersistedTransition('pagehide')
+    dispatchPersistedTransition('pageshow')
+  })
+}
+
 beforeEach(() => {
   liveFetch = vi.fn()
   vi.stubGlobal('fetch', liveFetch)
@@ -105,17 +121,19 @@ describe('SMS opt-in form', () => {
 
   it('keeps the production client safely disconnected', async () => {
     const user = userEvent.setup()
-    render(
-      <SmsOptInClient createIdempotencyKey={() => IDEMPOTENCY_KEY} />,
-    )
+    render(<SmsOptInClient createIdempotencyKey={() => IDEMPOTENCY_KEY} />)
     await completeForm(user)
 
-    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+    await user.click(
+      screen.getByRole('button', { name: /agree and continue/i }),
+    )
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Consent submission is not available yet. No consent was sent or recorded.',
     )
-    expect(screen.queryByText('Your SMS consent was saved.')).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('Your SMS consent was saved.'),
+    ).not.toBeInTheDocument()
   })
 
   it('announces missing fields and focuses the first invalid field', async () => {
@@ -123,7 +141,9 @@ describe('SMS opt-in form', () => {
     const submit = vi.fn().mockResolvedValue(durableReceipt)
     renderForm(createClient(submit))
 
-    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+    await user.click(
+      screen.getByRole('button', { name: /agree and continue/i }),
+    )
 
     expect(screen.getByText('Enter a mobile phone number.')).toBeVisible()
     expect(
@@ -154,7 +174,9 @@ describe('SMS opt-in form', () => {
       screen.getByRole('textbox', { name: /mobile phone number/i }),
       '5555550123',
     )
-    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+    await user.click(
+      screen.getByRole('button', { name: /agree and continue/i }),
+    )
 
     expect(
       screen.getByText('Check the consent box to agree before continuing.'),
@@ -183,7 +205,9 @@ describe('SMS opt-in form', () => {
         name: /i agree to receive the one-time verification-code/i,
       }),
     )
-    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+    await user.click(
+      screen.getByRole('button', { name: /agree and continue/i }),
+    )
 
     expect(
       screen.getByText(
@@ -256,17 +280,140 @@ describe('SMS opt-in form', () => {
     ).toHaveFocus()
     await user.keyboard(' ')
     await user.tab()
-    expect(screen.getByRole('link', { name: /terms of service/i })).toHaveFocus()
+    expect(
+      screen.getByRole('link', { name: /terms of service/i }),
+    ).toHaveFocus()
     await user.tab()
     expect(screen.getByRole('link', { name: /privacy policy/i })).toHaveFocus()
     await user.tab()
     expect(screen.getByRole('button', { name: /no thanks/i })).toHaveFocus()
     await user.tab()
-    expect(screen.getByRole('button', { name: /agree and continue/i })).toHaveFocus()
+    expect(
+      screen.getByRole('button', { name: /agree and continue/i }),
+    ).toHaveFocus()
     await user.keyboard('{Enter}')
 
     expect(await screen.findByText('Your SMS consent was saved.')).toBeVisible()
     expect(submit).toHaveBeenCalledTimes(1)
+  })
+
+  it('clears an idle consent session after a genuine persisted page lifecycle', async () => {
+    const user = userEvent.setup()
+    const submit = vi.fn().mockResolvedValue(durableReceipt)
+    renderForm(createClient(submit))
+    await completeForm(user)
+
+    await restoreFromBfcache()
+
+    expect(
+      screen.getByRole('textbox', { name: /mobile phone number/i }),
+    ).toHaveValue('')
+    expect(
+      screen.getByRole('checkbox', {
+        name: /i agree to receive the one-time verification-code/i,
+      }),
+    ).not.toBeChecked()
+    expect(
+      screen.getByRole('checkbox', {
+        name: /i confirm that i am the subscriber/i,
+      }),
+    ).not.toBeChecked()
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', { name: /agree and continue/i }),
+      ).toBeEnabled(),
+    )
+    expect(submit).not.toHaveBeenCalled()
+  })
+
+  it('clears validation feedback on a persisted restoration without submitting', async () => {
+    const user = userEvent.setup()
+    const submit = vi.fn().mockResolvedValue(durableReceipt)
+    renderForm(createClient(submit))
+    await user.click(
+      screen.getByRole('button', { name: /agree and continue/i }),
+    )
+    expect(screen.getByRole('alert')).toHaveTextContent('highlighted fields')
+
+    await restoreFromBfcache()
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('Enter a mobile phone number.'),
+    ).not.toBeInTheDocument()
+    expect(submit).not.toHaveBeenCalled()
+  })
+
+  it('aborts loading work and ignores its delayed completion after persisted restoration', async () => {
+    const user = userEvent.setup()
+    let resolveRequest!: (receipt: DurableSmsConsentReceipt) => void
+    const submit = vi.fn(
+      (_submission, _key, signal?: AbortSignal) =>
+        new Promise<DurableSmsConsentReceipt>((resolve) => {
+          expect(signal?.aborted).toBe(false)
+          resolveRequest = resolve
+        }),
+    )
+    renderForm(createClient(submit))
+    await completeForm(user)
+    await user.click(
+      screen.getByRole('button', { name: /agree and continue/i }),
+    )
+    expect(
+      screen.getByText(/waiting for durable-persistence confirmation/i),
+    ).toBeVisible()
+    const signal = submit.mock.calls[0][2]
+
+    await restoreFromBfcache()
+
+    expect(signal?.aborted).toBe(true)
+    expect(
+      screen.getByRole('textbox', { name: /mobile phone number/i }),
+    ).toHaveValue('')
+    expect(
+      screen.queryByText(/durable-persistence confirmation/i),
+    ).not.toBeInTheDocument()
+    await act(async () => resolveRequest(durableReceipt))
+    expect(
+      screen.queryByText('Your SMS consent was saved.'),
+    ).not.toBeInTheDocument()
+    expect(submit).toHaveBeenCalledTimes(1)
+  })
+
+  it('discards ambiguous retry identity and stale retry success on persisted restoration', async () => {
+    const user = userEvent.setup()
+    let resolveRetry!: (receipt: DurableSmsConsentReceipt) => void
+    const submit = vi
+      .fn<SmsConsentClient['submit']>()
+      .mockRejectedValueOnce(new TypeError('network failed'))
+      .mockImplementationOnce(
+        (_submission, _key, signal) =>
+          new Promise<DurableSmsConsentReceipt>((resolve) => {
+            expect(signal?.aborted).toBe(false)
+            resolveRetry = resolve
+          }),
+      )
+    renderForm(createClient(submit))
+    await completeForm(user)
+    await user.click(
+      screen.getByRole('button', { name: /agree and continue/i }),
+    )
+    await screen.findByRole('alert')
+    await user.click(screen.getByRole('button', { name: /try again/i }))
+    expect(submit).toHaveBeenCalledTimes(2)
+    const retrySignal = submit.mock.calls[1][2]
+
+    await restoreFromBfcache()
+
+    expect(retrySignal?.aborted).toBe(true)
+    expect(
+      screen.queryByRole('button', { name: /try again/i }),
+    ).not.toBeInTheDocument()
+    await act(async () => resolveRetry(durableReceipt))
+    expect(
+      screen.queryByText('Your SMS consent was saved.'),
+    ).not.toBeInTheDocument()
+    expect(submit).toHaveBeenCalledTimes(2)
   })
 
   it('allows at most one in-flight request after duplicate clicks', async () => {
@@ -301,11 +448,15 @@ describe('SMS opt-in form', () => {
     renderForm(createClient(submit))
     await completeForm(user)
 
-    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+    await user.click(
+      screen.getByRole('button', { name: /agree and continue/i }),
+    )
 
     const alert = await screen.findByRole('alert')
     expect(alert).toHaveTextContent('treated as not recorded')
-    expect(screen.queryByText('Your SMS consent was saved.')).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('Your SMS consent was saved.'),
+    ).not.toBeInTheDocument()
   })
 
   it('retries an ambiguous failure with the same idempotency key', async () => {
@@ -316,7 +467,9 @@ describe('SMS opt-in form', () => {
       .mockResolvedValueOnce(durableReceipt)
     renderForm(createClient(submit))
     await completeForm(user)
-    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+    await user.click(
+      screen.getByRole('button', { name: /agree and continue/i }),
+    )
     await screen.findByRole('alert')
 
     await user.click(screen.getByRole('button', { name: /try again/i }))
@@ -360,7 +513,9 @@ describe('SMS opt-in form', () => {
     renderForm(client)
     await completeForm(user)
 
-    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+    await user.click(
+      screen.getByRole('button', { name: /agree and continue/i }),
+    )
     await screen.findByRole('alert')
     await user.click(screen.getByRole('button', { name: /try again/i }))
 
@@ -395,13 +550,17 @@ describe('SMS opt-in form', () => {
       .mockReturnValueOnce(SECOND_IDEMPOTENCY_KEY)
     renderForm(createClient(submit), createIdempotencyKey)
     await completeForm(user)
-    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+    await user.click(
+      screen.getByRole('button', { name: /agree and continue/i }),
+    )
     await screen.findByRole('alert')
 
     const phone = screen.getByRole('textbox', { name: /mobile phone number/i })
     await user.clear(phone)
     await user.type(phone, '5555550199')
-    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+    await user.click(
+      screen.getByRole('button', { name: /agree and continue/i }),
+    )
 
     expect(await screen.findByText('Your SMS consent was saved.')).toBeVisible()
     expect(createIdempotencyKey).toHaveBeenCalledTimes(2)
@@ -430,7 +589,9 @@ describe('SMS opt-in form', () => {
       .mockReturnValueOnce(SECOND_IDEMPOTENCY_KEY)
     renderForm(createClient(submit), createIdempotencyKey)
     await completeForm(user)
-    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+    await user.click(
+      screen.getByRole('button', { name: /agree and continue/i }),
+    )
     await screen.findByRole('alert')
 
     const consent = screen.getByRole('checkbox', {
@@ -438,7 +599,9 @@ describe('SMS opt-in form', () => {
     })
     await user.click(consent)
     await user.click(consent)
-    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+    await user.click(
+      screen.getByRole('button', { name: /agree and continue/i }),
+    )
 
     expect(await screen.findByText('Your SMS consent was saved.')).toBeVisible()
     expect(submit.mock.calls.map((call) => call[1])).toEqual([
@@ -467,7 +630,9 @@ describe('SMS opt-in form', () => {
       .mockReturnValueOnce(SECOND_IDEMPOTENCY_KEY)
     renderForm(createClient(submit), createIdempotencyKey)
     await completeForm(user)
-    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+    await user.click(
+      screen.getByRole('button', { name: /agree and continue/i }),
+    )
     await screen.findByRole('alert')
 
     const attestation = screen.getByRole('checkbox', {
@@ -475,7 +640,9 @@ describe('SMS opt-in form', () => {
     })
     await user.click(attestation)
     await user.click(attestation)
-    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+    await user.click(
+      screen.getByRole('button', { name: /agree and continue/i }),
+    )
 
     expect(await screen.findByText('Your SMS consent was saved.')).toBeVisible()
     expect(submit.mock.calls.map((call) => call[1])).toEqual([
@@ -498,7 +665,9 @@ describe('SMS opt-in form', () => {
       .mockResolvedValueOnce(durableReceipt)
     renderForm(createClient(submit))
     await completeForm(user)
-    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+    await user.click(
+      screen.getByRole('button', { name: /agree and continue/i }),
+    )
     await screen.findByRole('alert')
 
     Object.defineProperty(window.navigator, 'onLine', {
@@ -542,7 +711,9 @@ describe('SMS opt-in form', () => {
     await completeForm(user)
     vi.useFakeTimers()
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /agree and continue/i }))
+      fireEvent.click(
+        screen.getByRole('button', { name: /agree and continue/i }),
+      )
       await Promise.resolve()
     })
 
@@ -568,14 +739,23 @@ describe('SMS opt-in form', () => {
     'unavailable',
   ] as const)('offers an explicit retry for %s', async (code) => {
     const user = userEvent.setup()
-    const submit = vi.fn().mockRejectedValue(
-      new ConsentSubmissionError(code, 'The consent request could not be completed.'),
-    )
+    const submit = vi
+      .fn()
+      .mockRejectedValue(
+        new ConsentSubmissionError(
+          code,
+          'The consent request could not be completed.',
+        ),
+      )
     renderForm(createClient(submit))
     await completeForm(user)
-    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+    await user.click(
+      screen.getByRole('button', { name: /agree and continue/i }),
+    )
 
-    expect(await screen.findByRole('button', { name: /try again/i })).toBeVisible()
+    expect(
+      await screen.findByRole('button', { name: /try again/i }),
+    ).toBeVisible()
   })
 
   it.each([
@@ -587,15 +767,24 @@ describe('SMS opt-in form', () => {
     'unsupported-media-type',
   ] as const)('does not retry the definitive %s response', async (code) => {
     const user = userEvent.setup()
-    const submit = vi.fn().mockRejectedValue(
-      new ConsentSubmissionError(code, 'The consent request could not be completed.'),
-    )
+    const submit = vi
+      .fn()
+      .mockRejectedValue(
+        new ConsentSubmissionError(
+          code,
+          'The consent request could not be completed.',
+        ),
+      )
     renderForm(createClient(submit))
     await completeForm(user)
-    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+    await user.click(
+      screen.getByRole('button', { name: /agree and continue/i }),
+    )
 
     await screen.findByRole('alert')
-    expect(screen.queryByRole('button', { name: /try again/i })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /try again/i }),
+    ).not.toBeInTheDocument()
     expect(submit).toHaveBeenCalledTimes(1)
   })
 
@@ -636,12 +825,16 @@ describe('SMS opt-in form', () => {
     renderForm(createClient(submit as SmsConsentClient['submit']))
     await completeForm(user)
 
-    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+    await user.click(
+      screen.getByRole('button', { name: /agree and continue/i }),
+    )
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'treated as not recorded',
     )
-    expect(screen.queryByText('Your SMS consent was saved.')).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('Your SMS consent was saved.'),
+    ).not.toBeInTheDocument()
   })
 
   it('never displays success for a normalized but impossible timestamp', async () => {
@@ -653,12 +846,16 @@ describe('SMS opt-in form', () => {
     renderForm(createClient(submit))
     await completeForm(user)
 
-    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+    await user.click(
+      screen.getByRole('button', { name: /agree and continue/i }),
+    )
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'treated as not recorded',
     )
-    expect(screen.queryByText('Your SMS consent was saved.')).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('Your SMS consent was saved.'),
+    ).not.toBeInTheDocument()
     expect(liveFetch).not.toHaveBeenCalled()
   })
 
@@ -668,7 +865,9 @@ describe('SMS opt-in form', () => {
     renderForm(createClient(submit))
     await completeForm(user)
 
-    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+    await user.click(
+      screen.getByRole('button', { name: /agree and continue/i }),
+    )
 
     expect(await screen.findByRole('status')).toHaveTextContent(
       'confirmed that your consent record was durably persisted',
@@ -678,14 +877,12 @@ describe('SMS opt-in form', () => {
   it('links to the version-referenced Terms and Privacy pages', () => {
     renderForm()
 
-    expect(screen.getByRole('link', { name: /terms of service/i })).toHaveAttribute(
-      'href',
-      SMS_CONSENT_TERMS.reference,
-    )
-    expect(screen.getByRole('link', { name: /privacy policy/i })).toHaveAttribute(
-      'href',
-      SMS_CONSENT_PRIVACY.reference,
-    )
+    expect(
+      screen.getByRole('link', { name: /terms of service/i }),
+    ).toHaveAttribute('href', SMS_CONSENT_TERMS.reference)
+    expect(
+      screen.getByRole('link', { name: /privacy policy/i }),
+    ).toHaveAttribute('href', SMS_CONSENT_PRIVACY.reference)
   })
 
   it('announces offline state and makes no request', async () => {
@@ -696,8 +893,12 @@ describe('SMS opt-in form', () => {
     const submit = vi.fn().mockResolvedValue(durableReceipt)
     renderForm(createClient(submit))
 
-    expect(await screen.findByRole('status')).toHaveTextContent('You are offline')
-    expect(screen.getByRole('button', { name: /agree and continue/i })).toBeDisabled()
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'You are offline',
+    )
+    expect(
+      screen.getByRole('button', { name: /agree and continue/i }),
+    ).toBeDisabled()
     expect(submit).not.toHaveBeenCalled()
   })
 
@@ -713,7 +914,9 @@ describe('SMS opt-in form', () => {
     const submit = vi.fn().mockResolvedValue(durableReceipt)
     const { container } = renderForm(createClient(submit))
 
-    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+    await user.click(
+      screen.getByRole('button', { name: /agree and continue/i }),
+    )
     await screen.findByRole('alert')
 
     await expectNoAxeViolations(container)
@@ -733,7 +936,9 @@ describe('SMS opt-in form', () => {
     const { container } = renderForm(createClient(submit))
     await completeForm(user)
 
-    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+    await user.click(
+      screen.getByRole('button', { name: /agree and continue/i }),
+    )
     await screen.findByText(/waiting for durable-persistence confirmation/i)
 
     await expectNoAxeViolations(container)
@@ -753,7 +958,9 @@ describe('SMS opt-in form', () => {
     const submit = vi.fn().mockResolvedValue(durableReceipt)
     const { container } = renderForm(createClient(submit))
 
-    await screen.findByText('You are offline. Reconnect before submitting. No consent has been sent or recorded.')
+    await screen.findByText(
+      'You are offline. Reconnect before submitting. No consent has been sent or recorded.',
+    )
 
     await expectNoAxeViolations(container)
     expect(submit).not.toHaveBeenCalled()
@@ -766,7 +973,9 @@ describe('SMS opt-in form', () => {
     const { container } = renderForm(createClient(submit))
     await completeForm(user)
 
-    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+    await user.click(
+      screen.getByRole('button', { name: /agree and continue/i }),
+    )
     await screen.findByRole('alert')
 
     await expectNoAxeViolations(container)
@@ -788,7 +997,9 @@ describe('SMS opt-in form', () => {
       )
     const { container } = renderForm(createClient(submit))
     await completeForm(user)
-    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+    await user.click(
+      screen.getByRole('button', { name: /agree and continue/i }),
+    )
     await screen.findByRole('alert')
 
     await user.click(screen.getByRole('button', { name: /try again/i }))
@@ -825,7 +1036,9 @@ describe('SMS opt-in form', () => {
     const { container } = renderForm(createClient(submit))
     await completeForm(user)
 
-    await user.click(screen.getByRole('button', { name: /agree and continue/i }))
+    await user.click(
+      screen.getByRole('button', { name: /agree and continue/i }),
+    )
     await screen.findByText('Your SMS consent was saved.')
 
     await expectNoAxeViolations(container)

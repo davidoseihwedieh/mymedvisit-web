@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import {
   FormEvent,
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -62,6 +63,8 @@ export function SmsOptInClient({
   const [canRetry, setCanRetry] = useState(false)
   const [retryDelayActive, setRetryDelayActive] = useState(false)
   const [isOnline, setIsOnline] = useState(true)
+  const [lifecycleSuspended, setLifecycleSuspended] = useState(false)
+  const formRef = useRef<HTMLFormElement>(null)
   const phoneRef = useRef<HTMLInputElement>(null)
   const consentRef = useRef<HTMLInputElement>(null)
   const attestationRef = useRef<HTMLInputElement>(null)
@@ -69,45 +72,175 @@ export function SmsOptInClient({
   const lastAttemptRef = useRef<SubmissionAttempt | null>(null)
   const retryDelayRef = useRef(false)
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const focusAnimationFrameRef = useRef<number | null>(null)
+  const restoreAnimationFrameRef = useRef<number | null>(null)
+  const lifecycleEpochRef = useRef(0)
+  const activeRequestControllerRef = useRef<AbortController | null>(null)
+  const mountedRef = useRef(false)
+
+  const cancelScheduledFocus = useCallback(() => {
+    if (focusAnimationFrameRef.current !== null) {
+      cancelAnimationFrame(focusAnimationFrameRef.current)
+      focusAnimationFrameRef.current = null
+    }
+  }, [])
+
+  const cancelScheduledRestore = useCallback(() => {
+    if (restoreAnimationFrameRef.current !== null) {
+      cancelAnimationFrame(restoreAnimationFrameRef.current)
+      restoreAnimationFrameRef.current = null
+    }
+  }, [])
+
+  const clearRetryDelayTimer = useCallback(() => {
+    if (retryTimerRef.current !== null) {
+      clearTimeout(retryTimerRef.current)
+      retryTimerRef.current = null
+    }
+    retryDelayRef.current = false
+    if (mountedRef.current) {
+      setRetryDelayActive(false)
+    }
+  }, [])
+
+  const invalidateAsyncWork = useCallback(() => {
+    lifecycleEpochRef.current += 1
+    activeRequestControllerRef.current?.abort()
+    activeRequestControllerRef.current = null
+    inFlightRef.current = false
+    cancelScheduledFocus()
+    cancelScheduledRestore()
+  }, [cancelScheduledFocus, cancelScheduledRestore])
+
+  const resetConsentSession = useCallback(
+    (nextPhase: FormPhase = 'idle') => {
+      invalidateAsyncWork()
+      clearRetryDelayTimer()
+      lastAttemptRef.current = null
+      setPhone('')
+      setConsented(false)
+      setAuthorizedNumberAttestation(false)
+      setErrors({})
+      setFailureMessage('')
+      setCanRetry(false)
+      setRetryDelayActive(false)
+      setIsOnline(browserIsOnline())
+      setPhase(nextPhase)
+    },
+    [clearRetryDelayTimer, invalidateAsyncWork],
+  )
+
+  const disableConsentControlsImmediately = useCallback(() => {
+    for (const control of formRef.current?.elements ?? []) {
+      if (
+        control instanceof HTMLInputElement ||
+        control instanceof HTMLButtonElement
+      ) {
+        control.disabled = true
+      }
+    }
+  }, [])
 
   useEffect(() => {
+    mountedRef.current = true
+
     function updateOnlineState() {
       setIsOnline(navigator.onLine)
+    }
+
+    function handlePageHide() {
+      // Firefox may restore native form state before React hydrates a history
+      // entry. Harden the live controls synchronously before it snapshots them.
+      disableConsentControlsImmediately()
+      setLifecycleSuspended(true)
+      resetConsentSession('idle')
+    }
+
+    function handlePageShow(event: PageTransitionEvent) {
+      if (event.persisted) {
+        resetConsentSession('idle')
+        setLifecycleSuspended(false)
+        const epoch = lifecycleEpochRef.current
+        restoreAnimationFrameRef.current = requestAnimationFrame(() => {
+          restoreAnimationFrameRef.current = null
+          if (!mountedRef.current || lifecycleEpochRef.current !== epoch) {
+            return
+          }
+          for (const control of formRef.current?.elements ?? []) {
+            if (
+              control instanceof HTMLInputElement ||
+              control instanceof HTMLButtonElement
+            ) {
+              control.disabled = false
+            }
+          }
+          const submitButton =
+            formRef.current?.querySelector<HTMLButtonElement>(
+              'button[type="submit"]',
+            )
+          if (submitButton && !browserIsOnline()) {
+            submitButton.disabled = true
+          }
+        })
+      }
     }
 
     updateOnlineState()
     window.addEventListener('online', updateOnlineState)
     window.addEventListener('offline', updateOnlineState)
+    window.addEventListener('pagehide', handlePageHide)
+    window.addEventListener('pageshow', handlePageShow)
 
     return () => {
+      mountedRef.current = false
       window.removeEventListener('online', updateOnlineState)
       window.removeEventListener('offline', updateOnlineState)
+      window.removeEventListener('pagehide', handlePageHide)
+      window.removeEventListener('pageshow', handlePageShow)
+      lifecycleEpochRef.current += 1
+      activeRequestControllerRef.current?.abort()
+      activeRequestControllerRef.current = null
+      inFlightRef.current = false
+      lastAttemptRef.current = null
+      cancelScheduledFocus()
+      cancelScheduledRestore()
       if (retryTimerRef.current !== null) {
         clearTimeout(retryTimerRef.current)
       }
       retryTimerRef.current = null
       retryDelayRef.current = false
     }
-  }, [])
-
-  function clearRetryDelayTimer() {
-    if (retryTimerRef.current !== null) {
-      clearTimeout(retryTimerRef.current)
-      retryTimerRef.current = null
-    }
-    retryDelayRef.current = false
-    setRetryDelayActive(false)
-  }
+  }, [
+    cancelScheduledFocus,
+    cancelScheduledRestore,
+    disableConsentControlsImmediately,
+    resetConsentSession,
+  ])
 
   function enforceRetryDelay(milliseconds: number) {
     clearRetryDelayTimer()
+    const epoch = lifecycleEpochRef.current
     retryDelayRef.current = true
     setRetryDelayActive(true)
     retryTimerRef.current = setTimeout(() => {
+      if (!mountedRef.current || lifecycleEpochRef.current !== epoch) {
+        return
+      }
       retryTimerRef.current = null
       retryDelayRef.current = false
       setRetryDelayActive(false)
     }, milliseconds)
+  }
+
+  function scheduleFocus(target: () => HTMLElement | null) {
+    const epoch = lifecycleEpochRef.current
+    cancelScheduledFocus()
+    focusAnimationFrameRef.current = requestAnimationFrame(() => {
+      focusAnimationFrameRef.current = null
+      if (mountedRef.current && lifecycleEpochRef.current === epoch) {
+        target()?.focus()
+      }
+    })
   }
 
   function resetSubmissionFeedback() {
@@ -165,15 +298,15 @@ export function SmsOptInClient({
     clearRetryDelayTimer()
 
     if (nextErrors.phone) {
-      requestAnimationFrame(() => phoneRef.current?.focus())
+      scheduleFocus(() => phoneRef.current)
       return
     }
     if (nextErrors.consent) {
-      requestAnimationFrame(() => consentRef.current?.focus())
+      scheduleFocus(() => consentRef.current)
       return
     }
     if (nextErrors.attestation) {
-      requestAnimationFrame(() => attestationRef.current?.focus())
+      scheduleFocus(() => attestationRef.current)
       return
     }
 
@@ -220,6 +353,9 @@ export function SmsOptInClient({
       return
     }
 
+    const epoch = lifecycleEpochRef.current
+    const requestController = new AbortController()
+    activeRequestControllerRef.current = requestController
     inFlightRef.current = true
     setPhase('submitting')
     setFailureMessage('')
@@ -229,7 +365,12 @@ export function SmsOptInClient({
       const receipt = await activeClient.submit(
         attempt.submission,
         attempt.idempotencyKey,
+        requestController.signal,
       )
+
+      if (!isCurrentAsyncWork(epoch, requestController)) {
+        return
+      }
 
       if (!isDurableSmsConsentReceipt(receipt, attempt.idempotencyKey)) {
         throw new ConsentSubmissionError(
@@ -245,6 +386,10 @@ export function SmsOptInClient({
       setAuthorizedNumberAttestation(false)
       setPhase('success')
     } catch (error) {
+      if (!isCurrentAsyncWork(epoch, requestController)) {
+        return
+      }
+
       const disabled = isDisabledSubmissionError(error)
       const retryable = isRetryableSubmissionError(error)
 
@@ -267,8 +412,23 @@ export function SmsOptInClient({
           : 'We could not confirm that your consent was saved. It is being treated as not recorded. You can safely retry this same request.',
       )
     } finally {
-      inFlightRef.current = false
+      if (isCurrentAsyncWork(epoch, requestController)) {
+        activeRequestControllerRef.current = null
+        inFlightRef.current = false
+      }
     }
+  }
+
+  function isCurrentAsyncWork(
+    epoch: number,
+    controller: AbortController,
+  ): boolean {
+    return (
+      mountedRef.current &&
+      lifecycleEpochRef.current === epoch &&
+      activeRequestControllerRef.current === controller &&
+      !controller.signal.aborted
+    )
   }
 
   async function retry() {
@@ -281,24 +441,12 @@ export function SmsOptInClient({
   }
 
   function decline() {
-    if (inFlightRef.current) {
-      return
-    }
-
-    lastAttemptRef.current = null
-    setPhone('')
-    setConsented(false)
-    setAuthorizedNumberAttestation(false)
-    setErrors({})
-    setFailureMessage('')
-    setCanRetry(false)
-    clearRetryDelayTimer()
-    setPhase('declined')
+    resetConsentSession('declined')
   }
 
   function reconsider() {
-    setPhase('idle')
-    requestAnimationFrame(() => phoneRef.current?.focus())
+    resetConsentSession('idle')
+    scheduleFocus(() => phoneRef.current)
   }
 
   const submitting = phase === 'submitting'
@@ -382,10 +530,10 @@ export function SmsOptInClient({
               Choose whether to receive SMS
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-[rgba(13,27,42,0.68)]">
-              Enter your mobile number and affirmatively check both boxes only if
-              you want the described verification-code messages and may consent
-              for this number. You can decline or leave this page without opting
-              in.
+              Enter your mobile number and affirmatively check both boxes only
+              if you want the described verification-code messages and may
+              consent for this number. You can decline or leave this page
+              without opting in.
             </p>
 
             {phase === 'declined' ? (
@@ -394,7 +542,9 @@ export function SmsOptInClient({
                 role="status"
                 aria-live="polite"
               >
-                <h3 className="text-lg font-semibold">You have not opted in.</h3>
+                <h3 className="text-lg font-semibold">
+                  You have not opted in.
+                </h3>
                 <p className="mt-2 text-sm text-[rgba(13,27,42,0.7)]">
                   No request was sent and no SMS consent was recorded from this
                   page.
@@ -413,7 +563,9 @@ export function SmsOptInClient({
                 role="status"
                 aria-live="polite"
               >
-                <h3 className="text-lg font-semibold">Your SMS consent was saved.</h3>
+                <h3 className="text-lg font-semibold">
+                  Your SMS consent was saved.
+                </h3>
                 <p className="mt-2 text-sm">
                   MyMedVisit confirmed that your consent record was durably
                   persisted. Reply STOP to any message to opt out.
@@ -428,13 +580,14 @@ export function SmsOptInClient({
                     aria-live="polite"
                     className="mt-8 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-950"
                   >
-                    SMS choices are unavailable until this page finishes loading.
-                    If JavaScript is disabled or unavailable, this form cannot
-                    submit consent. Enable JavaScript and reload to make a choice.
-                    No consent has been sent or recorded.
+                    SMS choices are unavailable until this page finishes
+                    loading. If JavaScript is disabled or unavailable, this form
+                    cannot submit consent. Enable JavaScript and reload to make
+                    a choice. No consent has been sent or recorded.
                   </p>
                 )}
                 <form
+                  ref={formRef}
                   className="mt-8 space-y-6"
                   onSubmit={submit}
                   noValidate
@@ -443,249 +596,260 @@ export function SmsOptInClient({
                     isHydrated ? undefined : 'sms-form-unavailable'
                   }
                 >
-                <div>
-                  <label htmlFor="sms-phone" className="text-sm font-semibold">
-                    Mobile phone number
-                  </label>
-                  <input
-                    ref={phoneRef}
-                    id="sms-phone"
-                    type="tel"
-                    inputMode="tel"
-                    autoComplete="tel"
-                    required
-                    disabled={!isHydrated || submitting}
-                    value={phone}
-                    onChange={(event) => updatePhone(event.target.value)}
-                    aria-invalid={Boolean(errors.phone)}
-                    aria-describedby={
-                      errors.phone ? 'phone-help phone-error' : 'phone-help'
-                    }
-                    className="mt-2 w-full rounded-2xl border border-[rgba(13,27,42,0.25)] bg-white px-4 py-3 text-base outline-none transition-colors placeholder:text-slate-500 focus:border-[var(--teal-dark)] focus-visible:outline-[var(--teal-dark)] disabled:cursor-not-allowed disabled:opacity-70"
-                    placeholder="(555) 555-0123"
-                  />
-                  <p
-                    id="phone-help"
-                    className="mt-2 text-xs text-[rgba(13,27,42,0.65)]"
-                  >
-                    Use a mobile number that can receive SMS. Do not include
-                    health information.
-                  </p>
-                  {errors.phone && (
-                    <p
-                      id="phone-error"
-                      className="mt-2 text-sm font-semibold text-red-800"
-                    >
-                      {errors.phone}
-                    </p>
-                  )}
-                </div>
-
-                <fieldset
-                  className="rounded-2xl border border-[rgba(13,27,42,0.18)] bg-white/80 p-5"
-                  aria-describedby={
-                    errors.consent
-                      ? 'sms-disclosure consent-error'
-                      : 'sms-disclosure'
-                  }
-                >
-                  <legend className="px-1 text-sm font-semibold">
-                    Transactional SMS consent
-                  </legend>
-                  <p
-                    id="sms-disclosure"
-                    className="text-sm leading-relaxed text-[rgba(13,27,42,0.82)]"
-                  >
-                    {/* Proposed OTP-only language; not approved for production use. */}
-                    MyMedVisit may send one-time verification codes that you
-                    request for authentication, account recovery, or confirmation
-                    of a sensitive action. Message frequency varies based on the
-                    verification requests you initiate. Message and data rates may
-                    apply. Reply STOP to opt out and HELP for help. Consent is not
-                    a condition of purchase and does not authorize advertising or
-                    promotional messages.
-                  </p>
-                  <div className="mt-4 flex items-start gap-3">
-                    <input
-                      ref={consentRef}
-                      id="sms-consent"
-                      type="checkbox"
-                      checked={consented}
-                      disabled={!isHydrated || submitting}
-                      onChange={(event) => updateConsent(event.target.checked)}
-                      aria-invalid={Boolean(errors.consent)}
-                      aria-describedby={
-                        errors.consent
-                          ? 'sms-disclosure consent-error'
-                          : 'sms-disclosure'
-                      }
-                      className="mt-0.5 h-6 w-6 shrink-0 cursor-pointer accent-[var(--teal-dark)] focus-visible:outline-[var(--teal-dark)] disabled:cursor-not-allowed"
-                    />
+                  <div>
                     <label
-                      htmlFor="sms-consent"
-                      className="cursor-pointer text-sm font-semibold leading-relaxed"
+                      htmlFor="sms-phone"
+                      className="text-sm font-semibold"
                     >
-                      I agree to receive the one-time verification-code text
-                      messages described above from MyMedVisit at the mobile
-                      number I provided.
+                      Mobile phone number
                     </label>
-                  </div>
-                  {errors.consent && (
+                    <input
+                      ref={phoneRef}
+                      id="sms-phone"
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
+                      required
+                      disabled={!isHydrated || lifecycleSuspended || submitting}
+                      value={phone}
+                      onChange={(event) => updatePhone(event.target.value)}
+                      aria-invalid={Boolean(errors.phone)}
+                      aria-describedby={
+                        errors.phone ? 'phone-help phone-error' : 'phone-help'
+                      }
+                      className="mt-2 w-full rounded-2xl border border-[rgba(13,27,42,0.25)] bg-white px-4 py-3 text-base outline-none transition-colors placeholder:text-slate-500 focus:border-[var(--teal-dark)] focus-visible:outline-[var(--teal-dark)] disabled:cursor-not-allowed disabled:opacity-70"
+                      placeholder="Enter a mobile number"
+                    />
                     <p
-                      id="consent-error"
-                      className="mt-3 text-sm font-semibold text-red-800"
+                      id="phone-help"
+                      className="mt-2 text-xs text-[rgba(13,27,42,0.65)]"
                     >
-                      {errors.consent}
+                      Use a mobile number that can receive SMS. Do not include
+                      health information.
                     </p>
-                  )}
+                    {errors.phone && (
+                      <p
+                        id="phone-error"
+                        className="mt-2 text-sm font-semibold text-red-800"
+                      >
+                        {errors.phone}
+                      </p>
+                    )}
+                  </div>
 
-                  <div className="mt-6 border-t border-[rgba(13,27,42,0.12)] pt-5">
-                    <div className="flex items-start gap-3">
+                  <fieldset
+                    className="rounded-2xl border border-[rgba(13,27,42,0.18)] bg-white/80 p-5"
+                    aria-describedby={
+                      errors.consent
+                        ? 'sms-disclosure consent-error'
+                        : 'sms-disclosure'
+                    }
+                  >
+                    <legend className="px-1 text-sm font-semibold">
+                      Transactional SMS consent
+                    </legend>
+                    <p
+                      id="sms-disclosure"
+                      className="text-sm leading-relaxed text-[rgba(13,27,42,0.82)]"
+                    >
+                      {/* Proposed OTP-only language; not approved for production use. */}
+                      MyMedVisit may send one-time verification codes that you
+                      request for authentication, account recovery, or
+                      confirmation of a sensitive action. Message frequency
+                      varies based on the verification requests you initiate.
+                      Message and data rates may apply. Reply STOP to opt out
+                      and HELP for help. Consent is not a condition of purchase
+                      and does not authorize advertising or promotional
+                      messages.
+                    </p>
+                    <div className="mt-4 flex items-start gap-3">
                       <input
-                        ref={attestationRef}
-                        id="authorized-number-attestation"
+                        ref={consentRef}
+                        id="sms-consent"
                         type="checkbox"
-                        checked={authorizedNumberAttestation}
-                        disabled={!isHydrated || submitting}
-                        onChange={(event) =>
-                          updateAttestation(event.target.checked)
+                        checked={consented}
+                        disabled={
+                          !isHydrated || lifecycleSuspended || submitting
                         }
-                        aria-invalid={Boolean(errors.attestation)}
+                        onChange={(event) =>
+                          updateConsent(event.target.checked)
+                        }
+                        aria-invalid={Boolean(errors.consent)}
                         aria-describedby={
-                          errors.attestation
-                            ? 'attestation-description attestation-error'
-                            : 'attestation-description'
+                          errors.consent
+                            ? 'sms-disclosure consent-error'
+                            : 'sms-disclosure'
                         }
                         className="mt-0.5 h-6 w-6 shrink-0 cursor-pointer accent-[var(--teal-dark)] focus-visible:outline-[var(--teal-dark)] disabled:cursor-not-allowed"
                       />
                       <label
-                        htmlFor="authorized-number-attestation"
+                        htmlFor="sms-consent"
                         className="cursor-pointer text-sm font-semibold leading-relaxed"
                       >
-                        {/* Proposed attestation; counsel has not approved it. */}
-                        I confirm that I am the subscriber for this mobile number,
-                        or that the subscriber has authorized me to consent to
-                        receive the one-time verification-code messages described
-                        above at this number.
+                        I agree to receive the one-time verification-code text
+                        messages described above from MyMedVisit at the mobile
+                        number I provided.
                       </label>
                     </div>
-                    <p
-                      id="attestation-description"
-                      className="mt-2 pl-9 text-xs text-[rgba(13,27,42,0.65)]"
-                    >
-                      This statement records an attestation; it does not verify
-                      ownership or possession of the number.
-                    </p>
-                    {errors.attestation && (
+                    {errors.consent && (
                       <p
-                        id="attestation-error"
+                        id="consent-error"
                         className="mt-3 text-sm font-semibold text-red-800"
                       >
-                        {errors.attestation}
+                        {errors.consent}
                       </p>
                     )}
-                  </div>
-                  <p className="mt-4 text-sm text-[rgba(13,27,42,0.72)]">
-                    Review the{' '}
-                    <Link
-                      href={SMS_CONSENT_TERMS.reference}
-                      className="rounded font-semibold text-[var(--teal-dark)] underline underline-offset-4"
-                    >
-                      Terms of Service
-                    </Link>{' '}
-                    and{' '}
-                    <Link
-                      href={SMS_CONSENT_PRIVACY.reference}
-                      className="rounded font-semibold text-[var(--teal-dark)] underline underline-offset-4"
-                    >
-                      Privacy Policy
-                    </Link>
-                    .
-                  </p>
-                </fieldset>
 
-                {validationErrorCount > 0 && (
-                  <div
-                    role="alert"
-                    aria-live="assertive"
-                    className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-900"
-                  >
-                    Please correct the highlighted field
-                    {validationErrorCount === 1 ? '' : 's'} before continuing.
-                  </div>
-                )}
-
-                {!isOnline && (
-                  <p
-                    role="status"
-                    aria-live="polite"
-                    className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-950"
-                  >
-                    You are offline. Reconnect before submitting. No consent has
-                    been sent or recorded.
-                  </p>
-                )}
-
-                {submitting && (
-                  <p
-                    role="status"
-                    aria-live="polite"
-                    className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm font-medium text-sky-950"
-                  >
-                    Submitting your choice and waiting for durable-persistence
-                    confirmation…
-                  </p>
-                )}
-
-                {phase === 'failure' && failureMessage && (
-                  <div
-                    role="alert"
-                    aria-live="assertive"
-                    className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-900"
-                  >
-                    <p>{failureMessage}</p>
-                    {canRetry && (
-                      <button
-                        type="button"
-                        onClick={retry}
-                        disabled={submitting || !isOnline || retryDelayActive}
-                        className="mt-4 rounded-full border border-red-800 px-5 py-2.5 font-semibold transition-colors hover:bg-red-900 hover:text-white focus-visible:outline-red-900 disabled:cursor-not-allowed disabled:opacity-60"
+                    <div className="mt-6 border-t border-[rgba(13,27,42,0.12)] pt-5">
+                      <div className="flex items-start gap-3">
+                        <input
+                          ref={attestationRef}
+                          id="authorized-number-attestation"
+                          type="checkbox"
+                          checked={authorizedNumberAttestation}
+                          disabled={
+                            !isHydrated || lifecycleSuspended || submitting
+                          }
+                          onChange={(event) =>
+                            updateAttestation(event.target.checked)
+                          }
+                          aria-invalid={Boolean(errors.attestation)}
+                          aria-describedby={
+                            errors.attestation
+                              ? 'attestation-description attestation-error'
+                              : 'attestation-description'
+                          }
+                          className="mt-0.5 h-6 w-6 shrink-0 cursor-pointer accent-[var(--teal-dark)] focus-visible:outline-[var(--teal-dark)] disabled:cursor-not-allowed"
+                        />
+                        <label
+                          htmlFor="authorized-number-attestation"
+                          className="cursor-pointer text-sm font-semibold leading-relaxed"
+                        >
+                          {/* Proposed attestation; counsel has not approved it. */}
+                          I confirm that I am the subscriber for this mobile
+                          number, or that the subscriber has authorized me to
+                          consent to receive the one-time verification-code
+                          messages described above at this number.
+                        </label>
+                      </div>
+                      <p
+                        id="attestation-description"
+                        className="mt-2 pl-9 text-xs text-[rgba(13,27,42,0.65)]"
                       >
-                        Try again
-                      </button>
-                    )}
-                  </div>
-                )}
+                        This statement records an attestation; it does not
+                        verify ownership or possession of the number.
+                      </p>
+                      {errors.attestation && (
+                        <p
+                          id="attestation-error"
+                          className="mt-3 text-sm font-semibold text-red-800"
+                        >
+                          {errors.attestation}
+                        </p>
+                      )}
+                    </div>
+                    <p className="mt-4 text-sm text-[rgba(13,27,42,0.72)]">
+                      Review the{' '}
+                      <Link
+                        href={SMS_CONSENT_TERMS.reference}
+                        className="rounded font-semibold text-[var(--teal-dark)] underline underline-offset-4"
+                      >
+                        Terms of Service
+                      </Link>{' '}
+                      and{' '}
+                      <Link
+                        href={SMS_CONSENT_PRIVACY.reference}
+                        className="rounded font-semibold text-[var(--teal-dark)] underline underline-offset-4"
+                      >
+                        Privacy Policy
+                      </Link>
+                      .
+                    </p>
+                  </fieldset>
 
-                <div className="flex flex-col-reverse gap-3 sm:flex-row">
-                  <button
-                    type="button"
-                    onClick={decline}
-                    disabled={!isHydrated || submitting}
-                    className="min-h-12 flex-1 rounded-full border border-[var(--ink)] px-6 py-3 text-sm font-semibold transition-colors hover:bg-[var(--ink)] hover:text-white focus-visible:outline-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    No thanks
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={
-                      !isHydrated ||
-                      submitting ||
-                      !isOnline ||
-                      (phase === 'failure' && canRetry)
-                    }
-                    className="min-h-12 flex-1 rounded-full bg-[var(--teal-dark)] px-6 py-3 text-sm font-semibold text-white shadow-[var(--shadow)] transition-colors hover:bg-[var(--ink)] focus-visible:outline-[var(--ink)] disabled:cursor-not-allowed disabled:bg-slate-500 disabled:shadow-none"
-                  >
-                    {submitting ? 'Submitting…' : 'Agree and continue'}
-                  </button>
-                </div>
+                  {validationErrorCount > 0 && (
+                    <div
+                      role="alert"
+                      aria-live="assertive"
+                      className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-900"
+                    >
+                      Please correct the highlighted field
+                      {validationErrorCount === 1 ? '' : 's'} before continuing.
+                    </div>
+                  )}
+
+                  {!isOnline && (
+                    <p
+                      role="status"
+                      aria-live="polite"
+                      className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-950"
+                    >
+                      You are offline. Reconnect before submitting. No consent
+                      has been sent or recorded.
+                    </p>
+                  )}
+
+                  {submitting && (
+                    <p
+                      role="status"
+                      aria-live="polite"
+                      className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm font-medium text-sky-950"
+                    >
+                      Submitting your choice and waiting for durable-persistence
+                      confirmation…
+                    </p>
+                  )}
+
+                  {phase === 'failure' && failureMessage && (
+                    <div
+                      role="alert"
+                      aria-live="assertive"
+                      className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-900"
+                    >
+                      <p>{failureMessage}</p>
+                      {canRetry && (
+                        <button
+                          type="button"
+                          onClick={retry}
+                          disabled={submitting || !isOnline || retryDelayActive}
+                          className="mt-4 rounded-full border border-red-800 px-5 py-2.5 font-semibold transition-colors hover:bg-red-900 hover:text-white focus-visible:outline-red-900 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          Try again
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="flex flex-col-reverse gap-3 sm:flex-row">
+                    <button
+                      type="button"
+                      onClick={decline}
+                      disabled={!isHydrated || lifecycleSuspended || submitting}
+                      className="min-h-12 flex-1 rounded-full border border-[var(--ink)] px-6 py-3 text-sm font-semibold transition-colors hover:bg-[var(--ink)] hover:text-white focus-visible:outline-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      No thanks
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={
+                        !isHydrated ||
+                        lifecycleSuspended ||
+                        submitting ||
+                        !isOnline ||
+                        (phase === 'failure' && canRetry)
+                      }
+                      className="min-h-12 flex-1 rounded-full bg-[var(--teal-dark)] px-6 py-3 text-sm font-semibold text-white shadow-[var(--shadow)] transition-colors hover:bg-[var(--ink)] focus-visible:outline-[var(--ink)] disabled:cursor-not-allowed disabled:bg-slate-500 disabled:shadow-none"
+                    >
+                      {submitting ? 'Submitting…' : 'Agree and continue'}
+                    </button>
+                  </div>
                 </form>
               </>
             )}
 
             <p className="mt-6 text-center text-sm text-[rgba(13,27,42,0.65)]">
-              Entering a number or checking either box alone does not opt you in.
-              Consent is requested only when you select Agree and continue.
+              Entering a number or checking either box alone does not opt you
+              in. Consent is requested only when you select Agree and continue.
             </p>
           </div>
         </div>

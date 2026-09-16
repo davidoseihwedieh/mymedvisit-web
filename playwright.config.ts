@@ -8,12 +8,13 @@ export default defineConfig({
   forbidOnly: true,
   retries: 0,
   workers: 1,
-  reporter: 'list',
+  reporter: [['list'], ['./tests/browser/no-skips-reporter.ts']],
   use: {
     baseURL,
     serviceWorkers: 'block',
-    trace: 'retain-on-failure',
-    screenshot: 'only-on-failure',
+    trace: 'off',
+    screenshot: 'off',
+    video: 'off',
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },

@@ -43,12 +43,12 @@ function jsonResponse(
   return new Response(
     status === 204 || status === 205 ? null : JSON.stringify(body),
     {
-    status,
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      'Cache-Control': 'private, no-store',
-      ...Object.fromEntries(new Headers(additionalHeaders)),
-    },
+      status,
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Cache-Control': 'private, no-store',
+        ...Object.fromEntries(new Headers(additionalHeaders)),
+      },
     },
   )
 }
@@ -93,41 +93,68 @@ describe('SMS consent closed request boundary', () => {
   })
 
   it.each([
-    ['false attestation', { ...wireRequest, authorizedNumberAttestation: false }],
-    ['string attestation', { ...wireRequest, authorizedNumberAttestation: 'true' }],
-    ['missing token', (() => {
-      const value: Record<string, unknown> = { ...wireRequest }
-      delete value.recaptchaToken
-      return value
-    })()],
+    [
+      'false attestation',
+      { ...wireRequest, authorizedNumberAttestation: false },
+    ],
+    [
+      'string attestation',
+      { ...wireRequest, authorizedNumberAttestation: 'true' },
+    ],
+    [
+      'missing token',
+      (() => {
+        const value: Record<string, unknown> = { ...wireRequest }
+        delete value.recaptchaToken
+        return value
+      })(),
+    ],
     ['empty token', { ...wireRequest, recaptchaToken: '' }],
     ['NUL token', { ...wireRequest, recaptchaToken: 'token\0value' }],
     ['extra root field', { ...wireRequest, consent: true }],
     ['body idempotency key', { ...wireRequest, idempotencyKey }],
-    ['extra privacy field', {
-      ...wireRequest,
-      privacy: { ...wireRequest.privacy, extra: true },
-    }],
-    ['extra terms field', {
-      ...wireRequest,
-      terms: { ...wireRequest.terms, extra: true },
-    }],
-    ['duplicate category', {
-      ...wireRequest,
-      transactionalMessageCategories: [
-        'one_time_verification_codes',
-        'one_time_verification_codes',
-      ],
-    }],
-    ['unknown category', {
-      ...wireRequest,
-      transactionalMessageCategories: ['marketing'],
-    }],
-    ['empty categories', {
-      ...wireRequest,
-      transactionalMessageCategories: [],
-    }],
-    ['control-character phone', { ...wireRequest, phoneNumber: '555\n5550123' }],
+    [
+      'extra privacy field',
+      {
+        ...wireRequest,
+        privacy: { ...wireRequest.privacy, extra: true },
+      },
+    ],
+    [
+      'extra terms field',
+      {
+        ...wireRequest,
+        terms: { ...wireRequest.terms, extra: true },
+      },
+    ],
+    [
+      'duplicate category',
+      {
+        ...wireRequest,
+        transactionalMessageCategories: [
+          'one_time_verification_codes',
+          'one_time_verification_codes',
+        ],
+      },
+    ],
+    [
+      'unknown category',
+      {
+        ...wireRequest,
+        transactionalMessageCategories: ['marketing'],
+      },
+    ],
+    [
+      'empty categories',
+      {
+        ...wireRequest,
+        transactionalMessageCategories: [],
+      },
+    ],
+    [
+      'control-character phone',
+      { ...wireRequest, phoneNumber: '555\n5550123' },
+    ],
   ])('rejects %s', (_name, value) => {
     expect(isSmsConsentWireRequest(value)).toBe(false)
   })
@@ -217,9 +244,11 @@ describe('SMS consent HTTP transport', () => {
     'rejects unsupported success-like HTTP status %s',
     async (status) => {
       const transport = createTransport(
-        vi.fn<typeof fetch>().mockResolvedValue(
-          jsonResponse(status === 204 ? null : durableReceipt, status),
-        ),
+        vi
+          .fn<typeof fetch>()
+          .mockResolvedValue(
+            jsonResponse(status === 204 ? null : durableReceipt, status),
+          ),
       )
 
       await expect(
@@ -249,17 +278,47 @@ describe('SMS consent HTTP transport', () => {
     consoleError.mockRestore()
   })
 
+  it('aborts an in-flight fetch when its lifecycle signal is invalidated', async () => {
+    let fetchSignal: AbortSignal | null = null
+    const fetcher = vi.fn<typeof fetch>((_input, init) => {
+      fetchSignal = init?.signal ?? null
+      return new Promise<Response>((_resolve, reject) => {
+        fetchSignal?.addEventListener(
+          'abort',
+          () => reject(new DOMException('Aborted', 'AbortError')),
+          { once: true },
+        )
+      })
+    })
+    const transport = createTransport(fetcher)
+    const lifecycle = new AbortController()
+
+    const result = transport
+      .submit(wireRequest, idempotencyKey, lifecycle.signal)
+      .catch((error: unknown) => error)
+    lifecycle.abort()
+
+    await expect(result).resolves.toMatchObject({ code: 'network' })
+    expect(fetcher.mock.calls[0][1]?.signal?.aborted).toBe(true)
+    expect(fetcher).toHaveBeenCalledTimes(1)
+  })
+
   it.each([
     ['missing content type', { 'Content-Type': '' }],
     ['wrong content type', { 'Content-Type': 'text/plain' }],
-    ['non-UTF-8 charset', { 'Content-Type': 'application/json; charset=iso-8859-1' }],
+    [
+      'non-UTF-8 charset',
+      { 'Content-Type': 'application/json; charset=iso-8859-1' },
+    ],
     ['missing no-store', { 'Cache-Control': '' }],
   ])('rejects a response with %s', async (_name, headers) => {
     const response = jsonResponse(durableReceipt)
     for (const [name, value] of Object.entries(headers)) {
       value ? response.headers.set(name, value) : response.headers.delete(name)
     }
-    const transport = createTransport(vi.fn<typeof fetch>().mockResolvedValue(response))
+    const transport = createTransport(
+      vi.fn<typeof fetch>().mockResolvedValue(response),
+    )
 
     await expect(
       transport.submit(wireRequest, idempotencyKey),
@@ -269,7 +328,9 @@ describe('SMS consent HTTP transport', () => {
   it('rejects a redirected response even if its body otherwise looks valid', async () => {
     const response = jsonResponse(durableReceipt)
     Object.defineProperty(response, 'redirected', { value: true })
-    const transport = createTransport(vi.fn<typeof fetch>().mockResolvedValue(response))
+    const transport = createTransport(
+      vi.fn<typeof fetch>().mockResolvedValue(response),
+    )
 
     await expect(
       transport.submit(wireRequest, idempotencyKey),
@@ -285,7 +346,9 @@ describe('SMS consent HTTP transport', () => {
         'Cache-Control': 'no-store',
       },
     })
-    const transport = createTransport(vi.fn<typeof fetch>().mockResolvedValue(response))
+    const transport = createTransport(
+      vi.fn<typeof fetch>().mockResolvedValue(response),
+    )
 
     const error = await transport
       .submit(wireRequest, idempotencyKey)
@@ -306,7 +369,9 @@ describe('SMS consent HTTP transport', () => {
       },
     })
     vi.spyOn(response, 'json').mockResolvedValue(hostileBody)
-    const transport = createTransport(vi.fn<typeof fetch>().mockResolvedValue(response))
+    const transport = createTransport(
+      vi.fn<typeof fetch>().mockResolvedValue(response),
+    )
 
     await expect(
       transport.submit(wireRequest, idempotencyKey),
@@ -364,15 +429,24 @@ describe('durable success validation', () => {
   it.each([
     ['wrong status', { ...durableReceipt, status: 'accepted' }],
     ['bad evidence prefix', { ...durableReceipt, evidenceId: 'evidence-123' }],
-    ['uppercase UUID', {
-      ...durableReceipt,
-      evidenceId: 'sce_22222222-2222-4222-8222-22222222222A',
-    }],
-    ['wrong UUID version', {
-      ...durableReceipt,
-      evidenceId: 'sce_22222222-2222-3222-8222-222222222222',
-    }],
-    ['mismatched key', { ...durableReceipt, idempotencyKey: differentIdempotencyKey }],
+    [
+      'uppercase UUID',
+      {
+        ...durableReceipt,
+        evidenceId: 'sce_22222222-2222-4222-8222-22222222222A',
+      },
+    ],
+    [
+      'wrong UUID version',
+      {
+        ...durableReceipt,
+        evidenceId: 'sce_22222222-2222-3222-8222-222222222222',
+      },
+    ],
+    [
+      'mismatched key',
+      { ...durableReceipt, idempotencyKey: differentIdempotencyKey },
+    ],
     ['extra field', { ...durableReceipt, phoneNumber }],
     ['symbol field', { ...durableReceipt, [Symbol('extra')]: true }],
     ['array', Object.assign([], durableReceipt)],
@@ -403,12 +477,12 @@ describe('durable success validation', () => {
     }
   })
 
-  it.each([
-    idempotencyKey,
-    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
-  ])('accepts lowercase UUIDv4 key %s', (value) => {
-    expect(isLowercaseUuidV4(value)).toBe(true)
-  })
+  it.each([idempotencyKey, 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'])(
+    'accepts lowercase UUIDv4 key %s',
+    (value) => {
+      expect(isLowercaseUuidV4(value)).toBe(true)
+    },
+  )
 
   it.each([
     'request-123',
@@ -460,7 +534,9 @@ describe('closed generic error contract', () => {
         .catch((caught: unknown) => caught)
 
       expect(error).toMatchObject({ code: clientCode })
-      expect(String(error)).toBe('ConsentSubmissionError: The consent request could not be completed.')
+      expect(String(error)).toBe(
+        'ConsentSubmissionError: The consent request could not be completed.',
+      )
       if (status === 503) {
         expect(error).toMatchObject({ retryAfterMs: 5_000 })
       }
@@ -474,9 +550,12 @@ describe('closed generic error contract', () => {
   ])('rejects %s', async (_name, status, code) => {
     const transport = createTransport(
       vi.fn<typeof fetch>().mockResolvedValue(
-        jsonResponse({
-          error: { code, message: 'Request could not be completed.' },
-        }, status),
+        jsonResponse(
+          {
+            error: { code, message: 'Request could not be completed.' },
+          },
+          status,
+        ),
       ),
     )
 
@@ -486,50 +565,68 @@ describe('closed generic error contract', () => {
   })
 
   it.each([
-    ['extra envelope field', {
-      error: {
-        code: 'invalid_request',
-        message: 'Request could not be completed.',
+    [
+      'extra envelope field',
+      {
+        error: {
+          code: 'invalid_request',
+          message: 'Request could not be completed.',
+        },
+        phoneNumber,
       },
-      phoneNumber,
-    }],
-    ['extra error field', {
-      error: {
-        code: 'invalid_request',
-        message: 'Request could not be completed.',
-        reason: recaptchaToken,
+    ],
+    [
+      'extra error field',
+      {
+        error: {
+          code: 'invalid_request',
+          message: 'Request could not be completed.',
+          reason: recaptchaToken,
+        },
       },
-    }],
-    ['reflected message', {
-      error: {
-        code: 'invalid_request',
-        message: `Invalid ${phoneNumber}`,
+    ],
+    [
+      'reflected message',
+      {
+        error: {
+          code: 'invalid_request',
+          message: `Invalid ${phoneNumber}`,
+        },
       },
-    }],
-    ['inherited envelope', Object.create({
-      error: {
-        code: 'invalid_request',
-        message: 'Request could not be completed.',
+    ],
+    [
+      'inherited envelope',
+      Object.create({
+        error: {
+          code: 'invalid_request',
+          message: 'Request could not be completed.',
+        },
+      }),
+    ],
+    [
+      'symbol property',
+      {
+        error: {
+          code: 'invalid_request',
+          message: 'Request could not be completed.',
+        },
+        [Symbol('correlation')]: 'secret',
       },
-    })],
-    ['symbol property', {
-      error: {
-        code: 'invalid_request',
-        message: 'Request could not be completed.',
-      },
-      [Symbol('correlation')]: 'secret',
-    }],
+    ],
   ])('rejects %s without reflecting it', (_name, value) => {
     expect(isSmsConsentErrorEnvelope(value, 400)).toBe(false)
   })
 
   it('requires the fixed Retry-After header on 503', async () => {
-    const response = jsonResponse({
-      error: {
-        code: 'consent_capture_unavailable',
-        message: 'Request could not be completed.',
+    const response = jsonResponse(
+      {
+        error: {
+          code: 'consent_capture_unavailable',
+          message: 'Request could not be completed.',
+        },
       },
-    }, 503)
+      503,
+    )
     const transport = createTransport(
       vi.fn<typeof fetch>().mockResolvedValue(response),
     )

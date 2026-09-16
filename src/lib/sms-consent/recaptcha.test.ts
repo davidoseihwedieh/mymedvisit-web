@@ -51,7 +51,10 @@ describe('reCAPTCHA Enterprise token provider', () => {
       events.push('load')
       return api
     })
-    const provider = createRecaptchaEnterpriseTokenProvider({ siteKey, loadApi })
+    const provider = createRecaptchaEnterpriseTokenProvider({
+      siteKey,
+      loadApi,
+    })
 
     await expect(provider.getToken()).resolves.toBe('attempt-local-token')
     expect(SMS_CONSENT_RECAPTCHA_ACTION).toBe('sms_consent_submit')
@@ -60,33 +63,46 @@ describe('reCAPTCHA Enterprise token provider', () => {
 
   it.each([
     ['script blocking', () => Promise.reject(new Error('blocked'))],
-    ['script readiness failure', async () => ({
-      ready() {
-        throw new Error('not ready')
-      },
-      execute: vi.fn(),
-    })],
-    ['execution rejection', async () => ({
-      ready(callback: () => void) {
-        callback()
-      },
-      execute: vi.fn().mockRejectedValue(new Error('provider rejected token')),
-    })],
-  ])('sanitizes %s without logging provider details', async (_name, loadApi) => {
-    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
-    const provider = createRecaptchaEnterpriseTokenProvider({
-      siteKey,
-      loadApi: loadApi as () => Promise<RecaptchaEnterpriseApi>,
-    })
+    [
+      'script readiness failure',
+      async () => ({
+        ready() {
+          throw new Error('not ready')
+        },
+        execute: vi.fn(),
+      }),
+    ],
+    [
+      'execution rejection',
+      async () => ({
+        ready(callback: () => void) {
+          callback()
+        },
+        execute: vi
+          .fn()
+          .mockRejectedValue(new Error('provider rejected token')),
+      }),
+    ],
+  ])(
+    'sanitizes %s without logging provider details',
+    async (_name, loadApi) => {
+      const consoleError = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {})
+      const provider = createRecaptchaEnterpriseTokenProvider({
+        siteKey,
+        loadApi: loadApi as () => Promise<RecaptchaEnterpriseApi>,
+      })
 
-    const error = await provider.getToken().catch((caught: unknown) => caught)
+      const error = await provider.getToken().catch((caught: unknown) => caught)
 
-    expect(error).toMatchObject({ code: 'captcha-unavailable' })
-    expect(String(error)).toBe(
-      'ConsentSubmissionError: Consent submission is temporarily unavailable.',
-    )
-    expect(consoleError).not.toHaveBeenCalled()
-  })
+      expect(error).toMatchObject({ code: 'captcha-unavailable' })
+      expect(String(error)).toBe(
+        'ConsentSubmissionError: Consent submission is temporarily unavailable.',
+      )
+      expect(consoleError).not.toHaveBeenCalled()
+    },
+  )
 
   it('fails safely when readiness never completes', async () => {
     vi.useFakeTimers()
@@ -102,6 +118,26 @@ describe('reCAPTCHA Enterprise token provider', () => {
 
     const result = provider.getToken().catch((caught: unknown) => caught)
     await vi.advanceTimersByTimeAsync(25)
+
+    await expect(result).resolves.toMatchObject({ code: 'captcha-unavailable' })
+    expect(execute).not.toHaveBeenCalled()
+  })
+
+  it('aborts readiness and never executes a token after lifecycle invalidation', async () => {
+    const execute = vi.fn()
+    const controller = new AbortController()
+    const provider = createRecaptchaEnterpriseTokenProvider({
+      siteKey,
+      loadApi: async () => ({
+        ready() {},
+        execute,
+      }),
+    })
+
+    const result = provider
+      .getToken(controller.signal)
+      .catch((error: unknown) => error)
+    controller.abort()
 
     await expect(result).resolves.toMatchObject({ code: 'captcha-unavailable' })
     expect(execute).not.toHaveBeenCalled()
@@ -150,9 +186,9 @@ describe('token-to-transport boundary', () => {
     }
     const client = createRecaptchaSmsConsentClient({ transport, tokenProvider })
 
-    await expect(client.submit(logicalRequest, idempotencyKey)).resolves.toEqual(
-      receipt,
-    )
+    await expect(
+      client.submit(logicalRequest, idempotencyKey),
+    ).resolves.toEqual(receipt)
 
     expect(logicalRequest).not.toHaveProperty('recaptchaToken')
     expect(receivedRequest).toEqual({
@@ -164,9 +200,11 @@ describe('token-to-transport boundary', () => {
   it('makes no API request when token acquisition fails', async () => {
     const transport: SmsConsentTransport = { submit: vi.fn() }
     const tokenProvider: RecaptchaTokenProvider = {
-      getToken: vi.fn().mockRejectedValue(
-        new Error('synthetic script failure containing private details'),
-      ),
+      getToken: vi
+        .fn()
+        .mockRejectedValue(
+          new Error('synthetic script failure containing private details'),
+        ),
     }
     const client = createRecaptchaSmsConsentClient({ transport, tokenProvider })
 
@@ -175,13 +213,35 @@ describe('token-to-transport boundary', () => {
     ).rejects.toMatchObject({ code: 'captcha-unavailable' })
     expect(transport.submit).not.toHaveBeenCalled()
   })
+
+  it('propagates one lifecycle signal across token acquisition and transport', async () => {
+    const tokenProvider: RecaptchaTokenProvider = {
+      getToken: vi.fn().mockResolvedValue('attempt-local-token'),
+    }
+    const transport: SmsConsentTransport = {
+      submit: vi.fn().mockResolvedValue(receipt),
+    }
+    const controller = new AbortController()
+    const client = createRecaptchaSmsConsentClient({ transport, tokenProvider })
+
+    await client.submit(logicalRequest, idempotencyKey, controller.signal)
+
+    expect(tokenProvider.getToken).toHaveBeenCalledWith(controller.signal)
+    expect(transport.submit).toHaveBeenCalledWith(
+      { ...logicalRequest, recaptchaToken: 'attempt-local-token' },
+      idempotencyKey,
+      controller.signal,
+    )
+  })
 })
 
 describe('literal production-disable boundary', () => {
   it('cannot be enabled by public environment values', async () => {
     const originalApiBase = process.env.NEXT_PUBLIC_SMS_CONSENT_API_BASE_URL
-    const originalSiteKey = process.env.NEXT_PUBLIC_SMS_CONSENT_RECAPTCHA_SITE_KEY
-    process.env.NEXT_PUBLIC_SMS_CONSENT_API_BASE_URL = 'https://api.invalid.example'
+    const originalSiteKey =
+      process.env.NEXT_PUBLIC_SMS_CONSENT_RECAPTCHA_SITE_KEY
+    process.env.NEXT_PUBLIC_SMS_CONSENT_API_BASE_URL =
+      'https://api.invalid.example'
     process.env.NEXT_PUBLIC_SMS_CONSENT_RECAPTCHA_SITE_KEY = 'not-a-real-key'
 
     try {
