@@ -67,6 +67,8 @@ export class BrowserSecurityMonitor {
   private readonly expectedRequestFailures: TrackedRequestFailure[] = []
   private readonly expectedConsoleErrors: TrackedConsoleError[] = []
   private readonly violations: string[] = []
+  private mainFrameRoute = 'UNAPPROVED_ROUTE'
+  private pageClosed = false
 
   constructor(
     private readonly page: Page,
@@ -81,6 +83,14 @@ export class BrowserSecurityMonitor {
     })
 
     this.page.on('request', (request) => this.inspectRequest(request))
+    this.page.on('framenavigated', (frame) => {
+      if (frame === this.page.mainFrame()) {
+        this.mainFrameRoute = safeRouteLabel(frame.url())
+      }
+    })
+    this.page.on('close', () => {
+      this.pageClosed = true
+    })
     this.page.on('console', (message) => {
       const text = message.text()
       if (text === 'MMV_BROWSER_UNHANDLED_REJECTION') {
@@ -107,6 +117,9 @@ export class BrowserSecurityMonitor {
     this.page.on('requestfailed', (request) => {
       if (!this.consumeExpectedRequestFailure(request)) {
         this.violations.push('BROWSER_REQUEST_FAILURE [request]')
+        if (process.env.MMV_BROWSER_FAILURE_DIAGNOSTICS === '1') {
+          this.writeRequestFailureDiagnostic(request)
+        }
       }
     })
   }
@@ -166,6 +179,47 @@ export class BrowserSecurityMonitor {
     }
   }
 
+  private writeRequestFailureDiagnostic(request: Request): void {
+    let url: URL
+    try {
+      url = new URL(request.url())
+    } catch {
+      process.stderr.write(
+        'MMV_BROWSER_FAILURE_DIAGNOSTIC {"rule":"BROWSER_REQUEST_URL_INVALID"}\n',
+      )
+      return
+    }
+
+    let mainFrame = false
+    let frameAttached = false
+    try {
+      const frame = request.frame()
+      mainFrame = frame === this.page.mainFrame()
+      frameAttached = !frame.isDetached()
+    } catch {
+      // A detached frame is itself useful lifecycle context; keep it redacted.
+    }
+    const failureReason = classifyFailureReason(
+      request.failure()?.errorText ?? '',
+    )
+    process.stderr.write(
+      `MMV_BROWSER_FAILURE_DIAGNOSTIC ${JSON.stringify({
+        method: request.method(),
+        origin: url.origin,
+        pathname: url.pathname,
+        queryPresent: url.search !== '',
+        fragmentPresent: url.hash !== '',
+        resourceType: request.resourceType(),
+        failureReason,
+        navigationRequest: request.isNavigationRequest(),
+        mainFrame,
+        frameAttached,
+        currentPageRoute: this.mainFrameRoute,
+        pageClosed: this.pageClosed,
+      })}\n`,
+    )
+  }
+
   private consumeExpectedRequestFailure(request: Request): boolean {
     let url
     try {
@@ -206,6 +260,27 @@ export class BrowserSecurityMonitor {
     if (candidates.length !== 1) return false
     candidates[0].consumed = true
     return true
+  }
+}
+
+function classifyFailureReason(value: string): string {
+  if (!value) return 'NO_FAILURE_REASON'
+  if (/abort|cancel/i.test(value)) return 'ABORTED_OR_CANCELLED'
+  if (/timed?\s*out|timeout/i.test(value)) return 'TIMEOUT'
+  if (/internal error/i.test(value)) return 'BROWSER_INTERNAL_ERROR'
+  if (/blocked|denied/i.test(value)) return 'BLOCKED_OR_DENIED'
+  if (/network|connection|dns|offline/i.test(value)) return 'NETWORK_FAILURE'
+  return 'OTHER_FAILURE'
+}
+
+function safeRouteLabel(value: string): string {
+  try {
+    const path = new URL(value).pathname
+    return ['/sms-opt-in', '/terms', '/privacy'].includes(path)
+      ? path
+      : 'UNAPPROVED_ROUTE'
+  } catch {
+    return 'UNAPPROVED_ROUTE'
   }
 }
 

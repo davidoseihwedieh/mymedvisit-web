@@ -402,15 +402,21 @@ test('Terms and Privacy links navigate only to their exact canonical paths', asy
   })
   const terms = consentGroup.getByRole('link', { name: /terms of service/i })
   const privacy = consentGroup.getByRole('link', { name: /privacy policy/i })
-  await expect(terms).toHaveAttribute('href', 'https://mymedvisit.app/terms')
-  await expect(privacy).toHaveAttribute(
-    'href',
-    'https://mymedvisit.app/privacy',
-  )
+  await assertCanonicalLegalLinks(page)
 
   await completeForm(page)
+  const termsResponsePromise = page.waitForResponse(
+    (response) =>
+      response.url() === 'https://mymedvisit.app/terms' &&
+      response.request().isNavigationRequest(),
+  )
   await terms.click()
+  const termsResponse = await termsResponsePromise
+  expect(termsResponse.status()).toBe(200)
   await expect(page).toHaveURL('https://mymedvisit.app/terms')
+  await expect(
+    page.getByRole('heading', { name: 'Terms and Conditions', level: 1 }),
+  ).toBeVisible()
   await page.goBack()
   await expect(
     page.getByRole('textbox', { name: /mobile phone number/i }),
@@ -428,11 +434,82 @@ test('Terms and Privacy links navigate only to their exact canonical paths', asy
 
   await page.goForward()
   await expect(page).toHaveURL('https://mymedvisit.app/terms')
+  await expect(
+    page.getByRole('heading', { name: 'Terms and Conditions', level: 1 }),
+  ).toBeVisible()
   await page.goBack()
   await expect(page).toHaveURL(`${localOrigin}/sms-opt-in`)
 
+  const privacyResponsePromise = page.waitForResponse(
+    (response) =>
+      response.url() === 'https://mymedvisit.app/privacy' &&
+      response.request().isNavigationRequest(),
+  )
   await privacy.click()
+  const privacyResponse = await privacyResponsePromise
+  expect(privacyResponse.status()).toBe(200)
   await expect(page).toHaveURL('https://mymedvisit.app/privacy')
+  await expect(
+    page.getByRole('heading', { name: 'Privacy Policy', level: 1 }),
+  ).toBeVisible()
+})
+
+test('does not permit either aborted legal-page document', async ({
+  browser,
+}) => {
+  for (const path of ['/terms', '/privacy']) {
+    const context = await browser.newContext({ baseURL: localOrigin })
+    const page = await context.newPage()
+    let intercepted = false
+    await page.route(`https://mymedvisit.app${path}`, (route) => {
+      intercepted = true
+      return route.abort('failed')
+    })
+    await page.goto('/sms-opt-in')
+    let navigationRejected = false
+    await page
+      .goto(`https://mymedvisit.app${path}`)
+      .catch(() => (navigationRejected = true))
+    expect(intercepted).toBe(true)
+    expect(navigationRejected).toBe(true)
+    expect(page.url()).toBe(`${localOrigin}/sms-opt-in`)
+    await context.close()
+  }
+})
+
+async function assertCanonicalLegalLinks(page: Page): Promise<void> {
+  const group = page.getByRole('group', {
+    name: /transactional sms consent/i,
+  })
+  await expect(
+    group.getByRole('link', { name: /terms of service/i }),
+  ).toHaveAttribute('href', 'https://mymedvisit.app/terms')
+  await expect(
+    group.getByRole('link', { name: /privacy policy/i }),
+  ).toHaveAttribute('href', 'https://mymedvisit.app/privacy')
+}
+
+test('canonical legal-link contract rejects either changed destination', async ({
+  page,
+}) => {
+  await installSyntheticBoundaries(page)
+  await page.goto('/sms-opt-in')
+  const group = page.getByRole('group', {
+    name: /transactional sms consent/i,
+  })
+  const terms = group.getByRole('link', { name: /terms of service/i })
+  await terms.evaluate((element) => {
+    element.setAttribute('href', 'https://mymedvisit.app/other-terms')
+  })
+  await expect(assertCanonicalLegalLinks(page)).rejects.toThrow()
+  await terms.evaluate((element) => {
+    element.setAttribute('href', 'https://mymedvisit.app/terms')
+  })
+  const privacy = group.getByRole('link', { name: /privacy policy/i })
+  await privacy.evaluate((element) => {
+    element.setAttribute('href', 'https://mymedvisit.app/other-privacy')
+  })
+  await expect(assertCanonicalLegalLinks(page)).rejects.toThrow()
 })
 
 async function installSyntheticBoundaries(
@@ -538,7 +615,7 @@ async function installSyntheticBoundaries(
       await route.fulfill({
         status: 200,
         contentType: 'text/html',
-        body: `<main><h1>${url.pathname === '/terms' ? 'Terms' : 'Privacy'}</h1></main>`,
+        body: `<main><h1>${url.pathname === '/terms' ? 'Terms and Conditions' : 'Privacy Policy'}</h1></main>`,
       })
       return
     }
