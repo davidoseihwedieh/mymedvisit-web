@@ -1,0 +1,23 @@
+import { configDefaults, defineConfig } from 'vitest/config'
+import path from 'node:path'
+
+export default defineConfig({
+  esbuild: {
+    jsx: 'automatic',
+  },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, 'src'),
+    },
+  },
+  test: {
+    environment: 'jsdom',
+    setupFiles: ['./vitest.setup.ts'],
+    exclude: [
+      ...configDefaults.exclude,
+      'tests/browser/**',
+      'tests/bfcache/**',
+      'tests/enforcement/**',
+    ],
+  },
+})
