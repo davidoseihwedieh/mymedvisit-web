@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { illustrations } from '@/assets/illustrations'
 import HeroSection from '@/components/HeroSection'
 import FAQProviderConsent from '@/components/FAQProviderConsent'
+import { SpecialtyWorkflows } from '@/components/SpecialtyWorkflows'
 
 const steps = [
   {
@@ -176,6 +177,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <SpecialtyWorkflows />
 
       {/* Sharing flow SVG */}
       <section className="px-6 py-16">
