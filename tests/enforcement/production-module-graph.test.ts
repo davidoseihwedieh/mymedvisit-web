@@ -14,6 +14,8 @@ import {
   SmsConsentProductionModuleGraphPlugin,
   classifyExternalReportEntry,
   classifyProductionModule,
+  isCanonicalExternalType,
+  readCanonicalExternalType,
 } from '../../scripts/production-module-graph-plugin.mjs'
 
 const require = createRequire(import.meta.url)
@@ -66,6 +68,146 @@ afterEach(async () => {
 })
 
 describe('authoritative production compiler graph enforcement', () => {
+  it.each(['commonjs', 'commonjs2', 'module', 'import', 'node-commonjs'])(
+    'accepts only the exact canonical external type %s',
+    (externalType) => {
+      expect(isCanonicalExternalType(externalType)).toBe(true)
+    },
+  )
+
+  it.each([
+    'COMMONJS',
+    'CommonJS',
+    ' commonjs',
+    'commonjs ',
+    '\tcommonjs',
+    'commonjs\n',
+    'cоmmonjs',
+    'ｃommonjs',
+    'commonjs\u0000',
+    'var',
+    '',
+    undefined,
+    null,
+    7,
+    ['commonjs'],
+    { type: 'commonjs' },
+    Object('commonjs'),
+  ])('rejects noncanonical external type %j without coercion', (value) => {
+    expect(isCanonicalExternalType(value)).toBe(false)
+  })
+
+  it.each(['commonjs', 'commonjs2', 'module', 'import', 'node-commonjs'])(
+    'still rejects forbidden vitest with canonical type %s',
+    async (externalType) => {
+      const root = await fixtureRoot()
+      await writeFile(join(root, 'entry.js'), `import 'vitest'\n`)
+      const result = await compile(root, {
+        externals: { vitest: 'commonjs vitest' },
+        mutateExternal: (module) => {
+          module.externalType = externalType
+        },
+      })
+      expect(result.hasErrors).toBe(true)
+      expect(result.rules).toContain('MODULE_GRAPH_TEST_ONLY_EXTERNAL')
+    },
+  )
+
+  it.each([
+    'COMMONJS',
+    'CommonJS',
+    ' commonjs',
+    'commonjs ',
+    '\tcommonjs',
+    'commonjs\n',
+    'cоmmonjs',
+    'ｃommonjs',
+    'commonjs\u0000',
+    'var',
+    '',
+    undefined,
+    null,
+    7,
+    ['commonjs'],
+    { type: 'commonjs' },
+    Object('commonjs'),
+  ])(
+    'rejects approved resend with malformed external type %j',
+    async (value) => {
+      const root = await fixtureRoot()
+      await writeFile(join(root, 'entry.js'), `import 'resend'\n`)
+      const result = await compile(root, {
+        externals: { resend: 'commonjs resend' },
+        mutateExternal: (module) => {
+          module.externalType = value
+        },
+      })
+      expect(result.hasErrors).toBe(true)
+      expect(result.rules).toContain('MODULE_GRAPH_UNINSPECTABLE_EXTERNAL')
+    },
+  )
+
+  it('rejects a hostile externalType getter without invoking it', () => {
+    let invoked = false
+    const externalFixture = Object.defineProperty({}, 'externalType', {
+      get() {
+        invoked = true
+        throw new Error('fixture getter')
+      },
+    })
+    expect(() => readCanonicalExternalType(externalFixture)).toThrow(
+      'UNSAFE_GETTER',
+    )
+    expect(invoked).toBe(false)
+  })
+
+  it('rejects hostile proxies without invoking proxy traps', () => {
+    let invoked = false
+    const hostileValue = new Proxy(
+      {},
+      {
+        get() {
+          invoked = true
+          throw new Error('fixture proxy')
+        },
+        getOwnPropertyDescriptor() {
+          invoked = true
+          throw new Error('fixture proxy')
+        },
+      },
+    )
+    expect(() =>
+      readCanonicalExternalType({ externalType: hostileValue }),
+    ).toThrow('UNSUPPORTED_EXTERNAL_TYPE')
+    const hostileModule = new Proxy(
+      { externalType: 'commonjs' },
+      {
+        get() {
+          invoked = true
+          throw new Error('fixture proxy')
+        },
+        getOwnPropertyDescriptor() {
+          invoked = true
+          throw new Error('fixture proxy')
+        },
+      },
+    )
+    expect(() => readCanonicalExternalType(hostileModule)).toThrow(
+      'UNSAFE_PROXY',
+    )
+    expect(invoked).toBe(false)
+  })
+
+  it('accepts an approved production external with canonical type', async () => {
+    const root = await fixtureRoot()
+    await writeFile(join(root, 'entry.js'), `import 'resend'\n`)
+    const result = await compile(root, {
+      externals: { resend: 'commonjs resend' },
+    })
+    expect(result.hasErrors).toBe(false)
+    expect(result.rules).toEqual([])
+  })
+
   it.each(['commonjs', 'commonjs2'])(
     'rejects external %s vitest during an actual production compilation',
     async (externalType) => {
@@ -146,6 +288,19 @@ describe('authoritative production compiler graph enforcement', () => {
       externals: { resend: 'commonjs resend' },
       mutateExternal: (webpackModule) => {
         webpackModule.externalType = 'unrecognized-external-kind'
+      },
+    })
+    expect(result.hasErrors).toBe(true)
+    expect(result.rules).toContain('MODULE_GRAPH_UNINSPECTABLE_EXTERNAL')
+  })
+
+  it('rejects an external module with a missing external type', async () => {
+    const root = await fixtureRoot()
+    await writeFile(join(root, 'entry.js'), `import 'resend'\n`)
+    const result = await compile(root, {
+      externals: { resend: 'commonjs resend' },
+      mutateExternal: (webpackModule) => {
+        delete webpackModule.externalType
       },
     })
     expect(result.hasErrors).toBe(true)

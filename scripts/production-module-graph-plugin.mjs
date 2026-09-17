@@ -242,6 +242,18 @@ export function classifyExternalReportEntry(entry) {
   return classifyExternalIdentity(request.identity, productionPackagePolicy())
 }
 
+export function isCanonicalExternalType(value) {
+  return typeof value === 'string' && EXTERNAL_TYPES.has(value)
+}
+
+export function readCanonicalExternalType(module) {
+  const value = readDataProperty(module, 'externalType')
+  if (!isCanonicalExternalType(value)) {
+    throw new Error('UNSUPPORTED_EXTERNAL_TYPE')
+  }
+  return value
+}
+
 export function moduleGraphReportSchema() {
   return REPORT_SCHEMA
 }
@@ -271,18 +283,14 @@ function inspectExternalModule(
   repositoryRoot = process.cwd(),
 ) {
   try {
-    const externalType = readDataProperty(compiledModule, 'externalType')
     const identifier = invokeModuleMethodStrict(compiledModule, 'identifier')
     const externalByIdentifier =
       typeof identifier === 'string' && identifier.startsWith('external ')
-    const detected = typeof externalType === 'string' || externalByIdentifier
+    const detected =
+      hasOwnDataOrAccessorProperty(compiledModule, 'externalType') ||
+      externalByIdentifier
     if (!detected) return { detected: false }
-    if (
-      typeof externalType !== 'string' ||
-      !EXTERNAL_TYPES.has(externalType.toLowerCase())
-    ) {
-      throw new Error('UNSUPPORTED_EXTERNAL_TYPE')
-    }
+    const externalType = readCanonicalExternalType(compiledModule)
 
     const rawValues = []
     for (const key of ['request', 'userRequest']) {
@@ -445,7 +453,7 @@ function inspectExternalModule(
     return {
       detected: true,
       identities: records.map(({ request, kind }) => ({
-        externalType: externalType.toLowerCase(),
+        externalType,
         identity: request.identity,
         kind,
       })),
@@ -459,6 +467,13 @@ function inspectExternalModule(
       },
     }
   }
+}
+
+function hasOwnDataOrAccessorProperty(object, key) {
+  if (!object || (typeof object !== 'object' && typeof object !== 'function'))
+    return false
+  if (utilTypes.isProxy(object)) throw new Error('UNSAFE_PROXY')
+  return Object.getOwnPropertyDescriptor(object, key) !== undefined
 }
 
 function productionPackagePolicy() {

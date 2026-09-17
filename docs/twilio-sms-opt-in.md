@@ -198,11 +198,13 @@ the client and server graphs. It classifies canonical resolved resource paths
 and inspects Webpack `ExternalModule` request metadata even when `resource` is
 absent. External request, user request, identifier, readable identifier,
 external type, and exposed dependency request metadata are normalized without
-invoking getters. The accepted Webpack external types are `commonjs`,
-`commonjs2`, `module`, `import`, and `node-commonjs`; other or ambiguous types
-fail the compilation. Traversal, loader, query, fragment, encoded, whitespace,
-control-character, case-alias, and normalization-ambiguous requests fail
-closed. A relative Webpack `userRequest` containing traversal is accepted only
+invoking getters. The accepted Webpack external types are the exact raw string
+values `commonjs`, `commonjs2`, `module`, `import`, and `node-commonjs`; type
+validation performs no trimming, case folding, Unicode normalization, or
+coercion. Missing, non-string, accessor-backed, proxied, or otherwise
+noncanonical types fail the compilation. Traversal, loader, query, fragment,
+encoded, whitespace, control-character, case-alias, and normalization-ambiguous
+requests fail closed. A relative Webpack `userRequest` containing traversal is accepted only
 when canonical resolution proves it stays inside the same approved production
 package as its external package request.
 Package externals are closed against `dependencies` in `package.json`; every
