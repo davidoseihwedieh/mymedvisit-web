@@ -583,6 +583,12 @@ test('canonical legal-link contract rejects either changed destination', async (
   const geistFont = observeLocalGeistFont(page, browserName === 'webkit')
   await installSyntheticBoundaries(page)
   await page.goto('/sms-opt-in')
+  // The submit control remains disabled until the client component hydrates.
+  // Wait for that observable app-ready condition before deliberately mutating
+  // its server-rendered legal link for the negative contract assertions.
+  await expect(
+    page.getByRole('button', { name: /agree and continue/i }),
+  ).toBeEnabled()
   await geistFont.waitUntilSettled()
   const group = page.getByRole('group', {
     name: /transactional sms consent/i,
