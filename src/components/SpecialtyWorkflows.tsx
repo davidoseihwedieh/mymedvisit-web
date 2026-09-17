@@ -192,7 +192,7 @@ export function SpecialtyWorkflows() {
                 }}
                 aria-controls="specialty-workflow-panel"
                 aria-selected={isSelected}
-                className={`group relative flex min-h-[190px] w-full flex-col items-start rounded-[24px] border p-5 text-left shadow-sm transition-[background-color,border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--teal-dark)] motion-reduce:transition-none motion-reduce:hover:transform-none sm:p-6 ${
+                className={`group relative flex min-h-[170px] w-full flex-col items-start rounded-[24px] border p-5 text-left shadow-sm transition-[background-color,border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--teal-dark)] motion-reduce:transition-none motion-reduce:hover:transform-none sm:p-6 ${
                   isSelected
                     ? 'border-[var(--teal)] bg-white shadow-[var(--shadow)] ring-1 ring-[var(--teal)]/15'
                     : 'border-white/80 bg-white/65 hover:border-[rgba(10,126,164,0.3)]'
