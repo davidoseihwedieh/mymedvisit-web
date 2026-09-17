@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { SpecialtyWorkflows } from './SpecialtyWorkflows'
 
 describe('SpecialtyWorkflows', () => {
-  it('presents three equal specialty applications and labels examples synthetic', () => {
+  it('presents four equal specialty applications and labels examples synthetic', () => {
     render(<SpecialtyWorkflows />)
 
     expect(
@@ -20,7 +20,16 @@ describe('SpecialtyWorkflows', () => {
       'specialty-tab-oncology',
       'specialty-tab-exercise-recovery',
       'specialty-tab-orthopaedics',
+      'specialty-tab-cardiovascular',
     ])
+    for (const name of [
+      'Oncology',
+      'Exercise & Recovery',
+      'Orthopaedics',
+      'Cardiovascular',
+    ]) {
+      expect(screen.getByRole('tab', { name: new RegExp(name) })).toBeVisible()
+    }
     expect(
       tabs.filter((tab) => tab.getAttribute('aria-selected') === 'true'),
     ).toHaveLength(1)
@@ -49,12 +58,15 @@ describe('SpecialtyWorkflows', () => {
     const oncology = screen.getByRole('tab', { name: /Oncology/i })
     const exercise = screen.getByRole('tab', { name: /Exercise & Recovery/i })
     const orthopaedics = screen.getByRole('tab', { name: /Orthopaedics/i })
+    const cardiovascular = screen.getByRole('tab', {
+      name: /Cardiovascular/i,
+    })
     const tablist = screen.getByRole('tablist', {
       name: 'Select a specialty workflow',
     })
     const panel = screen.getByRole('tabpanel')
 
-    expect(within(tablist).getAllByRole('tab')).toHaveLength(3)
+    expect(within(tablist).getAllByRole('tab')).toHaveLength(4)
     expect(oncology).toHaveAttribute('aria-controls', panel.id)
     expect(panel).toHaveAttribute('aria-labelledby', oncology.id)
 
@@ -80,6 +92,31 @@ describe('SpecialtyWorkflows', () => {
       ),
     ).toBeVisible()
 
+    fireEvent.click(orthopaedics)
+    expect(
+      screen.getByText(/Pain, mobility, function, postoperative recovery/i),
+    ).toBeVisible()
+
+    fireEvent.click(cardiovascular)
+    expect(cardiovascular).toHaveAttribute('aria-selected', 'true')
+    expect(
+      screen.getByRole('heading', { name: 'Cardiovascular', level: 3 }),
+    ).toBeVisible()
+    expect(
+      screen.getByText(
+        /Longitudinal symptoms, functional tolerance, medication-related observations, recovery patterns/i,
+      ),
+    ).toBeVisible()
+    expect(screen.getByText('Functional tolerance')).toBeVisible()
+    expect(screen.getByText('Medication-related observations')).toBeVisible()
+
+    fireEvent.keyDown(cardiovascular, { key: 'ArrowRight' })
+    expect(oncology).toHaveFocus()
+    expect(oncology).toHaveAttribute('aria-selected', 'true')
+    fireEvent.keyDown(oncology, { key: 'End' })
+    expect(cardiovascular).toHaveFocus()
+    expect(cardiovascular).toHaveAttribute('aria-selected', 'true')
+
     fireEvent.click(oncology)
     expect(oncology).toHaveAttribute('aria-selected', 'true')
     expect(
@@ -91,11 +128,22 @@ describe('SpecialtyWorkflows', () => {
     const { container } = render(<SpecialtyWorkflows />)
 
     expect(
-      screen.getByText(/Three applications, one shared platform/i),
+      screen.getByText(/Four applications, one shared platform/i),
     ).toBeVisible()
     expect(
       screen.getByText(/observations, change over time, prioritization/i),
     ).toBeVisible()
-    expect((await axe(container)).violations).toEqual([])
+
+    for (const name of [
+      'Oncology',
+      'Exercise & Recovery',
+      'Orthopaedics',
+      'Cardiovascular',
+    ]) {
+      const tab = screen.getByRole('tab', { name: new RegExp(name) })
+      fireEvent.click(tab)
+      expect(tab).toHaveAttribute('aria-selected', 'true')
+      expect((await axe(container)).violations).toEqual([])
+    }
   })
 })

@@ -57,6 +57,24 @@ const workflows = [
     ],
     accent: 'orthopaedics',
   },
+  {
+    id: 'cardiovascular',
+    name: 'Cardiovascular',
+    description:
+      'Longitudinal symptoms, functional tolerance, medication-related observations, recovery patterns, and meaningful changes between encounters.',
+    signals: [
+      'Longitudinal symptoms',
+      'Functional tolerance',
+      'Medication-related observations',
+      'Recovery patterns',
+    ],
+    example: [
+      { label: 'Observation', value: 'Everyday experience described' },
+      { label: 'Change over time', value: 'Context organized for review' },
+      { label: 'Care-team workflow', value: 'Information ready to consider' },
+    ],
+    accent: 'cardiovascular',
+  },
 ] as const
 
 function WorkflowMark({
@@ -81,6 +99,11 @@ function WorkflowMark({
       <>
         <path d="M8 4a2.5 2.5 0 1 0-3.5 3.5l7.9 7.9a2.5 2.5 0 1 0 3.5-3.5L8 4Z" />
         <path d="M16 20a2.5 2.5 0 1 0 3.5-3.5l-2.2-2.2" />
+      </>
+    ),
+    cardiovascular: (
+      <>
+        <path d="M12 20s-7-4.4-9-9.1C1.3 6.8 6.5 3.2 10 6.3L12 8l2-1.7c3.5-3.1 8.7.5 7 4.6C19 15.6 12 20 12 20Z" />
       </>
     ),
   }
@@ -137,7 +160,7 @@ export function SpecialtyWorkflows() {
       <div className="mx-auto max-w-6xl">
         <div className="max-w-3xl">
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--teal-dark)]">
-            Three applications, one shared platform
+            Four applications, one shared platform
           </p>
           <h2
             className="mt-4 font-[var(--font-fraunces)] text-4xl leading-tight tracking-tight sm:text-5xl"
@@ -156,7 +179,7 @@ export function SpecialtyWorkflows() {
 
         <div
           aria-label="Select a specialty workflow"
-          className="mt-10 grid gap-4 md:grid-cols-3"
+          className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
           role="tablist"
         >
           {workflows.map((workflow, index) => {

@@ -11,6 +11,7 @@ const specialties = [
   { id: 'oncology', name: 'Oncology' },
   { id: 'exercise-recovery', name: 'Exercise & Recovery' },
   { id: 'orthopaedics', name: 'Orthopaedics' },
+  { id: 'cardiovascular', name: 'Cardiovascular' },
 ] as const
 
 async function returnToPageTop(page: Page) {
@@ -59,6 +60,36 @@ test('platform homepage reflows and shows every specialty with synthetic example
       await expect(panel).toContainText(
         'Synthetic example · not a patient record',
       )
+      if (specialty.id === 'cardiovascular') {
+        await expect(panel).toContainText(
+          'Longitudinal symptoms, functional tolerance, medication-related observations, recovery patterns, and meaningful changes between encounters.',
+        )
+      }
+
+      const cardLayout = await page
+        .getByRole('tablist', { name: 'Select a specialty workflow' })
+        .getByRole('tab')
+        .evaluateAll((tabs) =>
+          tabs.map((tab) => {
+            const bounds = tab.getBoundingClientRect()
+            return {
+              x: Math.round(bounds.x),
+              y: Math.round(bounds.y),
+              width: Math.round(bounds.width),
+            }
+          }),
+        )
+      const expectedColumns =
+        viewport.width >= 1280 ? 4 : viewport.width >= 640 ? 2 : 1
+      expect(new Set(cardLayout.map((card) => card.y)).size).toBe(
+        Math.ceil(specialties.length / expectedColumns),
+      )
+      for (let row = 0; row < cardLayout.length; row += expectedColumns) {
+        const widths = cardLayout
+          .slice(row, row + expectedColumns)
+          .map((card) => card.width)
+        expect(Math.max(...widths) - Math.min(...widths)).toBeLessThanOrEqual(1)
+      }
 
       const dimensions = await page.evaluate(() => ({
         viewportWidth: window.innerWidth,

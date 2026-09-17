@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import Home from './page'
 
 describe('homepage platform narrative', () => {
-  it('presents the shared workflow, dyadic model, and three equal specialty applications', () => {
+  it('presents the shared workflow, dyadic model, and four equal specialty applications', () => {
     render(<Home />)
 
     expect(
@@ -36,7 +36,10 @@ describe('homepage platform narrative', () => {
     const tablist = screen.getByRole('tablist', {
       name: 'Select a specialty workflow',
     })
-    expect(within(tablist).getAllByRole('tab')).toHaveLength(3)
+    expect(within(tablist).getAllByRole('tab')).toHaveLength(4)
+    expect(
+      within(tablist).getByRole('tab', { name: 'Cardiovascular' }),
+    ).toBeVisible()
     expect(
       screen.queryByText(/most developed|concept workflow|in development/i),
     ).not.toBeInTheDocument()
