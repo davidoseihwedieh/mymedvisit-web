@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { SpecialtyWorkflows } from './SpecialtyWorkflows'
 
 describe('SpecialtyWorkflows', () => {
-  it('presents Oncology as the most developed pathway and labels other paths in development', () => {
+  it('presents three equal specialty applications and labels examples synthetic', () => {
     render(<SpecialtyWorkflows />)
 
     expect(
@@ -12,21 +12,38 @@ describe('SpecialtyWorkflows', () => {
         name: 'One platform. Specialty-specific intelligence.',
       }),
     ).toBeInTheDocument()
+
+    const tabs = within(
+      screen.getByRole('tablist', { name: 'Select a specialty workflow' }),
+    ).getAllByRole('tab')
+    expect(tabs.map((tab) => tab.id)).toEqual([
+      'specialty-tab-oncology',
+      'specialty-tab-exercise-recovery',
+      'specialty-tab-orthopaedics',
+    ])
     expect(
-      screen.getByRole('tab', { name: /Oncology.*Most developed pathway/i }),
-    ).toHaveAttribute('aria-selected', 'true')
+      tabs.filter((tab) => tab.getAttribute('aria-selected') === 'true'),
+    ).toHaveLength(1)
+
+    for (const label of [
+      /most developed/i,
+      /concept workflow/i,
+      /in development/i,
+      /clinically validated/i,
+    ]) {
+      expect(screen.queryByText(label)).not.toBeInTheDocument()
+    }
     expect(
-      screen.getByRole('tab', { name: /Exercise & Recovery.*in development/i }),
-    ).toBeVisible()
+      screen.getAllByText('Synthetic example · not a patient record'),
+    ).toHaveLength(1)
     expect(
-      screen.getByRole('tab', { name: /Orthopaedics.*in development/i }),
-    ).toBeVisible()
-    expect(
-      screen.getByText(/Synthetic example · not a patient record/),
+      screen.getByText(
+        /do not represent clinical validation, active deployment/i,
+      ),
     ).toBeVisible()
   })
 
-  it('selects workflows by click and keyboard while keeping the panel relationship accessible', () => {
+  it('keeps all specialty details selectable by click and keyboard', () => {
     render(<SpecialtyWorkflows />)
 
     const oncology = screen.getByRole('tab', { name: /Oncology/i })
@@ -49,6 +66,9 @@ describe('SpecialtyWorkflows', () => {
     expect(
       screen.getByRole('heading', { name: 'Orthopaedics', level: 3 }),
     ).toBeVisible()
+    expect(
+      screen.getByText(/Pain, mobility, function, postoperative recovery/i),
+    ).toBeVisible()
     expect(orthopaedics).toHaveAttribute('aria-controls', panel.id)
     expect(panel).toHaveAttribute('aria-labelledby', orthopaedics.id)
 
@@ -56,23 +76,26 @@ describe('SpecialtyWorkflows', () => {
     expect(exercise).toHaveAttribute('aria-selected', 'true')
     expect(
       screen.getByText(
-        /exertional symptoms, recovery, and activity tolerance/i,
+        /Exertional symptoms, activity tolerance, recovery patterns/i,
       ),
+    ).toBeVisible()
+
+    fireEvent.click(oncology)
+    expect(oncology).toHaveAttribute('aria-selected', 'true')
+    expect(
+      screen.getByText(/Treatment-related symptoms, patient and caregiver/i),
     ).toBeVisible()
   })
 
-  it('exposes the shared four-step architecture and has no axe violations', async () => {
+  it('exposes the full platform explanation and has no axe violations', async () => {
     const { container } = render(<SpecialtyWorkflows />)
-    const architecture = screen.getByRole('list', {
-      name: 'Shared architecture flow',
-    })
 
-    expect(within(architecture).getByText('Voice observations')).toBeVisible()
-    expect(within(architecture).getByText('Longitudinal change')).toBeVisible()
     expect(
-      within(architecture).getByText('Clinical prioritization'),
+      screen.getByText(/Three applications, one shared platform/i),
     ).toBeVisible()
-    expect(within(architecture).getByText('Care-team action')).toBeVisible()
+    expect(
+      screen.getByText(/observations, change over time, prioritization/i),
+    ).toBeVisible()
     expect((await axe(container)).violations).toEqual([])
   })
 })

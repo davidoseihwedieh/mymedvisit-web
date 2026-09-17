@@ -6,74 +6,56 @@ const workflows = [
   {
     id: 'oncology',
     name: 'Oncology',
-    maturity: 'Most developed pathway',
     description:
-      'Treatment-toxicity observations can be viewed over time, including reports from patients and caregivers, to help bring meaningful changes into the care-team conversation.',
+      'Treatment-related symptoms, patient and caregiver observations, longitudinal change, prioritization, and care-team review.',
     signals: [
-      'Treatment toxicity',
-      'Patient + caregiver voice',
-      'Patient/caregiver escalation',
+      'Treatment-related symptoms',
+      'Patient + caregiver observations',
+      'Change and care-team review',
     ],
     example: [
-      { label: 'Voice observation', value: 'Treatment side effect noted' },
-      { label: 'Longitudinal change', value: 'A new change is surfaced' },
-      { label: 'Care-team action', value: 'Context ready for review' },
+      { label: 'Observation', value: 'Treatment-related symptom noted' },
+      { label: 'Change over time', value: 'Context organized for review' },
+      { label: 'Care-team workflow', value: 'Information ready to consider' },
     ],
     accent: 'oncology',
   },
   {
     id: 'exercise-recovery',
     name: 'Exercise & Recovery',
-    maturity: 'Concept workflow · in development',
     description:
-      'A concept for bringing exertional symptoms, recovery, and activity tolerance into one longitudinal view.',
-    signals: ['Exertional symptoms', 'Recovery patterns', 'Activity tolerance'],
+      'Exertional symptoms, activity tolerance, recovery patterns, and meaningful changes over time.',
+    signals: [
+      'Exertional symptoms',
+      'Activity tolerance',
+      'Recovery over time',
+    ],
     example: [
-      { label: 'Voice observation', value: 'Effort and symptoms described' },
-      { label: 'Longitudinal change', value: 'Recovery compared over time' },
-      { label: 'Care-team action', value: 'Context ready for review' },
+      { label: 'Observation', value: 'Activity experience described' },
+      { label: 'Change over time', value: 'Recovery context organized' },
+      { label: 'Care-team workflow', value: 'Information ready to consider' },
     ],
     accent: 'exercise',
   },
   {
     id: 'orthopaedics',
     name: 'Orthopaedics',
-    maturity: 'Concept workflow · in development',
     description:
-      'A concept for following postoperative recovery, mobility, wound concerns, and implant-related change over time.',
+      'Pain, mobility, function, postoperative recovery, wound concerns, and implant-related changes between encounters.',
     signals: [
+      'Pain, mobility, and function',
       'Postoperative recovery',
-      'Mobility + wound concerns',
-      'Implant-related change',
+      'Wound or implant-related change',
     ],
     example: [
-      { label: 'Voice observation', value: 'Mobility or recovery described' },
+      { label: 'Observation', value: 'Recovery experience described' },
       {
-        label: 'Longitudinal change',
-        value: 'A change is organized over time',
+        label: 'Change over time',
+        value: 'Context organized for review',
       },
-      { label: 'Care-team action', value: 'Context ready for review' },
+      { label: 'Care-team workflow', value: 'Information ready to consider' },
     ],
     accent: 'orthopaedics',
-  },
-] as const
-
-const architecture = [
-  {
-    title: 'Voice observations',
-    description: 'Patient and caregiver context',
-  },
-  {
-    title: 'Longitudinal change',
-    description: 'Signals considered over time',
-  },
-  {
-    title: 'Clinical prioritization',
-    description: 'Changes organized for review',
-  },
-  {
-    title: 'Care-team action',
-    description: 'A clearer starting point for follow-up',
   },
 ] as const
 
@@ -155,7 +137,7 @@ export function SpecialtyWorkflows() {
       <div className="mx-auto max-w-6xl">
         <div className="max-w-3xl">
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--teal-dark)]">
-            One voice-first foundation
+            Three applications, one shared platform
           </p>
           <h2
             className="mt-4 font-[var(--font-fraunces)] text-4xl leading-tight tracking-tight sm:text-5xl"
@@ -164,9 +146,11 @@ export function SpecialtyWorkflows() {
             One platform. Specialty-specific intelligence.
           </h2>
           <p className="mt-5 max-w-2xl text-base leading-relaxed text-[rgba(13,27,42,0.7)] sm:text-lg">
-            Explore how the same architecture can organize a voice observation
-            into longitudinal context and a useful starting point for care-team
-            review.
+            Each specialty brings its own clinical context to the same platform
+            foundation: observations, change over time, prioritization, and
+            care-team review. These examples are synthetic and do not represent
+            clinical validation, active deployment, or institutional
+            partnership.
           </p>
         </div>
 
@@ -177,7 +161,6 @@ export function SpecialtyWorkflows() {
         >
           {workflows.map((workflow, index) => {
             const isSelected = workflow.id === selected.id
-            const isPrimary = workflow.id === 'oncology'
             return (
               <button
                 key={workflow.id}
@@ -187,13 +170,9 @@ export function SpecialtyWorkflows() {
                 aria-controls="specialty-workflow-panel"
                 aria-selected={isSelected}
                 className={`group relative flex min-h-[190px] w-full flex-col items-start rounded-[24px] border p-5 text-left shadow-sm transition-[background-color,border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--teal-dark)] motion-reduce:transition-none motion-reduce:hover:transform-none sm:p-6 ${
-                  isPrimary
-                    ? isSelected
-                      ? 'border-[var(--teal)] bg-white shadow-[0_14px_40px_rgba(10,126,164,0.14)] ring-1 ring-[var(--teal)]/20'
-                      : 'border-[rgba(10,126,164,0.28)] bg-white/90'
-                    : isSelected
-                      ? 'border-[var(--teal)] bg-white shadow-[var(--shadow)] ring-1 ring-[var(--teal)]/15'
-                      : 'border-white/80 bg-white/65 hover:border-[rgba(10,126,164,0.3)]'
+                  isSelected
+                    ? 'border-[var(--teal)] bg-white shadow-[var(--shadow)] ring-1 ring-[var(--teal)]/15'
+                    : 'border-white/80 bg-white/65 hover:border-[rgba(10,126,164,0.3)]'
                 }`}
                 id={`specialty-tab-${workflow.id}`}
                 onClick={() => setSelectedId(workflow.id)}
@@ -202,26 +181,11 @@ export function SpecialtyWorkflows() {
                 tabIndex={isSelected ? 0 : -1}
                 type="button"
               >
-                <span
-                  className={`mb-5 inline-flex h-11 w-11 items-center justify-center rounded-2xl ${
-                    isPrimary
-                      ? 'bg-[var(--teal)] text-white'
-                      : 'bg-[var(--sky)] text-[var(--teal-dark)]'
-                  }`}
-                >
+                <span className="mb-5 inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--sky)] text-[var(--teal-dark)]">
                   <WorkflowMark kind={workflow.accent} />
                 </span>
                 <span className="text-xl font-semibold tracking-tight text-[var(--ink)]">
                   {workflow.name}
-                </span>
-                <span
-                  className={`mt-2 text-xs font-semibold uppercase tracking-[0.12em] ${
-                    isPrimary
-                      ? 'text-[var(--teal-dark)]'
-                      : 'text-[rgba(13,27,42,0.58)]'
-                  }`}
-                >
-                  {workflow.maturity}
                 </span>
                 {isSelected && (
                   <span className="sr-only" aria-live="polite">
@@ -242,7 +206,7 @@ export function SpecialtyWorkflows() {
         >
           <div className="flex flex-col justify-center">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--teal-dark)]">
-              {selected.maturity}
+              Specialty application
             </p>
             <h3 className="mt-3 font-[var(--font-fraunces)] text-3xl leading-tight sm:text-4xl">
               {selected.name}
@@ -306,39 +270,6 @@ export function SpecialtyWorkflows() {
               ))}
             </ol>
           </div>
-        </div>
-
-        <div className="mt-10">
-          <p className="text-center text-xs font-semibold uppercase tracking-[0.22em] text-[var(--teal-dark)]">
-            Shared architecture
-          </p>
-          <ol
-            aria-label="Shared architecture flow"
-            className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
-          >
-            {architecture.map((step, index) => (
-              <li
-                className="relative rounded-[20px] border border-white/80 bg-white/65 p-4 sm:p-5"
-                key={step.title}
-              >
-                <span className="text-xs font-semibold tabular-nums text-[var(--teal-dark)]">
-                  0{index + 1}
-                </span>
-                <h3 className="mt-2 font-semibold text-[var(--ink)]">
-                  {step.title}
-                </h3>
-                <p className="mt-1 text-sm leading-relaxed text-[rgba(13,27,42,0.62)]">
-                  {step.description}
-                </p>
-                {index < architecture.length - 1 && (
-                  <span
-                    aria-hidden="true"
-                    className="absolute -right-2 top-1/2 z-10 hidden h-4 w-4 -translate-y-1/2 rotate-45 border-r border-t border-[rgba(10,126,164,0.35)] lg:block"
-                  />
-                )}
-              </li>
-            ))}
-          </ol>
         </div>
       </div>
     </section>
