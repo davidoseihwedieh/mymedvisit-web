@@ -1,4 +1,4 @@
-import { type Page, type Route } from '@playwright/test'
+import { type Page, type Request, type Route } from '@playwright/test'
 import { BrowserSecurityMonitor, expect, test } from './security-fixture'
 
 const phoneNumber = '+12025550123'
@@ -394,8 +394,10 @@ test('reflows at mobile, 200%, and 400% zoom-equivalent widths', async ({
 test('Terms and Privacy links navigate only to their exact canonical paths', async ({
   page,
 }) => {
+  const geistFont = observeLocalGeistFont(page)
   await installSyntheticBoundaries(page)
   await page.goto('/sms-opt-in')
+  await geistFont.waitUntilSettled()
 
   const consentGroup = page.getByRole('group', {
     name: /transactional sms consent/i,
@@ -432,6 +434,7 @@ test('Terms and Privacy links navigate only to their exact canonical paths', asy
     }),
   ).not.toBeChecked()
 
+  await geistFont.waitUntilSettled()
   await page.goForward()
   await expect(page).toHaveURL('https://mymedvisit.app/terms')
   await expect(
@@ -440,6 +443,7 @@ test('Terms and Privacy links navigate only to their exact canonical paths', asy
   await page.goBack()
   await expect(page).toHaveURL(`${localOrigin}/sms-opt-in`)
 
+  await geistFont.waitUntilSettled()
   const privacyResponsePromise = page.waitForResponse(
     (response) =>
       response.url() === 'https://mymedvisit.app/privacy' &&
@@ -460,12 +464,14 @@ test('does not permit either aborted legal-page document', async ({
   for (const path of ['/terms', '/privacy']) {
     const context = await browser.newContext({ baseURL: localOrigin })
     const page = await context.newPage()
+    const geistFont = observeLocalGeistFont(page)
     let intercepted = false
     await page.route(`https://mymedvisit.app${path}`, (route) => {
       intercepted = true
       return route.abort('failed')
     })
     await page.goto('/sms-opt-in')
+    await geistFont.waitUntilSettled()
     let navigationRejected = false
     await page
       .goto(`https://mymedvisit.app${path}`)
@@ -489,11 +495,87 @@ async function assertCanonicalLegalLinks(page: Page): Promise<void> {
   ).toHaveAttribute('href', 'https://mymedvisit.app/privacy')
 }
 
+function observeLocalGeistFont(page: Page): {
+  waitUntilSettled: () => Promise<void>
+} {
+  const pending = new Set<Request>()
+  const responseStatuses: number[] = []
+  let requestsSeen = 0
+  let failed = false
+
+  const isGeistFont = (request: Request): boolean => {
+    try {
+      const url = new URL(request.url())
+      return (
+        url.origin === localOrigin &&
+        url.pathname === '/__nextjs_font/geist-latin.woff2' &&
+        url.search === '' &&
+        url.hash === '' &&
+        request.resourceType() === 'font'
+      )
+    } catch {
+      return false
+    }
+  }
+
+  page.on('request', (request) => {
+    if (isGeistFont(request)) {
+      requestsSeen += 1
+      pending.add(request)
+    }
+  })
+  page.on('requestfinished', (request) => {
+    if (isGeistFont(request) && pending.delete(request)) {
+      void request.response().then((response) => {
+        responseStatuses.push(response?.status() ?? 0)
+      })
+    }
+  })
+  page.on('requestfailed', (request) => {
+    if (isGeistFont(request)) {
+      failed = true
+      pending.delete(request)
+    }
+  })
+
+  return {
+    async waitUntilSettled() {
+      const fontsReady = await page.evaluate(async (timeoutMs) => {
+        return new Promise<boolean>((resolve) => {
+          const timeoutId = window.setTimeout(() => resolve(false), timeoutMs)
+          void document.fonts.ready.then(
+            () => {
+              window.clearTimeout(timeoutId)
+              resolve(true)
+            },
+            () => {
+              window.clearTimeout(timeoutId)
+              resolve(false)
+            },
+          )
+        })
+      }, 5000)
+      expect(fontsReady).toBe(true)
+      await expect
+        .poll(() => requestsSeen, { timeout: 10000 })
+        .toBeGreaterThan(0)
+      await expect.poll(() => pending.size, { timeout: 10000 }).toBe(0)
+      await expect
+        .poll(() => responseStatuses.length, { timeout: 10000 })
+        .toBe(requestsSeen)
+      expect(failed).toBe(false)
+      expect(responseStatuses.every((status) => status === 200)).toBe(true)
+    },
+  }
+}
+
 test('canonical legal-link contract rejects either changed destination', async ({
   page,
 }) => {
+  const geistFont = observeLocalGeistFont(page)
   await installSyntheticBoundaries(page)
   await page.goto('/sms-opt-in')
+  await geistFont.waitUntilSettled()
   const group = page.getByRole('group', {
     name: /transactional sms consent/i,
   })

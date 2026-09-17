@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import type { Page } from '@playwright/test'
 import {
   BrowserSecurityError,
@@ -138,6 +138,64 @@ describe('exact browser security monitor allowances', () => {
     expect(error.message).toBe('BROWSER_DIAGNOSTIC_REDACTED [page]')
     assertNoCanaries(error.message)
   })
+
+  it('writes only opt-in redacted request-failure metadata', async () => {
+    const { page } = await harness()
+    const previous = process.env.MMV_BROWSER_FAILURE_DIAGNOSTICS
+    process.env.MMV_BROWSER_FAILURE_DIAGNOSTICS = '1'
+    const write = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation((() => true) as typeof process.stderr.write)
+    try {
+      page.failedRequest({
+        failureReason: diagnosticCanaries.join('|'),
+        url: `https://capture.invalid/assets/font.woff2?${diagnosticCanaries[5]}#${diagnosticCanaries[6]}`,
+      })
+      expect(write).toHaveBeenCalledOnce()
+      const line = String(write.mock.calls[0][0])
+      const record = JSON.parse(
+        line.slice('MMV_BROWSER_FAILURE_DIAGNOSTIC '.length),
+      ) as Record<string, unknown>
+      expect(record).toMatchObject({
+        method: 'POST',
+        origin: 'https://capture.invalid',
+        pathname: '/assets/font.woff2',
+        queryPresent: true,
+        fragmentPresent: true,
+        resourceType: 'fetch',
+        failureReason: 'OTHER_FAILURE',
+        navigationRequest: false,
+        currentPageRoute: 'UNAPPROVED_ROUTE',
+        pageClosed: false,
+      })
+      assertNoCanaries(line)
+    } finally {
+      write.mockRestore()
+      if (previous === undefined) {
+        delete process.env.MMV_BROWSER_FAILURE_DIAGNOSTICS
+      } else {
+        process.env.MMV_BROWSER_FAILURE_DIAGNOSTICS = previous
+      }
+    }
+  })
+
+  it('does not write request-failure metadata unless explicitly enabled', async () => {
+    const { page } = await harness()
+    const previous = process.env.MMV_BROWSER_FAILURE_DIAGNOSTICS
+    delete process.env.MMV_BROWSER_FAILURE_DIAGNOSTICS
+    const write = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation((() => true) as typeof process.stderr.write)
+    try {
+      page.failedRequest()
+      expect(write).not.toHaveBeenCalled()
+    } finally {
+      write.mockRestore()
+      if (previous !== undefined) {
+        process.env.MMV_BROWSER_FAILURE_DIAGNOSTICS = previous
+      }
+    }
+  })
 })
 
 class FakePage {
@@ -175,6 +233,7 @@ class FakePage {
       }),
       method: () => override.method ?? exactAllowance.method,
       resourceType: () => override.resourceType ?? exactAllowance.resourceType,
+      isNavigationRequest: () => false,
       url: () =>
         override.url ?? `${exactAllowance.origin}${exactAllowance.pathname}`,
     }

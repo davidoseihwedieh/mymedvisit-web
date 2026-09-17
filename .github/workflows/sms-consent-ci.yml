@@ -74,8 +74,6 @@ jobs:
       - name: Install selected Playwright browser
         run: npx playwright install --with-deps ${{ matrix.browser }}
       - name: Run security browser suite with zero skips
-        env:
-          MMV_BROWSER_FAILURE_DIAGNOSTICS: ${{ matrix.browser == 'webkit' && '1' || '0' }}
         run: npm run test:browser -- --project=${{ matrix.browser }}
       - name: Build for real BFCache observation
         if: matrix.browser == 'chromium'
