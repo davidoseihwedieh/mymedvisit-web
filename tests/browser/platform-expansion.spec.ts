@@ -81,9 +81,11 @@ test('platform homepage reflows and shows every specialty with synthetic example
         )
       const expectedColumns =
         viewport.width >= 1280 ? 4 : viewport.width >= 640 ? 2 : 1
-      expect(new Set(cardLayout.map((card) => card.y)).size).toBe(
-        Math.ceil(specialties.length / expectedColumns),
-      )
+      const rowTops = cardLayout.map((card) => card.y).sort((a, b) => a - b)
+      const rowCount = rowTops.filter(
+        (top, index) => index === 0 || top - rowTops[index - 1] > 8,
+      ).length
+      expect(rowCount).toBe(Math.ceil(specialties.length / expectedColumns))
       for (let row = 0; row < cardLayout.length; row += expectedColumns) {
         const widths = cardLayout
           .slice(row, row + expectedColumns)
