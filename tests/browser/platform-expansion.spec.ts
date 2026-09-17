@@ -1,3 +1,4 @@
+import { type Page } from '@playwright/test'
 import { expect, test } from './security-fixture'
 
 const viewports = [
@@ -11,6 +12,19 @@ const specialties = [
   { id: 'exercise-recovery', name: 'Exercise & Recovery' },
   { id: 'orthopaedics', name: 'Orthopaedics' },
 ] as const
+
+async function returnToPageTop(page: Page) {
+  const scrollTop = await page.evaluate(() => {
+    document.documentElement.style.scrollBehavior = 'auto'
+    document.body.style.scrollBehavior = 'auto'
+    const scrollingElement = document.scrollingElement
+    if (scrollingElement) scrollingElement.scrollTop = 0
+    window.scrollTo(0, 0)
+    return scrollingElement?.scrollTop ?? window.scrollY
+  })
+
+  expect(scrollTop).toBe(0)
+}
 
 test('platform homepage reflows and shows every specialty with synthetic examples', async ({
   page,
@@ -77,11 +91,7 @@ test('platform homepage reflows and shows every specialty with synthetic example
         ),
       ).toBe(true)
 
-      await page.evaluate(() => {
-        document.documentElement.style.scrollBehavior = 'auto'
-        window.scrollTo(0, 0)
-      })
-      await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0)
+      await returnToPageTop(page)
 
       await page.screenshot({
         path: testInfo.outputPath(`${viewport.label}-${specialty.id}.png`),
@@ -116,8 +126,7 @@ test('platform homepage reflows and shows every specialty with synthetic example
         transition: getComputedStyle(element).transitionProperty,
       })),
   ).toEqual({ outline: 'solid', transition: 'none' })
-  await page.evaluate(() => window.scrollTo(0, 0))
-  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0)
+  await returnToPageTop(page)
   await page.screenshot({
     path: testInfo.outputPath('desktop-reduced-motion-keyboard-focus.png'),
     fullPage: true,
