@@ -27,9 +27,7 @@ async function returnToPageTop(page: Page) {
   expect(scrollTop).toBe(0)
 }
 
-test('platform homepage reflows and shows every specialty with synthetic examples', async ({
-  page,
-}, testInfo) => {
+async function waitForHomepageReadiness(page: Page) {
   await page.goto('/')
 
   await expect(
@@ -43,7 +41,41 @@ test('platform homepage reflows and shows every specialty with synthetic example
     }),
   ).toBeVisible()
 
-  for (const viewport of viewports) {
+  // Font completion and a successful real keyboard state transition provide
+  // explicit layout and hydration readiness without a sleep or network-idle
+  // heuristic. Before hydration, the arrow key cannot select the next tab.
+  await page.evaluate(async () => {
+    await document.fonts.ready
+  })
+  await expect
+    .poll(() => page.evaluate(() => document.fonts.status))
+    .toBe('loaded')
+
+  const oncologyTab = page.getByRole('tab', { name: 'Oncology' })
+  const exerciseTab = page.getByRole('tab', { name: 'Exercise & Recovery' })
+  await oncologyTab.focus()
+  await expect(oncologyTab).toBeFocused()
+  await expect
+    .poll(
+      async () => {
+        if ((await exerciseTab.getAttribute('aria-selected')) === 'true') {
+          return true
+        }
+        await oncologyTab.focus()
+        await page.keyboard.press('ArrowRight')
+        return (await exerciseTab.getAttribute('aria-selected')) === 'true'
+      },
+      { timeout: 10000 },
+    )
+    .toBe(true)
+  await expect(exerciseTab).toBeFocused()
+}
+
+for (const viewport of viewports) {
+  test(`platform specialties remain actionable at ${viewport.label}`, async ({
+    page,
+  }, testInfo) => {
+    await waitForHomepageReadiness(page)
     await page.setViewportSize({
       width: viewport.width,
       height: viewport.height,
@@ -51,7 +83,14 @@ test('platform homepage reflows and shows every specialty with synthetic example
 
     for (const specialty of specialties) {
       const tab = page.getByRole('tab', { name: specialty.name })
-      await tab.click()
+      await tab.scrollIntoViewIfNeeded()
+      await expect(tab).toBeInViewport()
+      await expect(tab).toBeEnabled()
+      // A trial click waits for Playwright's full pointer actionability checks
+      // (stable, visible, enabled, and receiving events); the following click
+      // remains a genuine pointer interaction asserted below.
+      await tab.click({ trial: true, timeout: 5000 })
+      await tab.click({ timeout: 5000 })
       await expect(tab).toHaveAttribute('aria-selected', 'true')
       const panel = page.getByRole('tabpanel')
       await expect(
@@ -125,44 +164,43 @@ test('platform homepage reflows and shows every specialty with synthetic example
       ).toBe(true)
 
       await returnToPageTop(page)
-
       await page.screenshot({
-        path: testInfo.outputPath(`${viewport.label}-${specialty.id}.png`),
+        path: testInfo.outputPath(`${viewport.label}-${specialty.id}.jpg`),
+        type: 'jpeg',
+        quality: 75,
         fullPage: true,
         animations: 'disabled',
       })
     }
-  }
 
-  await page.setViewportSize({ width: 1440, height: 1000 })
-  await page.emulateMedia({ reducedMotion: 'reduce' })
-  const oncologyTab = page.getByRole('tab', { name: 'Oncology' })
-  await oncologyTab.focus()
-  await expect(oncologyTab).toBeFocused()
-  await page.keyboard.press('ArrowRight')
-  await expect(
-    page.getByRole('tab', { name: 'Exercise & Recovery' }),
-  ).toBeFocused()
-  await expect(
-    page.getByRole('tab', { name: 'Exercise & Recovery' }),
-  ).toHaveAttribute('aria-selected', 'true')
-  expect(
-    await page.evaluate(
-      () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-    ),
-  ).toBe(true)
-  expect(
-    await page
-      .getByRole('tab', { name: 'Exercise & Recovery' })
-      .evaluate((element) => ({
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    const oncologyTab = page.getByRole('tab', { name: 'Oncology' })
+    await oncologyTab.focus()
+    await expect(oncologyTab).toBeFocused()
+    await page.keyboard.press('ArrowRight')
+    const exerciseTab = page.getByRole('tab', { name: 'Exercise & Recovery' })
+    await expect(exerciseTab).toBeFocused()
+    await expect(exerciseTab).toHaveAttribute('aria-selected', 'true')
+    expect(
+      await page.evaluate(
+        () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+      ),
+    ).toBe(true)
+    expect(
+      await exerciseTab.evaluate((element) => ({
         outline: getComputedStyle(element).outlineStyle,
         transition: getComputedStyle(element).transitionProperty,
       })),
-  ).toEqual({ outline: 'solid', transition: 'none' })
-  await returnToPageTop(page)
-  await page.screenshot({
-    path: testInfo.outputPath('desktop-reduced-motion-keyboard-focus.png'),
-    fullPage: true,
-    animations: 'disabled',
+    ).toEqual({ outline: 'solid', transition: 'none' })
+    await returnToPageTop(page)
+    await page.screenshot({
+      path: testInfo.outputPath(
+        `${viewport.label}-reduced-motion-keyboard-focus.jpg`,
+      ),
+      type: 'jpeg',
+      quality: 75,
+      fullPage: true,
+      animations: 'disabled',
+    })
   })
-})
+}
