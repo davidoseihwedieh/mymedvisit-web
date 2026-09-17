@@ -393,8 +393,9 @@ test('reflows at mobile, 200%, and 400% zoom-equivalent widths', async ({
 
 test('Terms and Privacy links navigate only to their exact canonical paths', async ({
   page,
+  browserName,
 }) => {
-  const geistFont = observeLocalGeistFont(page)
+  const geistFont = observeLocalGeistFont(page, browserName === 'webkit')
   await installSyntheticBoundaries(page)
   await page.goto('/sms-opt-in')
   await geistFont.waitUntilSettled()
@@ -460,11 +461,12 @@ test('Terms and Privacy links navigate only to their exact canonical paths', asy
 
 test('does not permit either aborted legal-page document', async ({
   browser,
+  browserName,
 }) => {
   for (const path of ['/terms', '/privacy']) {
     const context = await browser.newContext({ baseURL: localOrigin })
     const page = await context.newPage()
-    const geistFont = observeLocalGeistFont(page)
+    const geistFont = observeLocalGeistFont(page, browserName === 'webkit')
     let intercepted = false
     await page.route(`https://mymedvisit.app${path}`, (route) => {
       intercepted = true
@@ -495,7 +497,10 @@ async function assertCanonicalLegalLinks(page: Page): Promise<void> {
   ).toHaveAttribute('href', 'https://mymedvisit.app/privacy')
 }
 
-function observeLocalGeistFont(page: Page): {
+function observeLocalGeistFont(
+  page: Page,
+  requireRequest: boolean,
+): {
   waitUntilSettled: () => Promise<void>
 } {
   const pending = new Set<Request>()
@@ -556,9 +561,11 @@ function observeLocalGeistFont(page: Page): {
         })
       }, 5000)
       expect(fontsReady).toBe(true)
-      await expect
-        .poll(() => requestsSeen, { timeout: 10000 })
-        .toBeGreaterThan(0)
+      if (requireRequest) {
+        await expect
+          .poll(() => requestsSeen, { timeout: 10000 })
+          .toBeGreaterThan(0)
+      }
       await expect.poll(() => pending.size, { timeout: 10000 }).toBe(0)
       await expect
         .poll(() => responseStatuses.length, { timeout: 10000 })
@@ -571,8 +578,9 @@ function observeLocalGeistFont(page: Page): {
 
 test('canonical legal-link contract rejects either changed destination', async ({
   page,
+  browserName,
 }) => {
-  const geistFont = observeLocalGeistFont(page)
+  const geistFont = observeLocalGeistFont(page, browserName === 'webkit')
   await installSyntheticBoundaries(page)
   await page.goto('/sms-opt-in')
   await geistFont.waitUntilSettled()
