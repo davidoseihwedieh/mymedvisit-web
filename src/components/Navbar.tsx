@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 
@@ -19,11 +20,25 @@ export function Navbar() {
     <nav className="sticky top-0 z-50 border-b border-white/40 bg-white/70 backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--ink)] text-sm font-bold text-white">
-            MV
-          </span>
-          <span className="text-[15px] font-semibold tracking-wide">MyMedVisit</span>
+        <Link href="/" className="flex items-center" aria-label="MyMedVisit home">
+          <Image
+            src="/mmv_website_images/mymedvisit-logo.png"
+            alt="MyMedVisit"
+            width={2009}
+            height={783}
+            unoptimized
+            priority
+            className="hidden h-auto w-[148px] md:block md:w-[176px]"
+          />
+          <Image
+            src="/mmv-icon.png"
+            alt="MyMedVisit"
+            width={512}
+            height={512}
+            unoptimized
+            priority
+            className="h-10 w-10 md:hidden"
+          />
         </Link>
 
         {/* Desktop nav */}
