@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 
 const footerLinks = {
@@ -23,14 +24,14 @@ export function Footer() {
         <div className="grid gap-12 md:grid-cols-[1.5fr_1fr_1fr_1fr]">
           {/* Brand */}
           <div>
-            <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--ink)] text-sm font-bold text-white">
-                MV
-              </span>
-              <span className="text-[15px] font-semibold tracking-wide">
-                MyMedVisit
-              </span>
-            </div>
+            <Image
+              src="/mmv_website_images/mymedvisit-logo.png"
+              alt="MyMedVisit — The patient voice between visits."
+              width={2009}
+              height={783}
+              unoptimized
+              className="h-auto w-[220px]"
+            />
             <p className="mt-4 max-w-xs text-sm text-[rgba(13,27,42,0.5)]">
               Patient and caregiver observations, organized into longitudinal
               context for care-team workflows.
