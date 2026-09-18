@@ -5,7 +5,7 @@ import { SMS_OPT_IN_CANONICAL_URL } from '@/lib/sms-consent/constants'
 export const metadata: Metadata = {
   title: 'Transactional SMS Opt-In | MyMedVisit',
   description:
-    'Choose whether to receive transactional MyMedVisit text messages for verification, account security, and requested service notifications.',
+    'Choose whether to receive requested one-time verification-code text messages from MyMedVisit.',
   alternates: {
     canonical: SMS_OPT_IN_CANONICAL_URL,
   },
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Transactional SMS Opt-In | MyMedVisit',
     description:
-      'Choose whether to receive transactional MyMedVisit text messages.',
+      'Choose whether to receive requested one-time verification-code text messages from MyMedVisit.',
     type: 'website',
     url: SMS_OPT_IN_CANONICAL_URL,
   },

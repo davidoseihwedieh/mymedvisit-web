@@ -1,3 +1,8 @@
 .vercel
+.DS_Store
 .env*.local
 node_modules
+.next
+/out
+/playwright-report/
+/test-results/

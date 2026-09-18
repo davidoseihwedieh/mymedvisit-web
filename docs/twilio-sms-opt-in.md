@@ -4,11 +4,12 @@
 
 - Public and canonical page URL: `https://mymedvisit.app/sms-opt-in`.
 - QR destination: exactly `https://mymedvisit.app/sms-opt-in`. Scanning it opens the page and is not consent.
-- The consent checkbox is controlled and initially unchecked. It is never preselected.
+- The OTP consent and authorized-number-attestation checkboxes are separate, controlled, initially unchecked controls. Neither is ever preselected.
+- The server-rendered phone field and both checkboxes have no serializable names and remain disabled until React confirms hydration. If JavaScript is unavailable, the page explains that no consent can be submitted.
 - Entering a number, checking the box, scanning the QR code, leaving the page, or selecting **No thanks** does not submit consent.
-- The browser form is connected to `disabledSmsConsentClient`. It cannot contact a service or claim persistence.
+- The browser form is connected to `disabledSmsConsentClient` in every production build. The literal `SMS_CONSENT_INTEGRATION_ENABLED = false` gate prevents API/site-key environment values from constructing an HTTP transport, loading Google, executing reCAPTCHA, contacting a capture service, or claiming persistence.
 - The route is `noindex,follow` while the form is disconnected. This keeps the unfinished flow out of search results without preventing reviewers or users with the URL from opening it.
-- Route metadata declares exactly `https://mymedvisit.app/sms-opt-in` as canonical. Because this app uses Next.js static export, its source middleware is disabled in the exported artifact; the hosting/domain layer must be verified to ensure that exact canonical URL resolves without redirecting to `www`.
+- Route metadata declares exactly `https://mymedvisit.app/sms-opt-in` as canonical. Because this app uses Next.js static export and has no application middleware for host redirects, the hosting/domain layer must be verified to ensure that exact canonical URL resolves with the approved host behavior.
 
 Do not enable submission merely because an endpoint or environment variable exists. The contract, security controls, legal language, retention behavior, and production verification below must all be approved first.
 
@@ -16,13 +17,21 @@ Do not enable submission merely because an endpoint or environment variable exis
 
 1. A user enters a mobile number.
 2. The user reviews the transactional-only disclosure and the Terms and Privacy links.
-3. The user affirmatively checks the unchecked consent box.
+3. The user separately checks the unchecked OTP-consent and authorized-number-attestation controls.
 4. Only **Agree and continue** may create a consent request.
 5. The button and form controls are disabled during a request. A synchronous in-flight guard also prevents duplicate submissions before React rerenders.
 6. The UI may show success only after a response confirms durable persistence and echoes the request's idempotency key.
-7. Any network error, timeout, non-2xx response, malformed response, or ambiguous outcome is displayed and treated as **not recorded**. A retry reuses the original payload and idempotency key.
+7. Any network error, timeout, disallowed status, malformed response, or ambiguous outcome is displayed and treated as **not recorded**. An explicit approved retry reuses the stable nine-field logical payload and idempotency key but obtains a fresh reCAPTCHA token for the new HTTP attempt.
 
 The page clears the entered phone number after success or decline. It never puts the number or consent data in a URL and the client/API boundary contains no logging calls.
+
+The page also invalidates and aborts active work on `pagehide`, unmount,
+decline, reset, and persisted `pageshow`. A lifecycle generation prevents a
+token or client promise created before navigation from changing restored UI.
+A persisted restore always returns the phone and both controls to an empty,
+unchecked, enabled post-hydration state and discards validation, feedback,
+retry identity, timers, and loading state. Pre-hydration and no-JavaScript
+controls remain inert.
 
 ## Central consent constants
 
@@ -37,17 +46,25 @@ Client-safe, non-secret values live in `src/lib/sms-consent/constants.ts`:
 
 The disclosure, page, Terms, and Privacy versions currently equal `PENDING_LEGAL_AND_COMPLIANCE_REVIEW`. This is intentional. Do not replace them with dates or approval claims until counsel/compliance supplies the identifiers for the exact approved text.
 
-The current categories are:
+The closed taxonomy remains:
 
 - one-time verification codes;
 - account-security messages; and
 - requested service notifications.
 
-Any category change requires corresponding disclosure, policy, message-template, backend allowlist, and version updates.
+The proposed, unapproved initial website request contains exactly
+`one_time_verification_codes`. The other taxonomy members remain deferred. Any
+category change requires corresponding disclosure, policy, backend allowlist,
+and version updates; outbound message templates remain outside capture-only v1.
 
-## Preliminary backend contract (not approved)
+## Approved technical contract; production values remain unapproved
 
-The typed boundary in `src/lib/sms-consent/client.ts` is a proposed client contract, not authorization to connect it. The final endpoint method, path, authentication/abuse controls, request schema, and response schema remain backend decisions.
+The capture-only technical contract is frozen by the backend design, but this
+document and its implementation do not authorize connection or production
+capture. The future canonical endpoint is HTTPS
+`https://api.mymedvisit.app/api/v1/sms-consent`. Its deployment, public routing,
+approved origins, reCAPTCHA key/host, policy allowlists, and production
+authorization remain unresolved gates.
 
 ### Transport assumptions
 
@@ -57,10 +74,10 @@ The typed boundary in `src/lib/sms-consent/client.ts` is a proposed client contr
 - `Idempotency-Key: <browser-generated UUID>`.
 - No browser credentials by default (`credentials: omit`). If an authenticated contract is chosen, security review and boundary changes are required.
 - No redirects, no referrer, and no caching.
-- Ten-second client timeout unless the approved contract specifies otherwise.
-- Cross-origin deployment, if approved, must allow only expected website origins and required headers/methods. It must not use permissive CORS with credentials.
+- Ten-second client timeout.
+- Cross-origin deployment must allow only separately approved exact origins and `Content-Type, Idempotency-Key` for `POST, OPTIONS`. It must omit credentialed CORS.
 
-### Proposed request body
+### Exact closed ten-field request body
 
 ```json
 {
@@ -77,28 +94,59 @@ The typed boundary in `src/lib/sms-consent/client.ts` is a proposed client contr
     "reference": "https://mymedvisit.app/terms",
     "version": "PENDING_LEGAL_AND_COMPLIANCE_REVIEW"
   },
-  "transactionalMessageCategories": [
-    "one_time_verification_codes",
-    "account_security_messages",
-    "requested_service_notifications"
-  ]
+  "transactionalMessageCategories": ["one_time_verification_codes"],
+  "authorizedNumberAttestation": true,
+  "recaptchaToken": "<fresh single-use reCAPTCHA Enterprise token>"
 }
 ```
 
-The backend must decide whether the browser sends an E.164 number or an unnormalized user entry. The current boundary trims surrounding whitespace only. The endpoint must reject invalid/non-mobile numbers and either normalize them or return a field-safe validation result without reflecting the number.
+All ten root properties are required and additional properties are forbidden.
+`authorizedNumberAttestation` must be literal `true`. The browser may send the
+accepted user entry; the backend performs authoritative E.164 normalization and
+returns only generic validation failures. The reCAPTCHA token exists only in the
+attempt-local wire request and is excluded from the stable logical payload.
 
-### Proposed durable-success response
+### Exact durable-success response
 
 ```json
 {
   "status": "persisted",
-  "recordId": "opaque-nonempty-record-id",
-  "persistedAt": "server-generated-UTC-ISO-timestamp-ending-in-Z",
-  "idempotencyKey": "same-value-as-request-header"
+  "evidenceId": "sce_22222222-2222-4222-8222-222222222222",
+  "recordedAt": "server-generated canonical UTC timestamp such as 2026-09-15T12:00:00.000Z",
+  "idempotencyKey": "11111111-1111-4111-8111-111111111111"
 }
 ```
 
-All four fields are required by the current validator. The idempotency key must match the request. A generic `accepted`, queued, or 2xx response is not success. If durable persistence is asynchronous, the frontend contract must be redesigned so it does not display success before a durable record is confirmed.
+These are the only permitted fields. HTTP `201` means initial persistence and
+HTTP `200` means exact idempotent replay; every other status, including another
+2xx status, is failure. `evidenceId` must be `sce_` plus a lowercase UUIDv4. The
+idempotency key must match byte-for-byte. `recordedAt` must exactly round-trip
+through canonical millisecond UTC. Extra, inherited, symbol, proxy-derived,
+malformed, reflected, wrong-content-type, redirected, or cacheable responses are
+rejected.
+
+Every application error has only `error.code` plus the fixed message `Request
+could not be completed.` The client validates the exact status/code pairing but
+never displays or logs the backend code, body, phone, token, score, reason, or
+correlation detail. `503 consent_capture_unavailable` requires
+`Retry-After: 5`. Definitive 400, request-not-allowed 403, 405, 409, 413, and 415
+responses are not retried automatically or offered as an unchanged retained
+attempt.
+
+### reCAPTCHA attempt lifecycle
+
+- The action is exactly `sms_consent_submit`.
+- Validation completes before token acquisition.
+- Every actual HTTP attempt obtains a fresh token immediately before building
+  the wire object.
+- No token is retained in React state, refs, retry state, storage, a URL,
+  navigation, analytics, or logs.
+- Network ambiguity, malformed success, 429, 500, 503, and approved retryable
+  CAPTCHA failure retain the logical payload/key while discarding the token.
+- Script blocking, readiness failure, or execution rejection is generic failure
+  and makes no capture request.
+- Production currently loads no reCAPTCHA script. Script host, presentation,
+  public site key, and cookie treatment remain approval gates.
 
 ### Persistence and security assumptions requiring confirmation
 
@@ -117,7 +165,7 @@ The approved endpoint must:
 
 ## Environment and connection plan
 
-No environment variable is currently required because the production form is deliberately disconnected.
+No environment variable is currently required because the production form is deliberately disconnected. Browser tests use only a development-and-loopback-restricted `.invalid` adapter intercepted before network access; it cannot be selected by a production build.
 
 If security review approves a separate public API origin, use the non-secret build-time variable:
 
@@ -125,18 +173,70 @@ If security review approves a separate public API origin, use the non-secret bui
 NEXT_PUBLIC_SMS_CONSENT_API_BASE_URL
 ```
 
-This must contain only an approved HTTPS public base/origin—never credentials, tokens, a Cloud Run service URL chosen ad hoc, path parameters, query parameters, or sensitive data. The exact endpoint path remains part of the unconfirmed contract and is passed separately to `createHttpSmsConsentClient`.
+This must eventually equal exactly `https://api.mymedvisit.app`—never
+credentials, tokens, a Cloud Run URL, path, query, or sensitive data. A separate
+public `NEXT_PUBLIC_SMS_CONSENT_RECAPTCHA_SITE_KEY` may be supplied only after
+the key and host treatment are approved. Neither environment value can change
+the literal disabled gate.
 
 Before connecting the route, a developer must make a reviewed code change that:
 
-1. supplies the approved endpoint path and the public base URL;
-2. replaces `disabledSmsConsentClient` in the rendered component with the configured HTTP client;
-3. changes the code-controlled `SMS_CONSENT_INTEGRATION_ENABLED` safety switch only after all approvals (an environment variable alone must not enable submission);
-4. replaces every pending version constant with counsel-approved identifiers;
-5. adds contract/integration tests against an isolated fake or preview endpoint using only reserved test numbers; and
-6. makes the explicit, reviewed indexing decision. If indexing is approved, update both general and Google bot metadata from `index: false` to `index: true`.
+1. supplies the approved public base URL for the canonical `/api/v1/sms-consent` endpoint;
+2. installs the approved reCAPTCHA loader/site key and exact host policy;
+3. supplies the approved production HTTP client behind the code gate;
+4. changes `SMS_CONSENT_INTEGRATION_ENABLED` only after every gate and a separate evidence-bound production authorization;
+5. replaces every pending version constant with approved immutable identifiers and matching server allowlists;
+6. proves CORS, security headers, privacy leakage, staging, readiness, rollback, and exact release-candidate evidence; and
+7. makes the explicit reviewed indexing decision.
 
 Do not store secrets in `NEXT_PUBLIC_*`; Next.js embeds these values in browser assets.
+
+### Production graph and artifact enforcement
+
+The production Webpack compilation applies a fail-closed module-graph plugin to
+the client and server graphs. It classifies canonical resolved resource paths
+and inspects Webpack `ExternalModule` request metadata even when `resource` is
+absent. External request, user request, identifier, readable identifier,
+external type, and exposed dependency request metadata are normalized without
+invoking getters. The accepted Webpack external types are the exact raw string
+values `commonjs`, `commonjs2`, `module`, `import`, and `node-commonjs`; type
+validation performs no trimming, case folding, Unicode normalization, or
+coercion. Missing, non-string, accessor-backed, proxied, or otherwise
+noncanonical types fail the compilation. Traversal, loader, query, fragment,
+encoded, whitespace, control-character, case-alias, and normalization-ambiguous
+requests fail closed. A relative Webpack `userRequest` containing traversal is accepted only
+when canonical resolution proves it stays inside the same approved production
+package as its external package request.
+Package externals are closed against `dependencies` in `package.json`; every
+`devDependencies` package and a small explicit transitive test-tool denylist is
+forbidden. The policy also rejects Jest, Vitest, Testing Library, Playwright,
+axe adapters, test runners, and mock tooling (including their test-tool
+namespaces). A package duplicated across production and development dependency
+sets invalidates the policy. Only the five listed Webpack external types,
+recognized Node built-ins, and approved production dependencies are accepted;
+unknown bare package externals fail closed. Reports include sorted external
+identities, external type, and classification, and the verifier reclassifies
+each entry under the same policy.
+
+The plugin rejects the browser-test client, disabled HTTP transport, reCAPTCHA
+boundary, and test/fixture/support modules whether resolved locally or
+externalized. The intercepted browser-test adapter is selected only through a
+development-only alias; it is never a production import. Reports are cleared
+before each required `npm run build` sequence, and the production compilation
+itself fails for a forbidden module before report verification. The reports
+are deterministic consistency evidence, not a cryptographic attestation of
+which compiler produced them: standalone report verification can validate a
+fabricated safe report. Therefore CI and release builds must use the mandatory
+`npm run build` sequence (preparation, both client/server production
+compilations, then verification), not the verifier alone. The compiler graph
+is the authoritative module-absence control.
+
+The generated-artifact scanner has a different purpose: it enumerates every
+regular output artifact and detects literal or supported encoded privacy leaks
+in text, JavaScript constants, inline executable scripts, structured data, and
+approved binary types. Its finite decoding and constant-folding checks are
+defense in depth; they do not claim to determine arbitrary JavaScript behavior
+or replace the compiler graph.
 
 ## Sample transactional messages
 
@@ -148,7 +248,7 @@ These examples contain no patient symptoms, diagnoses, appointment details, real
 
 ## Local and preview verification
 
-Use test numbers only, such as `(555) 555-0123`, and no PHI.
+Use only synthetic reserved numbers supplied by the test fixtures, and no PHI.
 
 1. From a clean dependency install, run:
 
@@ -156,9 +256,16 @@ Use test numbers only, such as `(555) 555-0123`, and no PHI.
    npm ci
    npm run typecheck
    npm test
+   npm run format:check:sms
    npm run lint:sms
    npm run build
-   npm audit --omit=dev --audit-level=high
+   npm run verify:module-graph
+   npm run verify:sms-artifacts
+   npm run verify:qr
+   npm run audit:production
+   npm run audit:development
+   npm run test:browser
+   npm run test:bfcache
    git diff --check
    ```
 
@@ -167,31 +274,45 @@ Use test numbers only, such as `(555) 555-0123`, and no PHI.
    files that predate this track; the SMS files retain the full
    `next/core-web-vitals` rules. Existing legacy `<img>` optimization warnings
    remain visible and should be handled in their own website-maintenance track.
-   The production dependency audit must also pass before release. At the time of
-   this handoff, the current Next.js 14 dependency tree reports high/critical
-   advisories whose complete npm-recommended remediation is a breaking framework
-   upgrade; that upgrade is outside this SMS-only track and has not been applied.
+   The production dependency audit must also pass before release. This branch
+   retains Next.js `16.3.3`, React/React DOM `19.2.8`, PostCSS `8.5.23`, and
+   nanoid `3.3.19`; rerun the audit from a clean lockfile install rather than
+   relying on these recorded versions alone. Development-only findings remain a
+   separately enforced through the exact, expiring
+   `security/development-audit-policy.json`; new, changed, or expired
+   advisories fail CI. The production audit remains a zero-finding gate.
+
+   Playwright 1.63 disables BFCache by default and its documented
+   `page.goBack()`/`page.goForward()` helpers are not proof of BFCache. The
+   regular three-engine suite therefore enforces lifecycle behavior with real
+   `PageTransitionEvent` instances and separately checks back/forward
+   navigation for hydration/runtime failures. The dedicated headed Chromium
+   config removes Playwright's `--disable-back-forward-cache` default, blocks
+   external DNS, and passes only after the browser itself emits
+   `pageshow.persisted === true`; CI supplies a virtual display. It does not
+   substitute a reload result.
 
 2. Serve the static export locally without changing platform configuration:
 
    ```sh
-   python3 -m http.server 3000 --directory out
+   npx --yes serve@14.2.5 out --listen 3000 --no-clipboard
    ```
 
-3. Open `http://localhost:3000/sms-opt-in/` and verify at 320, 375, 768, 1024, and 1440 CSS pixels, portrait and landscape where relevant. Confirm there is no horizontal scrolling, clipped disclosure, overlapping content, or undersized control.
+3. Open `http://localhost:3000/sms-opt-in` without a trailing slash. Confirm the routing-aware static server returns the SMS page rather than the exported React Server Component directory, then verify at 320, 375, 768, 1024, and 1440 CSS pixels, portrait and landscape where relevant. Confirm there is no horizontal scrolling, clipped disclosure, overlapping content, or undersized control.
 4. At 200% browser zoom, confirm the layout reflows and all controls/text remain available.
 5. Keyboard only: tab through the QR link, phone field, checkbox, Terms, Privacy, decline, and submit controls. Confirm the focus ring is always visible; Space toggles the checkbox; Enter submits only from the submit control/form; and focus moves to the first invalid field.
 6. With a screen reader, confirm headings/landmarks, phone help/error association, checkbox disclosure, alert announcements, loading status, offline status, decline status, and durable-success status.
-7. Confirm initial checkbox state is unchecked after reload and back/forward navigation.
-8. Confirm entering a number, checking only the box, selecting **No thanks**, and going offline create no request.
-9. With the current disabled client, a complete submit must say no consent was sent or recorded and must never show success.
+7. Confirm both checkbox states are unchecked after reload and back/forward navigation.
+8. Confirm entering a number, checking either or both boxes without submit, selecting **No thanks**, and going offline create no request.
+9. With the current literal disabled client, a complete submit must load no Google script, make no API request, say no consent was sent or recorded, and never show success.
 10. Decode the QR using at least two physical devices/camera apps and confirm it opens exactly `https://mymedvisit.app/sms-opt-in` with no query or fragment. The automated test also decodes the SVG payload.
 11. Inspect generated `out/sms-opt-in.html` for the exact canonical URL, title, description, and `noindex, follow` robots value. Search generated output and browser network requests to confirm no phone number appears in URLs.
+12. Run `npm run test:browser`. Its `.invalid` CAPTCHA/capture routes are intercepted before network access and exercise no-JavaScript state, focus order, 201/200, lost-response retry with fresh tokens, CORS preflight, offline recovery, duplicate clicks, navigation, responsive layout, and privacy leakage across installed engines.
 
 ## Production verification after approvals (not performed here)
 
 1. Confirm the approved release artifact, environment, endpoint origin/path, versions, and indexing choice with two reviewers.
-2. Confirm `https://mymedvisit.app/sms-opt-in` returns the page without redirecting to `www`, while unrelated apex routes retain existing redirect behavior.
+2. Confirm `https://mymedvisit.app/sms-opt-in` returns the page and that apex/`www` behavior matches the separately approved hosting policy; do not assume application middleware provides a redirect.
 3. Repeat the viewport, zoom, keyboard, screen-reader, QR, metadata, and offline checks above on the production URL.
 4. Submit once with an approved reserved/test number. Confirm the UI remains loading until durable persistence is returned.
 5. Through an approved, access-controlled backend verification path, confirm exactly one record has the normalized test number/reference, categories, exact versions, server UTC timestamp, source, page URL, correlation/idempotency data, and revocation state.
@@ -219,12 +340,13 @@ The current disconnected branch can also be retained as the safe website fallbac
 - Authoritative version identifiers for the disclosure/page, Terms, and Privacy text. Do not infer them from existing “Last updated” dates.
 - Whether and how the legal pages' displayed update dates change when the SMS sections are approved.
 - Reconciliation of the existing age language: the Terms say users must be at least 13, while the Privacy Policy says the app is not intended for people under 18.
-- Confirmation that all three categories are strictly transactional and that “requested service notifications” is sufficiently specific.
+- Approval of OTP-only as the initial enabled subset; account-security and requested-service categories remain deferred.
 - Approved sender identity, message frequency statement, carrier rate statement, STOP/HELP flows, help contact, quiet-hours requirements, and supported countries.
 - Whether consent records or phone numbers are regulated health/personal data in each operating jurisdiction, plus retention/deletion/access rules.
 - Whether the Privacy language about sale/sharing and Twilio processing is complete and accurate for the final data flow and vendors.
 - Relationship between website consent, account ownership/number verification, in-app notification preferences, prior consent, number reassignment, and provider-side opt-out state.
 - Whether the public page should be indexed after the flow is live. It remains `noindex,follow` until that decision is approved.
+- Approved reCAPTCHA script host/presentation, site key, `_GRECAPTCHA` treatment, exact production CORS origins, and final CSP additions. No broad Google CSP is guessed here.
 - Provider campaign/toll-free verification approval and the exact evidence/screenshots required.
 
 Counsel, compliance, security, privacy, and the endpoint owner must approve their respective items before production submission is enabled.

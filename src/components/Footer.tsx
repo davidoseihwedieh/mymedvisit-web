@@ -1,5 +1,5 @@
-import Link from 'next/link'
 import Image from 'next/image'
+import Link from 'next/link'
 
 const footerLinks = {
   product: [
@@ -33,13 +33,16 @@ export function Footer() {
               className="h-auto w-[220px]"
             />
             <p className="mt-4 max-w-xs text-sm text-[rgba(13,27,42,0.5)]">
-              Your health, remembered by voice. Capture every visit, share with those who care.
+              Patient and caregiver observations, organized into longitudinal
+              context for care-team workflows.
             </p>
           </div>
 
           {/* Product */}
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[rgba(13,27,42,0.4)]">Product</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[rgba(13,27,42,0.4)]">
+              Product
+            </p>
             <div className="mt-4 flex flex-col gap-3">
               {footerLinks.product.map((link) => (
                 <Link
@@ -55,7 +58,9 @@ export function Footer() {
 
           {/* Company */}
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[rgba(13,27,42,0.4)]">Company</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[rgba(13,27,42,0.4)]">
+              Company
+            </p>
             <div className="mt-4 flex flex-col gap-3">
               {footerLinks.company.map((link) => (
                 <Link
@@ -71,7 +76,9 @@ export function Footer() {
 
           {/* Legal */}
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[rgba(13,27,42,0.4)]">Legal</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[rgba(13,27,42,0.4)]">
+              Legal
+            </p>
             <div className="mt-4 flex flex-col gap-3">
               {footerLinks.legal.map((link) => (
                 <Link
@@ -92,7 +99,7 @@ export function Footer() {
             &copy; {new Date().getFullYear()} MyMedVisit. All rights reserved.
           </p>
           <p className="text-xs text-[rgba(13,27,42,0.3)]">
-            Voice-first health intelligence
+            Voice-first clinical context
           </p>
         </div>
       </div>

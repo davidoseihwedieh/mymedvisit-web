@@ -1,0 +1,307 @@
+import { test as base, type Page, type Request } from '@playwright/test'
+
+export interface ConsoleAllowance {
+  locationUrl: string
+  text: string
+  type: 'error'
+}
+
+export interface RequestFailureAllowance {
+  id: string
+  origin: string
+  pathname: string
+  query: ''
+  fragment: ''
+  method: string
+  resourceType: string
+  failureReason: string
+  consoleErrors?: readonly ConsoleAllowance[]
+}
+
+interface TrackedRequestFailure extends RequestFailureAllowance {
+  consumed: boolean
+}
+
+interface TrackedConsoleError extends ConsoleAllowance {
+  consumed: boolean
+  requestAllowanceId: string
+}
+
+interface ProtectedEndpoint {
+  origin: string
+  pathname: string
+}
+
+const defaultProtectedEndpoints: readonly ProtectedEndpoint[] = [
+  { origin: 'https://capture.invalid', pathname: '/api/v1/sms-consent' },
+  { origin: 'https://recaptcha.invalid', pathname: '/token' },
+]
+
+const approvedDiagnostics = new Set([
+  'BROWSER_ALLOWANCE_INVALID [request]',
+  'BROWSER_CONSOLE_ALLOWANCE_UNUSED [console]',
+  'BROWSER_CONSOLE_ERROR [page]',
+  'BROWSER_DIAGNOSTIC_REDACTED [page]',
+  'BROWSER_ENDPOINT_QUERY_OR_FRAGMENT [request]',
+  'BROWSER_HYDRATION_CONSOLE [page]',
+  'BROWSER_PAGE_CRASH [page]',
+  'BROWSER_PAGE_ERROR [page]',
+  'BROWSER_REQUEST_ALLOWANCE_UNUSED [request]',
+  'BROWSER_REQUEST_FAILURE [request]',
+  'BROWSER_REQUEST_URL_INVALID [request]',
+  'BROWSER_UNHANDLED_REJECTION [page]',
+])
+
+export class BrowserSecurityError extends Error {
+  readonly rules: readonly string[]
+
+  constructor(rules: readonly string[]) {
+    const redactedRules = rules.map(redactDiagnostic)
+    super(redactedRules.join('\n'))
+    this.name = 'BrowserSecurityError'
+    this.rules = redactedRules
+  }
+}
+
+export class BrowserSecurityMonitor {
+  private readonly expectedRequestFailures: TrackedRequestFailure[] = []
+  private readonly expectedConsoleErrors: TrackedConsoleError[] = []
+  private readonly violations: string[] = []
+  private mainFrameRoute = 'UNAPPROVED_ROUTE'
+  private pageClosed = false
+
+  constructor(
+    private readonly page: Page,
+    private readonly protectedEndpoints = defaultProtectedEndpoints,
+  ) {}
+
+  async install(): Promise<void> {
+    await this.page.addInitScript(() => {
+      window.addEventListener('unhandledrejection', () => {
+        console.error('MMV_BROWSER_UNHANDLED_REJECTION')
+      })
+    })
+
+    this.page.on('request', (request) => this.inspectRequest(request))
+    this.page.on('framenavigated', (frame) => {
+      if (frame === this.page.mainFrame()) {
+        this.mainFrameRoute = safeRouteLabel(frame.url())
+      }
+    })
+    this.page.on('close', () => {
+      this.pageClosed = true
+    })
+    this.page.on('console', (message) => {
+      const text = message.text()
+      if (text === 'MMV_BROWSER_UNHANDLED_REJECTION') {
+        this.violations.push('BROWSER_UNHANDLED_REJECTION [page]')
+      } else if (/hydration/i.test(text)) {
+        this.violations.push('BROWSER_HYDRATION_CONSOLE [page]')
+      } else if (
+        message.type() === 'error' &&
+        !this.consumeExpectedConsoleError({
+          locationUrl: message.location().url,
+          text,
+          type: 'error',
+        })
+      ) {
+        this.violations.push('BROWSER_CONSOLE_ERROR [page]')
+      }
+    })
+    this.page.on('pageerror', () => {
+      this.violations.push('BROWSER_PAGE_ERROR [page]')
+    })
+    this.page.on('crash', () => {
+      this.violations.push('BROWSER_PAGE_CRASH [page]')
+    })
+    this.page.on('requestfailed', (request) => {
+      if (!this.consumeExpectedRequestFailure(request)) {
+        this.violations.push('BROWSER_REQUEST_FAILURE [request]')
+        if (process.env.MMV_BROWSER_FAILURE_DIAGNOSTICS === '1') {
+          this.writeRequestFailureDiagnostic(request)
+        }
+      }
+    })
+  }
+
+  expectRequestFailure(allowance: RequestFailureAllowance): void {
+    if (
+      !allowance.id ||
+      allowance.query !== '' ||
+      allowance.fragment !== '' ||
+      this.expectedRequestFailures.some(({ id }) => id === allowance.id)
+    ) {
+      throw new BrowserSecurityError(['BROWSER_ALLOWANCE_INVALID [request]'])
+    }
+    this.expectedRequestFailures.push({ ...allowance, consumed: false })
+    for (const consoleError of allowance.consoleErrors ?? []) {
+      this.expectedConsoleErrors.push({
+        ...consoleError,
+        consumed: false,
+        requestAllowanceId: allowance.id,
+      })
+    }
+  }
+
+  assertClean(): void {
+    const rules = [...this.violations]
+    for (const request of this.expectedRequestFailures) {
+      if (!request.consumed) {
+        rules.push('BROWSER_REQUEST_ALLOWANCE_UNUSED [request]')
+      }
+    }
+    for (const consoleError of this.expectedConsoleErrors) {
+      if (!consoleError.consumed) {
+        rules.push('BROWSER_CONSOLE_ALLOWANCE_UNUSED [console]')
+      }
+    }
+    if (rules.length > 0) {
+      throw new BrowserSecurityError(rules)
+    }
+  }
+
+  private inspectRequest(request: Request): void {
+    let url
+    try {
+      url = new URL(request.url())
+    } catch {
+      this.violations.push('BROWSER_REQUEST_URL_INVALID [request]')
+      return
+    }
+    if (
+      this.protectedEndpoints.some(
+        ({ origin, pathname }) =>
+          url.origin === origin && url.pathname === pathname,
+      ) &&
+      (url.search !== '' || url.hash !== '')
+    ) {
+      this.violations.push('BROWSER_ENDPOINT_QUERY_OR_FRAGMENT [request]')
+    }
+  }
+
+  private writeRequestFailureDiagnostic(request: Request): void {
+    let url: URL
+    try {
+      url = new URL(request.url())
+    } catch {
+      process.stderr.write(
+        'MMV_BROWSER_FAILURE_DIAGNOSTIC {"rule":"BROWSER_REQUEST_URL_INVALID"}\n',
+      )
+      return
+    }
+
+    let mainFrame = false
+    let frameAttached = false
+    try {
+      const frame = request.frame()
+      mainFrame = frame === this.page.mainFrame()
+      frameAttached = !frame.isDetached()
+    } catch {
+      // A detached frame is itself useful lifecycle context; keep it redacted.
+    }
+    const failureReason = classifyFailureReason(
+      request.failure()?.errorText ?? '',
+    )
+    process.stderr.write(
+      `MMV_BROWSER_FAILURE_DIAGNOSTIC ${JSON.stringify({
+        method: request.method(),
+        origin: url.origin,
+        pathname: url.pathname,
+        queryPresent: url.search !== '',
+        fragmentPresent: url.hash !== '',
+        resourceType: request.resourceType(),
+        failureReason,
+        navigationRequest: request.isNavigationRequest(),
+        mainFrame,
+        frameAttached,
+        currentPageRoute: this.mainFrameRoute,
+        pageClosed: this.pageClosed,
+      })}\n`,
+    )
+  }
+
+  private consumeExpectedRequestFailure(request: Request): boolean {
+    let url
+    try {
+      url = new URL(request.url())
+    } catch {
+      return false
+    }
+    const failureReason = request.failure()?.errorText ?? ''
+    const candidates = this.expectedRequestFailures.filter(
+      (entry) =>
+        !entry.consumed &&
+        entry.origin === url.origin &&
+        entry.pathname === url.pathname &&
+        entry.query === url.search &&
+        entry.fragment === url.hash &&
+        entry.method === request.method() &&
+        entry.resourceType === request.resourceType() &&
+        entry.failureReason === failureReason,
+    )
+    if (candidates.length === 0) return false
+    candidates[0].consumed = true
+    return true
+  }
+
+  private consumeExpectedConsoleError(actual: ConsoleAllowance): boolean {
+    const candidates = this.expectedConsoleErrors.filter((entry) => {
+      const request = this.expectedRequestFailures.find(
+        ({ id }) => id === entry.requestAllowanceId,
+      )
+      return (
+        !entry.consumed &&
+        request?.consumed === true &&
+        entry.type === actual.type &&
+        entry.text === actual.text &&
+        entry.locationUrl === actual.locationUrl
+      )
+    })
+    if (candidates.length !== 1) return false
+    candidates[0].consumed = true
+    return true
+  }
+}
+
+function classifyFailureReason(value: string): string {
+  if (!value) return 'NO_FAILURE_REASON'
+  if (/abort|cancel/i.test(value)) return 'ABORTED_OR_CANCELLED'
+  if (/timed?\s*out|timeout/i.test(value)) return 'TIMEOUT'
+  if (/internal error/i.test(value)) return 'BROWSER_INTERNAL_ERROR'
+  if (/blocked|denied/i.test(value)) return 'BLOCKED_OR_DENIED'
+  if (/network|connection|dns|offline/i.test(value)) return 'NETWORK_FAILURE'
+  return 'OTHER_FAILURE'
+}
+
+function safeRouteLabel(value: string): string {
+  try {
+    const path = new URL(value).pathname
+    return ['/sms-opt-in', '/terms', '/privacy'].includes(path)
+      ? path
+      : 'UNAPPROVED_ROUTE'
+  } catch {
+    return 'UNAPPROVED_ROUTE'
+  }
+}
+
+function redactDiagnostic(value: string): string {
+  return approvedDiagnostics.has(value)
+    ? value
+    : 'BROWSER_DIAGNOSTIC_REDACTED [page]'
+}
+
+export const test = base.extend<{
+  securityMonitor: BrowserSecurityMonitor
+}>({
+  securityMonitor: [
+    async ({ page }, use) => {
+      const monitor = new BrowserSecurityMonitor(page)
+      await monitor.install()
+      await use(monitor)
+      monitor.assertClean()
+    },
+    { auto: true },
+  ],
+})
+
+export { expect } from '@playwright/test'
