@@ -14,6 +14,7 @@
     "format:check:sms": "prettier --check .github/workflows/sms-consent-ci.yml .prettierrc.json docs/twilio-sms-opt-in.md next.config.mjs package.json package-lock.json playwright.config.ts playwright.bfcache.config.ts scripts/assert-node-version.mjs scripts/check-development-audit.mjs scripts/node-version-policy.mjs scripts/prepare-production-module-graph.mjs scripts/production-module-graph-plugin.mjs scripts/scan-sms-artifacts.mjs scripts/serve-static.mjs scripts/validate-workflow.mjs scripts/verify-production-module-graph.mjs security/development-audit-policy.json src/app/privacy/page.tsx src/app/sms-opt-in src/app/terms/page.tsx src/lib/sms-consent src/types/jest-axe.d.ts tests/bfcache tests/browser tests/enforcement vercel.json vitest.config.ts vitest.enforcement.config.ts vitest.setup.ts",
     "test": "vitest run",
     "test:sms": "vitest run src/app/sms-opt-in src/lib/sms-consent",
+    "test:cross-repo-contract": "vitest run --config vitest.cross-repo.config.ts",
     "test:enforcement": "vitest run --config vitest.enforcement.config.ts",
     "test:browser": "playwright test",
     "test:bfcache": "playwright test --config=playwright.bfcache.config.ts",

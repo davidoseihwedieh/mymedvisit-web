@@ -10,6 +10,12 @@ import {
   TRANSACTIONAL_MESSAGE_CATEGORIES,
   type TransactionalMessageCategory,
 } from './constants'
+import { createHttpSmsConsentTransport } from './httpTransport'
+import {
+  createRecaptchaSmsConsentClient,
+  createRecaptchaEnterpriseTokenProvider,
+  type RecaptchaEnterpriseApi,
+} from './recaptcha'
 
 const UUID_V4_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
@@ -293,14 +299,92 @@ export const disabledSmsConsentClient: SmsConsentClient = {
   },
 }
 
-// This literal false gate is the production safety boundary. Public environment
-// values cannot construct a transport or connect the form while it remains false.
-const approvedProductionClient: SmsConsentClient | null = null
+// This literal false gate is the production safety boundary. The production
+// wiring is complete so that a separately reviewed change can flip the gate;
+// environment values cannot construct a transport while it remains false.
+const approvedProductionClient: SmsConsentClient | null =
+  SMS_CONSENT_INTEGRATION_ENABLED
+    ? createRecaptchaSmsConsentClient({
+        transport: createHttpSmsConsentTransport({
+          baseUrl: requirePublicApiBaseUrl(),
+        }),
+        tokenProvider: {
+          getToken: async (signal) => {
+            const siteKey = requireRecaptchaSiteKey()
+            return createRecaptchaEnterpriseTokenProvider({
+              siteKey,
+              loadApi: loadRecaptchaEnterpriseApi,
+            }).getToken(signal)
+          },
+        },
+      })
+    : null
 
 export const productionSmsConsentClient: SmsConsentClient =
   SMS_CONSENT_INTEGRATION_ENABLED && approvedProductionClient
     ? approvedProductionClient
     : disabledSmsConsentClient
+
+function requirePublicApiBaseUrl(): string {
+  const value = process.env.NEXT_PUBLIC_SMS_CONSENT_API_BASE_URL
+  if (!value) {
+    throw new ConsentSubmissionError(
+      'invalid-configuration',
+      'The consent API configuration is invalid.',
+    )
+  }
+  return value
+}
+
+function requireRecaptchaSiteKey(): string {
+  const value = process.env.NEXT_PUBLIC_SMS_CONSENT_RECAPTCHA_SITE_KEY
+  if (!value) {
+    throw new ConsentSubmissionError(
+      'invalid-configuration',
+      'The reCAPTCHA configuration is invalid.',
+    )
+  }
+  return value
+}
+
+let recaptchaApiPromise: Promise<RecaptchaEnterpriseApi> | undefined
+
+function loadRecaptchaEnterpriseApi(): Promise<RecaptchaEnterpriseApi> {
+  if (typeof window === 'undefined') {
+    return Promise.reject(new Error('reCAPTCHA is only available in a browser'))
+  }
+  if (recaptchaApiPromise) return recaptchaApiPromise
+
+  recaptchaApiPromise = new Promise<RecaptchaEnterpriseApi>(
+    (resolve, reject) => {
+      const existing = (
+        window as Window & {
+          grecaptcha?: { enterprise?: RecaptchaEnterpriseApi }
+        }
+      ).grecaptcha?.enterprise
+      if (existing) {
+        resolve(existing)
+        return
+      }
+      const script = document.createElement('script')
+      script.src =
+        'https://www.google.com/recaptcha/enterprise.js?render=explicit'
+      script.async = true
+      script.onload = () => {
+        const api = (
+          window as Window & {
+            grecaptcha?: { enterprise?: RecaptchaEnterpriseApi }
+          }
+        ).grecaptcha?.enterprise
+        api ? resolve(api) : reject(new Error('reCAPTCHA API unavailable'))
+      }
+      script.onerror = () =>
+        reject(new Error('reCAPTCHA script failed to load'))
+      document.head.appendChild(script)
+    },
+  )
+  return recaptchaApiPromise
+}
 
 function isPlainRecord(value: unknown): value is Record<PropertyKey, unknown> {
   return (
