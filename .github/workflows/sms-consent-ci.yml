@@ -113,6 +113,9 @@ jobs:
         run: node scripts/assert-node-version.mjs
       - name: Clean dependency install
         run: npm ci
+      - name: Install backend service dependencies
+        working-directory: mymedvisit-app-backend/services/sms-consent-capture
+        run: npm ci
       - name: Run cross-repo public contract test against the real backend
         env:
           SMS_CONSENT_BACKEND_ROOT: ${{ github.workspace }}/mymedvisit-app-backend/services/sms-consent-capture
