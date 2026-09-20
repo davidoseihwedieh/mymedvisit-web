@@ -473,16 +473,6 @@ describe('authoritative production compiler graph enforcement', () => {
       'MODULE_GRAPH_BROWSER_TEST_CLIENT',
     ],
     [
-      'disabled HTTP transport',
-      'src/lib/sms-consent/httpTransport.mjs',
-      'MODULE_GRAPH_DISABLED_HTTP_TRANSPORT',
-    ],
-    [
-      'disabled reCAPTCHA boundary',
-      'src/lib/sms-consent/ReCaptcha.JS',
-      'MODULE_GRAPH_DISABLED_RECAPTCHA_BOUNDARY',
-    ],
-    [
       'browser support module',
       'tests/browser/security-fixture.js',
       'MODULE_GRAPH_TEST_ONLY_MODULE',
@@ -509,6 +499,28 @@ describe('authoritative production compiler graph enforcement', () => {
       expect(result.hasErrors).toBe(true)
       expect(result.rules).toContain(rule)
       expect(result.diagnostics).toMatch(/^[A-Z_]+ \[[A-Za-z0-9_./-]+\]$/m)
+    },
+  )
+
+  it.each([
+    ['the reviewed HTTP transport', 'src/lib/sms-consent/httpTransport.mjs'],
+    ['the reviewed reCAPTCHA boundary', 'src/lib/sms-consent/ReCaptcha.JS'],
+  ])(
+    'accepts an actual Webpack compilation importing %s (reviewed production implementation, gated at runtime by SMS_CONSENT_INTEGRATION_ENABLED, not by bundle exclusion)',
+    async (_label, path) => {
+      const root = await fixtureRoot()
+      const allowed = join(root, path)
+      await mkdir(dirname(allowed), { recursive: true })
+      await writeFile(allowed, 'export default 1\n')
+      await writeFile(
+        join(root, 'entry.js'),
+        `import ${JSON.stringify(allowed)}\n`,
+      )
+
+      const result = await compile(root)
+
+      expect(result.hasErrors).toBe(false)
+      expect(result.rules).toEqual([])
     },
   )
 
@@ -550,13 +562,19 @@ describe('authoritative production compiler graph enforcement', () => {
     const root = resolve('/approved/repository')
     expect(
       classifyProductionModule(
-        '/duplicate/package/src/lib/sms-consent/httpTransport.ts',
+        '/duplicate/package/src/lib/sms-consent/browserTestClient.ts',
         { repositoryRoot: root },
       ).violation,
     ).toEqual({
-      ruleId: 'MODULE_GRAPH_DISABLED_HTTP_TRANSPORT',
+      ruleId: 'MODULE_GRAPH_BROWSER_TEST_CLIENT',
       pathLabel: 'FORBIDDEN_MODULE',
     })
+    expect(
+      classifyProductionModule(
+        '/duplicate/package/src/lib/sms-consent/httpTransport.ts',
+        { repositoryRoot: root },
+      ).violation,
+    ).toBeNull()
     expect(
       classifyProductionModule('virtual:\0private/recaptcha-loader-fixture', {
         repositoryRoot: root,

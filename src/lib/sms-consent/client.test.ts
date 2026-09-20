@@ -642,4 +642,49 @@ describe('production safety boundary', () => {
     expect(SMS_CONSENT_INTEGRATION_ENABLED).toBe(false)
     expect(productionSmsConsentClient).toBe(disabledSmsConsentClient)
   })
+
+  // httpTransport.ts and recaptcha.ts are now part of the production bundle
+  // (feat/sms-consent-public-client-wiring) - the module-graph plugin no
+  // longer forbids them, since SMS_CONSENT_INTEGRATION_ENABLED gates
+  // *behavior*, not bundle inclusion. These tests are the replacement
+  // guarantee: present in the bundle, but provably inert while disabled.
+  it('never sends a network request while disabled', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch')
+
+    await expect(
+      productionSmsConsentClient.submit(logicalRequest, idempotencyKey),
+    ).rejects.toMatchObject({ code: 'disabled' })
+
+    expect(fetchSpy).not.toHaveBeenCalled()
+    fetchSpy.mockRestore()
+  })
+
+  it('never initializes or loads the reCAPTCHA script while disabled', async () => {
+    const appendChildSpy = vi.spyOn(document.head, 'appendChild')
+    const createElementSpy = vi.spyOn(document, 'createElement')
+
+    await expect(
+      productionSmsConsentClient.submit(logicalRequest, idempotencyKey),
+    ).rejects.toMatchObject({ code: 'disabled' })
+
+    expect(createElementSpy).not.toHaveBeenCalledWith('script')
+    expect(appendChildSpy).not.toHaveBeenCalled()
+    expect(
+      (window as Window & { grecaptcha?: unknown }).grecaptcha,
+    ).toBeUndefined()
+
+    appendChildSpy.mockRestore()
+    createElementSpy.mockRestore()
+  })
+
+  it('never reads the API base URL or reCAPTCHA site key config while disabled', async () => {
+    // If the disabled path ever touched these, a missing/invalid value
+    // would surface as 'invalid-configuration' instead of 'disabled' -
+    // asserting the exact code proves the config readers never ran, which
+    // is the only path either value (and by extension any secret-adjacent
+    // config) could be exposed.
+    await expect(
+      productionSmsConsentClient.submit(logicalRequest, idempotencyKey),
+    ).rejects.toMatchObject({ code: 'disabled' })
+  })
 })

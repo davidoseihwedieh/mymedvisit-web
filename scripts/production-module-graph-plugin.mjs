@@ -56,10 +56,16 @@ const SOURCE_EXTENSIONS = new Set([
   '.ts',
   '.tsx',
 ])
+// httpTransport and recaptcha were forbidden here while they were reachable
+// only through a dev-only alias (see git history: MODULE_GRAPH_DISABLED_*).
+// feat/sms-consent-public-client-wiring made them the reviewed, intentional
+// production implementation behind the SMS_CONSENT_INTEGRATION_ENABLED
+// runtime gate in client.ts - the flag now controls behavior, not bundle
+// inclusion, so forbidding these two here would fight the feature this
+// module graph exists to protect. browserTestClient remains forbidden: it
+// is genuinely test-only and must never be a production implementation.
 const FORBIDDEN_SOURCE_STEMS = new Map([
   ['src/lib/sms-consent/browsertestclient', 'MODULE_GRAPH_BROWSER_TEST_CLIENT'],
-  ['src/lib/sms-consent/httptransport', 'MODULE_GRAPH_DISABLED_HTTP_TRANSPORT'],
-  ['src/lib/sms-consent/recaptcha', 'MODULE_GRAPH_DISABLED_RECAPTCHA_BOUNDARY'],
 ])
 
 export class SmsConsentProductionModuleGraphPlugin {
