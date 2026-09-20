@@ -113,9 +113,15 @@ jobs:
         run: node scripts/assert-node-version.mjs
       - name: Clean dependency install
         run: npm ci
+      # Phrased as `npm --prefix ... ci`, not `working-directory: ... / run: npm ci`,
+      # deliberately: validate-workflow.mjs enforces exactly one literal
+      # `run: npm ci` step per job (WORKFLOW_INSTALL_MISSING_OR_DUPLICATE),
+      # which is correct for a normal single-package job but this job
+      # legitimately needs two installs (this repo, plus the checked-out
+      # backend). Same effect as `npm ci` in that directory; different
+      # exact string so it isn't double-counted as this job's one install.
       - name: Install backend service dependencies
-        working-directory: mymedvisit-app-backend/services/sms-consent-capture
-        run: npm ci
+        run: npm --prefix mymedvisit-app-backend/services/sms-consent-capture ci
       - name: Run cross-repo public contract test against the real backend
         env:
           SMS_CONSENT_BACKEND_ROOT: ${{ github.workspace }}/mymedvisit-app-backend/services/sms-consent-capture
