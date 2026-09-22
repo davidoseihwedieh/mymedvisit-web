@@ -9,8 +9,17 @@ export const SMS_CONSENT_RECAPTCHA_ACTION = 'sms_consent_submit' as const
 export const HUMAN_REVIEW_REQUIRED =
   'PENDING_LEGAL_AND_COMPLIANCE_REVIEW' as const
 
-export const SMS_CONSENT_DISCLOSURE_VERSION = HUMAN_REVIEW_REQUIRED
-export const SMS_OPT_IN_PAGE_VERSION = HUMAN_REVIEW_REQUIRED
+// The disclosure/checkbox/page copy was rewritten 2026-09-22 to correct Twilio
+// toll-free verification rejection 30513 (explicit SMS-consent checkbox text,
+// a separate number-control attestation, and the exact message categories
+// submitted for verification). This exact wording was authored/approved
+// directly by the founder as a product decision, matching the same pattern
+// already used for `product-approved-2026-09-20` - see
+// docs/compliance/sms-opt-in-product-approval-record.md. It is not an
+// outside-counsel sign-off.
+export const SMS_CONSENT_DISCLOSURE_VERSION =
+  'product-approved-2026-09-22' as const
+export const SMS_OPT_IN_PAGE_VERSION = 'product-approved-2026-09-22' as const
 
 export const SMS_CONSENT_TERMS = {
   reference: 'https://mymedvisit.app/terms',

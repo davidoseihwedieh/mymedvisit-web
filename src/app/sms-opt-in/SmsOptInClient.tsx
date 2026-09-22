@@ -469,17 +469,17 @@ export function SmsOptInClient({
                 MyMedVisit SMS preferences
               </p>
               <h1 className="mt-4 max-w-3xl font-[var(--font-fraunces)] text-[clamp(2.35rem,8vw,4.8rem)] leading-[1.05]">
-                Choose whether to receive one-time verification codes.
+                Choose whether to receive MyMedVisit SMS text messages.
               </h1>
-              {/* Proposed OTP-only language; not approved for production use. */}
               <p className="mt-6 max-w-2xl text-base leading-relaxed text-[rgba(13,27,42,0.7)] sm:text-lg">
-                MyMedVisit may send one-time verification codes that you request
-                for authentication, account recovery, or confirmation of a
-                sensitive action. This page is not an enrollment for advertising
-                or promotional messages.
+                MyMedVisit may send one-time verification codes, enrollment and
+                consent confirmations, visit-preparation reminders, symptom
+                check-in reminders, and care-workflow notifications. This page
+                is not an enrollment for advertising or promotional messages.
               </p>
               <p className="mt-4 text-sm font-medium text-[var(--teal-dark)]">
-                MyMedVisit is the sender.
+                MyMedVisit, operated by SUGARCANEHAYES, is the sender of these
+                messages.
               </p>
             </div>
 
@@ -529,13 +529,12 @@ export function SmsOptInClient({
               id="consent-heading"
               className="font-[var(--font-fraunces)] text-3xl"
             >
-              Choose whether to receive SMS
+              Review the disclosure and make your choice
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-[rgba(13,27,42,0.68)]">
               Enter your mobile number and affirmatively check both boxes only
-              if you want the described verification-code messages and may
-              consent for this number. You can decline or leave this page
-              without opting in.
+              if you want the described SMS messages and may consent for this
+              number. You can decline or leave this page without opting in.
             </p>
 
             {phase === 'declined' ? (
@@ -639,32 +638,11 @@ export function SmsOptInClient({
                     )}
                   </div>
 
-                  <fieldset
-                    className="rounded-2xl border border-[rgba(13,27,42,0.18)] bg-white/80 p-5"
-                    aria-describedby={
-                      errors.consent
-                        ? 'sms-disclosure consent-error'
-                        : 'sms-disclosure'
-                    }
-                  >
+                  <fieldset className="rounded-2xl border border-[rgba(13,27,42,0.18)] bg-white/80 p-5">
                     <legend className="px-1 text-sm font-semibold">
                       Transactional SMS consent
                     </legend>
-                    <p
-                      id="sms-disclosure"
-                      className="text-sm leading-relaxed text-[rgba(13,27,42,0.82)]"
-                    >
-                      {/* Proposed OTP-only language; not approved for production use. */}
-                      MyMedVisit may send one-time verification codes that you
-                      request for authentication, account recovery, or
-                      confirmation of a sensitive action. Message frequency
-                      varies based on the verification requests you initiate.
-                      Message and data rates may apply. Reply STOP to opt out
-                      and HELP for help. Consent is not a condition of purchase
-                      and does not authorize advertising or promotional
-                      messages.
-                    </p>
-                    <div className="mt-4 flex items-start gap-3">
+                    <div className="mt-1 flex items-start gap-3">
                       <input
                         ref={consentRef}
                         id="sms-consent"
@@ -678,19 +656,25 @@ export function SmsOptInClient({
                         }
                         aria-invalid={Boolean(errors.consent)}
                         aria-describedby={
-                          errors.consent
-                            ? 'sms-disclosure consent-error'
-                            : 'sms-disclosure'
+                          errors.consent ? 'consent-error' : undefined
                         }
                         className="mt-0.5 h-6 w-6 shrink-0 cursor-pointer accent-[var(--teal-dark)] focus-visible:outline-[var(--teal-dark)] disabled:cursor-not-allowed"
                       />
                       <label
                         htmlFor="sms-consent"
+                        id="sms-consent-label"
                         className="cursor-pointer text-sm font-semibold leading-relaxed"
                       >
-                        I agree to receive the one-time verification-code text
-                        messages described above from MyMedVisit at the mobile
-                        number I provided.
+                        I agree to receive recurring SMS text messages from
+                        MyMedVisit, operated by SUGARCANEHAYES, at the mobile
+                        number I provide. Messages may include one-time
+                        verification codes, enrollment and consent
+                        confirmations, visit-preparation reminders, symptom
+                        check-in reminders, and care-workflow notifications.
+                        Message frequency varies. Message and data rates may
+                        apply. Reply STOP to opt out or HELP for help. Consent
+                        to receive text messages is not a condition of
+                        purchasing any goods or services.
                       </label>
                     </div>
                     {errors.consent && (
@@ -701,6 +685,22 @@ export function SmsOptInClient({
                         {errors.consent}
                       </p>
                     )}
+
+                    <p className="mt-4 pl-9 text-sm text-[rgba(13,27,42,0.72)]">
+                      <Link
+                        href={SMS_CONSENT_TERMS.reference}
+                        className="rounded font-semibold text-[var(--teal-dark)] underline underline-offset-4"
+                      >
+                        Terms of Service
+                      </Link>
+                      {' · '}
+                      <Link
+                        href={SMS_CONSENT_PRIVACY.reference}
+                        className="rounded font-semibold text-[var(--teal-dark)] underline underline-offset-4"
+                      >
+                        Privacy Policy
+                      </Link>
+                    </p>
 
                     <div className="mt-6 border-t border-[rgba(13,27,42,0.12)] pt-5">
                       <div className="flex items-start gap-3">
@@ -727,11 +727,9 @@ export function SmsOptInClient({
                           htmlFor="authorized-number-attestation"
                           className="cursor-pointer text-sm font-semibold leading-relaxed"
                         >
-                          {/* Proposed attestation; counsel has not approved it. */}
-                          I confirm that I am the subscriber for this mobile
-                          number, or that the subscriber has authorized me to
-                          consent to receive the one-time verification-code
-                          messages described above at this number.
+                          I confirm that I am the subscriber or customary user
+                          of this mobile number and am authorized to consent to
+                          receive text messages at this number.
                         </label>
                       </div>
                       <p
@@ -750,23 +748,6 @@ export function SmsOptInClient({
                         </p>
                       )}
                     </div>
-                    <p className="mt-4 text-sm text-[rgba(13,27,42,0.72)]">
-                      Review the{' '}
-                      <Link
-                        href={SMS_CONSENT_TERMS.reference}
-                        className="rounded font-semibold text-[var(--teal-dark)] underline underline-offset-4"
-                      >
-                        Terms of Service
-                      </Link>{' '}
-                      and{' '}
-                      <Link
-                        href={SMS_CONSENT_PRIVACY.reference}
-                        className="rounded font-semibold text-[var(--teal-dark)] underline underline-offset-4"
-                      >
-                        Privacy Policy
-                      </Link>
-                      .
-                    </p>
                   </fieldset>
 
                   {validationErrorCount > 0 && (
@@ -842,7 +823,9 @@ export function SmsOptInClient({
                       }
                       className="min-h-12 flex-1 rounded-full bg-[var(--teal-dark)] px-6 py-3 text-sm font-semibold text-white shadow-[var(--shadow)] transition-colors hover:bg-[var(--ink)] focus-visible:outline-[var(--ink)] disabled:cursor-not-allowed disabled:bg-slate-500 disabled:shadow-none"
                     >
-                      {submitting ? 'Submitting…' : 'Agree and continue'}
+                      {submitting
+                        ? 'Submitting…'
+                        : 'Verify my number and enroll'}
                     </button>
                   </div>
                 </form>
@@ -851,7 +834,8 @@ export function SmsOptInClient({
 
             <p className="mt-6 text-center text-sm text-[rgba(13,27,42,0.65)]">
               Entering a number or checking either box alone does not opt you
-              in. Consent is requested only when you select Agree and continue.
+              in. Consent is requested only when you select Verify my number and
+              enroll.
             </p>
           </div>
         </div>
