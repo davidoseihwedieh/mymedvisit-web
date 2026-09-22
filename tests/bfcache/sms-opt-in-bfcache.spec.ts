@@ -31,7 +31,7 @@ test('observes a real persisted pageshow before accepting BFCache restoration', 
     .fill('+12025550123')
   await page
     .getByRole('checkbox', {
-      name: /i agree to receive the one-time verification-code/i,
+      name: /i agree to receive recurring sms text messages from mymedvisit/i,
     })
     .check()
   await page
@@ -56,7 +56,7 @@ test('observes a real persisted pageshow before accepting BFCache restoration', 
   ).toHaveValue('')
   await expect(
     page.getByRole('checkbox', {
-      name: /i agree to receive the one-time verification-code/i,
+      name: /i agree to receive recurring sms text messages from mymedvisit/i,
     }),
   ).not.toBeChecked()
   await expect(
@@ -65,7 +65,7 @@ test('observes a real persisted pageshow before accepting BFCache restoration', 
     }),
   ).not.toBeChecked()
   await expect(
-    page.getByRole('button', { name: /agree and continue/i }),
+    page.getByRole('button', { name: /verify my number and enroll/i }),
   ).toBeEnabled()
   monitor.assertClean()
 })
