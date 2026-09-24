@@ -65,7 +65,7 @@ async function completeForm(user: ReturnType<typeof userEvent.setup>) {
   )
   await user.click(
     screen.getByRole('checkbox', {
-      name: /i agree to receive recurring sms text messages from mymedvisit/i,
+      name: /i agree to receive one-time verification code text messages from mymedvisit/i,
     }),
   )
   await user.click(
@@ -109,7 +109,7 @@ describe('SMS opt-in form', () => {
 
     expect(
       screen.getByRole('checkbox', {
-        name: /i agree to receive recurring sms text messages from mymedvisit/i,
+        name: /i agree to receive one-time verification code text messages from mymedvisit/i,
       }),
     ).not.toBeChecked()
     expect(
@@ -125,14 +125,12 @@ describe('SMS opt-in form', () => {
     expect(
       screen.getByRole('checkbox', {
         name:
-          'I agree to receive recurring SMS text messages from MyMedVisit, ' +
-          'operated by SUGARCANEHAYES, at the mobile number I provide. ' +
-          'Messages may include one-time verification codes, enrollment ' +
-          'and consent confirmations, visit-preparation reminders, ' +
-          'symptom check-in reminders, and care-workflow notifications. ' +
-          'Message frequency varies. Message and data rates may apply. ' +
-          'Reply STOP to opt out or HELP for help. Consent to receive text ' +
-          'messages is not a condition of purchasing any goods or services.',
+          'I agree to receive one-time verification code text messages from MyMedVisit, ' +
+          'operated by SUGARCANEHAYES, at the mobile number provided. Messages ' +
+          'are sent only when I request verification. Message frequency varies ' +
+          'based on verification requests. Message and data rates may apply. ' +
+          'Reply STOP to opt out or HELP for help. Consent is not a condition of ' +
+          'purchasing any goods or services.',
       }),
     ).toBeVisible()
   })
@@ -169,12 +167,12 @@ describe('SMS opt-in form', () => {
 
     expect(
       screen.getByText(
-        /Consent to receive text messages is not a condition of purchasing any goods or services\./,
+        /Consent is not a condition of purchasing any goods or services\./,
       ),
     ).toBeVisible()
     expect(
       screen.getByText(
-        /This page is not an enrollment for advertising or promotional messages\./,
+        /This page is not for advertising or promotional messages\./,
       ),
     ).toBeVisible()
   })
@@ -184,7 +182,7 @@ describe('SMS opt-in form', () => {
 
     const consentLabel = screen
       .getByRole('checkbox', {
-        name: /i agree to receive recurring sms text messages from mymedvisit/i,
+        name: /i agree to receive one-time verification code text messages from mymedvisit/i,
       })
       .getAttribute('id')
     const label = document.querySelector(`label[for="${consentLabel}"]`)
@@ -197,7 +195,7 @@ describe('SMS opt-in form', () => {
     renderForm()
 
     const consent = screen.getByRole('checkbox', {
-      name: /i agree to receive recurring sms text messages from mymedvisit/i,
+      name: /i agree to receive one-time verification code text messages from mymedvisit/i,
     })
     const terms = screen.getByRole('link', { name: /terms of service/i })
     const privacy = screen.getByRole('link', { name: /privacy policy/i })
@@ -229,7 +227,7 @@ describe('SMS opt-in form', () => {
     renderForm()
 
     expect(
-      screen.getByRole('button', { name: 'Verify my number and enroll' }),
+      screen.getByRole('button', { name: 'Verify my number' }),
     ).toBeVisible()
   })
 
@@ -238,9 +236,7 @@ describe('SMS opt-in form', () => {
     render(<SmsOptInClient createIdempotencyKey={() => IDEMPOTENCY_KEY} />)
     await completeForm(user)
 
-    await user.click(
-      screen.getByRole('button', { name: /verify my number and enroll/i }),
-    )
+    await user.click(screen.getByRole('button', { name: /verify my number/i }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Consent submission is not available yet. No consent was sent or recorded.',
@@ -255,9 +251,7 @@ describe('SMS opt-in form', () => {
     const submit = vi.fn().mockResolvedValue(durableReceipt)
     renderForm(createClient(submit))
 
-    await user.click(
-      screen.getByRole('button', { name: /verify my number and enroll/i }),
-    )
+    await user.click(screen.getByRole('button', { name: /verify my number/i }))
 
     expect(screen.getByText('Enter a mobile phone number.')).toBeVisible()
     expect(
@@ -288,9 +282,7 @@ describe('SMS opt-in form', () => {
       screen.getByRole('textbox', { name: /mobile phone number/i }),
       '5555550123',
     )
-    await user.click(
-      screen.getByRole('button', { name: /verify my number and enroll/i }),
-    )
+    await user.click(screen.getByRole('button', { name: /verify my number/i }))
 
     expect(
       screen.getByText('Check the consent box to agree before continuing.'),
@@ -298,7 +290,7 @@ describe('SMS opt-in form', () => {
     await waitFor(() => {
       expect(
         screen.getByRole('checkbox', {
-          name: /i agree to receive recurring sms text messages from mymedvisit/i,
+          name: /i agree to receive one-time verification code text messages from mymedvisit/i,
         }),
       ).toHaveFocus()
     })
@@ -316,12 +308,10 @@ describe('SMS opt-in form', () => {
     )
     await user.click(
       screen.getByRole('checkbox', {
-        name: /i agree to receive recurring sms text messages from mymedvisit/i,
+        name: /i agree to receive one-time verification code text messages from mymedvisit/i,
       }),
     )
-    await user.click(
-      screen.getByRole('button', { name: /verify my number and enroll/i }),
-    )
+    await user.click(screen.getByRole('button', { name: /verify my number/i }))
 
     expect(
       screen.getByText(
@@ -352,16 +342,14 @@ describe('SMS opt-in form', () => {
         name: /i confirm that i am the subscriber/i,
       }),
     )
-    await user.click(
-      screen.getByRole('button', { name: /verify my number and enroll/i }),
-    )
+    await user.click(screen.getByRole('button', { name: /verify my number/i }))
 
     expect(
       screen.getByText('Check the consent box to agree before continuing.'),
     ).toBeVisible()
     expect(
       screen.getByRole('checkbox', {
-        name: /i agree to receive recurring sms text messages from mymedvisit/i,
+        name: /i agree to receive one-time verification code text messages from mymedvisit/i,
       }),
     ).not.toBeChecked()
     expect(submit).not.toHaveBeenCalled()
@@ -388,7 +376,7 @@ describe('SMS opt-in form', () => {
 
     await user.click(
       screen.getByRole('checkbox', {
-        name: /i agree to receive recurring sms text messages from mymedvisit/i,
+        name: /i agree to receive one-time verification code text messages from mymedvisit/i,
       }),
     )
     await user.click(
@@ -411,7 +399,7 @@ describe('SMS opt-in form', () => {
     await user.tab()
     expect(
       screen.getByRole('checkbox', {
-        name: /i agree to receive recurring sms text messages from mymedvisit/i,
+        name: /i agree to receive one-time verification code text messages from mymedvisit/i,
       }),
     ).toHaveFocus()
     await user.keyboard(' ')
@@ -432,7 +420,7 @@ describe('SMS opt-in form', () => {
     expect(screen.getByRole('button', { name: /no thanks/i })).toHaveFocus()
     await user.tab()
     expect(
-      screen.getByRole('button', { name: /verify my number and enroll/i }),
+      screen.getByRole('button', { name: /verify my number/i }),
     ).toHaveFocus()
     await user.keyboard('{Enter}')
 
@@ -453,7 +441,7 @@ describe('SMS opt-in form', () => {
     ).toHaveValue('')
     expect(
       screen.getByRole('checkbox', {
-        name: /i agree to receive recurring sms text messages from mymedvisit/i,
+        name: /i agree to receive one-time verification code text messages from mymedvisit/i,
       }),
     ).not.toBeChecked()
     expect(
@@ -463,7 +451,7 @@ describe('SMS opt-in form', () => {
     ).not.toBeChecked()
     await waitFor(() =>
       expect(
-        screen.getByRole('button', { name: /verify my number and enroll/i }),
+        screen.getByRole('button', { name: /verify my number/i }),
       ).toBeEnabled(),
     )
     expect(submit).not.toHaveBeenCalled()
@@ -473,9 +461,7 @@ describe('SMS opt-in form', () => {
     const user = userEvent.setup()
     const submit = vi.fn().mockResolvedValue(durableReceipt)
     renderForm(createClient(submit))
-    await user.click(
-      screen.getByRole('button', { name: /verify my number and enroll/i }),
-    )
+    await user.click(screen.getByRole('button', { name: /verify my number/i }))
     expect(screen.getByRole('alert')).toHaveTextContent('highlighted fields')
 
     await restoreFromBfcache()
@@ -499,9 +485,7 @@ describe('SMS opt-in form', () => {
     )
     renderForm(createClient(submit))
     await completeForm(user)
-    await user.click(
-      screen.getByRole('button', { name: /verify my number and enroll/i }),
-    )
+    await user.click(screen.getByRole('button', { name: /verify my number/i }))
     expect(
       screen.getByText(/waiting for durable-persistence confirmation/i),
     ).toBeVisible()
@@ -538,9 +522,7 @@ describe('SMS opt-in form', () => {
       )
     renderForm(createClient(submit))
     await completeForm(user)
-    await user.click(
-      screen.getByRole('button', { name: /verify my number and enroll/i }),
-    )
+    await user.click(screen.getByRole('button', { name: /verify my number/i }))
     await screen.findByRole('alert')
     await user.click(screen.getByRole('button', { name: /try again/i }))
     expect(submit).toHaveBeenCalledTimes(2)
@@ -571,7 +553,7 @@ describe('SMS opt-in form', () => {
     renderForm(createClient(submit))
     await completeForm(user)
     const button = screen.getByRole('button', {
-      name: /verify my number and enroll/i,
+      name: /verify my number/i,
     })
 
     await user.dblClick(button)
@@ -593,9 +575,7 @@ describe('SMS opt-in form', () => {
     renderForm(createClient(submit))
     await completeForm(user)
 
-    await user.click(
-      screen.getByRole('button', { name: /verify my number and enroll/i }),
-    )
+    await user.click(screen.getByRole('button', { name: /verify my number/i }))
 
     const alert = await screen.findByRole('alert')
     expect(alert).toHaveTextContent('treated as not recorded')
@@ -612,9 +592,7 @@ describe('SMS opt-in form', () => {
       .mockResolvedValueOnce(durableReceipt)
     renderForm(createClient(submit))
     await completeForm(user)
-    await user.click(
-      screen.getByRole('button', { name: /verify my number and enroll/i }),
-    )
+    await user.click(screen.getByRole('button', { name: /verify my number/i }))
     await screen.findByRole('alert')
 
     await user.click(screen.getByRole('button', { name: /try again/i }))
@@ -658,9 +636,7 @@ describe('SMS opt-in form', () => {
     renderForm(client)
     await completeForm(user)
 
-    await user.click(
-      screen.getByRole('button', { name: /verify my number and enroll/i }),
-    )
+    await user.click(screen.getByRole('button', { name: /verify my number/i }))
     await screen.findByRole('alert')
     await user.click(screen.getByRole('button', { name: /try again/i }))
 
@@ -695,17 +671,13 @@ describe('SMS opt-in form', () => {
       .mockReturnValueOnce(SECOND_IDEMPOTENCY_KEY)
     renderForm(createClient(submit), createIdempotencyKey)
     await completeForm(user)
-    await user.click(
-      screen.getByRole('button', { name: /verify my number and enroll/i }),
-    )
+    await user.click(screen.getByRole('button', { name: /verify my number/i }))
     await screen.findByRole('alert')
 
     const phone = screen.getByRole('textbox', { name: /mobile phone number/i })
     await user.clear(phone)
     await user.type(phone, '5555550199')
-    await user.click(
-      screen.getByRole('button', { name: /verify my number and enroll/i }),
-    )
+    await user.click(screen.getByRole('button', { name: /verify my number/i }))
 
     expect(await screen.findByText('Your SMS consent was saved.')).toBeVisible()
     expect(createIdempotencyKey).toHaveBeenCalledTimes(2)
@@ -734,19 +706,15 @@ describe('SMS opt-in form', () => {
       .mockReturnValueOnce(SECOND_IDEMPOTENCY_KEY)
     renderForm(createClient(submit), createIdempotencyKey)
     await completeForm(user)
-    await user.click(
-      screen.getByRole('button', { name: /verify my number and enroll/i }),
-    )
+    await user.click(screen.getByRole('button', { name: /verify my number/i }))
     await screen.findByRole('alert')
 
     const consent = screen.getByRole('checkbox', {
-      name: /i agree to receive recurring sms text messages from mymedvisit/i,
+      name: /i agree to receive one-time verification code text messages from mymedvisit/i,
     })
     await user.click(consent)
     await user.click(consent)
-    await user.click(
-      screen.getByRole('button', { name: /verify my number and enroll/i }),
-    )
+    await user.click(screen.getByRole('button', { name: /verify my number/i }))
 
     expect(await screen.findByText('Your SMS consent was saved.')).toBeVisible()
     expect(submit.mock.calls.map((call) => call[1])).toEqual([
@@ -775,9 +743,7 @@ describe('SMS opt-in form', () => {
       .mockReturnValueOnce(SECOND_IDEMPOTENCY_KEY)
     renderForm(createClient(submit), createIdempotencyKey)
     await completeForm(user)
-    await user.click(
-      screen.getByRole('button', { name: /verify my number and enroll/i }),
-    )
+    await user.click(screen.getByRole('button', { name: /verify my number/i }))
     await screen.findByRole('alert')
 
     const attestation = screen.getByRole('checkbox', {
@@ -785,9 +751,7 @@ describe('SMS opt-in form', () => {
     })
     await user.click(attestation)
     await user.click(attestation)
-    await user.click(
-      screen.getByRole('button', { name: /verify my number and enroll/i }),
-    )
+    await user.click(screen.getByRole('button', { name: /verify my number/i }))
 
     expect(await screen.findByText('Your SMS consent was saved.')).toBeVisible()
     expect(submit.mock.calls.map((call) => call[1])).toEqual([
@@ -810,9 +774,7 @@ describe('SMS opt-in form', () => {
       .mockResolvedValueOnce(durableReceipt)
     renderForm(createClient(submit))
     await completeForm(user)
-    await user.click(
-      screen.getByRole('button', { name: /verify my number and enroll/i }),
-    )
+    await user.click(screen.getByRole('button', { name: /verify my number/i }))
     await screen.findByRole('alert')
 
     Object.defineProperty(window.navigator, 'onLine', {
@@ -856,9 +818,7 @@ describe('SMS opt-in form', () => {
     await completeForm(user)
     vi.useFakeTimers()
     await act(async () => {
-      fireEvent.click(
-        screen.getByRole('button', { name: /verify my number and enroll/i }),
-      )
+      fireEvent.click(screen.getByRole('button', { name: /verify my number/i }))
       await Promise.resolve()
     })
 
@@ -894,9 +854,7 @@ describe('SMS opt-in form', () => {
       )
     renderForm(createClient(submit))
     await completeForm(user)
-    await user.click(
-      screen.getByRole('button', { name: /verify my number and enroll/i }),
-    )
+    await user.click(screen.getByRole('button', { name: /verify my number/i }))
 
     expect(
       await screen.findByRole('button', { name: /try again/i }),
@@ -922,9 +880,7 @@ describe('SMS opt-in form', () => {
       )
     renderForm(createClient(submit))
     await completeForm(user)
-    await user.click(
-      screen.getByRole('button', { name: /verify my number and enroll/i }),
-    )
+    await user.click(screen.getByRole('button', { name: /verify my number/i }))
 
     await screen.findByRole('alert')
     expect(
@@ -952,7 +908,7 @@ describe('SMS opt-in form', () => {
     renderForm(client)
     await completeForm(user)
     const submit = screen.getByRole('button', {
-      name: /verify my number and enroll/i,
+      name: /verify my number/i,
     })
 
     await user.dblClick(submit)
@@ -972,9 +928,7 @@ describe('SMS opt-in form', () => {
     renderForm(createClient(submit as SmsConsentClient['submit']))
     await completeForm(user)
 
-    await user.click(
-      screen.getByRole('button', { name: /verify my number and enroll/i }),
-    )
+    await user.click(screen.getByRole('button', { name: /verify my number/i }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'treated as not recorded',
@@ -993,9 +947,7 @@ describe('SMS opt-in form', () => {
     renderForm(createClient(submit))
     await completeForm(user)
 
-    await user.click(
-      screen.getByRole('button', { name: /verify my number and enroll/i }),
-    )
+    await user.click(screen.getByRole('button', { name: /verify my number/i }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'treated as not recorded',
@@ -1012,9 +964,7 @@ describe('SMS opt-in form', () => {
     renderForm(createClient(submit))
     await completeForm(user)
 
-    await user.click(
-      screen.getByRole('button', { name: /verify my number and enroll/i }),
-    )
+    await user.click(screen.getByRole('button', { name: /verify my number/i }))
 
     expect(await screen.findByRole('status')).toHaveTextContent(
       'confirmed that your consent record was durably persisted',
@@ -1044,7 +994,7 @@ describe('SMS opt-in form', () => {
       'You are offline',
     )
     expect(
-      screen.getByRole('button', { name: /verify my number and enroll/i }),
+      screen.getByRole('button', { name: /verify my number/i }),
     ).toBeDisabled()
     expect(submit).not.toHaveBeenCalled()
   })
@@ -1061,9 +1011,7 @@ describe('SMS opt-in form', () => {
     const submit = vi.fn().mockResolvedValue(durableReceipt)
     const { container } = renderForm(createClient(submit))
 
-    await user.click(
-      screen.getByRole('button', { name: /verify my number and enroll/i }),
-    )
+    await user.click(screen.getByRole('button', { name: /verify my number/i }))
     await screen.findByRole('alert')
 
     await expectNoAxeViolations(container)
@@ -1083,9 +1031,7 @@ describe('SMS opt-in form', () => {
     const { container } = renderForm(createClient(submit))
     await completeForm(user)
 
-    await user.click(
-      screen.getByRole('button', { name: /verify my number and enroll/i }),
-    )
+    await user.click(screen.getByRole('button', { name: /verify my number/i }))
     await screen.findByText(/waiting for durable-persistence confirmation/i)
 
     await expectNoAxeViolations(container)
@@ -1120,9 +1066,7 @@ describe('SMS opt-in form', () => {
     const { container } = renderForm(createClient(submit))
     await completeForm(user)
 
-    await user.click(
-      screen.getByRole('button', { name: /verify my number and enroll/i }),
-    )
+    await user.click(screen.getByRole('button', { name: /verify my number/i }))
     await screen.findByRole('alert')
 
     await expectNoAxeViolations(container)
@@ -1144,9 +1088,7 @@ describe('SMS opt-in form', () => {
       )
     const { container } = renderForm(createClient(submit))
     await completeForm(user)
-    await user.click(
-      screen.getByRole('button', { name: /verify my number and enroll/i }),
-    )
+    await user.click(screen.getByRole('button', { name: /verify my number/i }))
     await screen.findByRole('alert')
 
     await user.click(screen.getByRole('button', { name: /try again/i }))
@@ -1183,13 +1125,36 @@ describe('SMS opt-in form', () => {
     const { container } = renderForm(createClient(submit))
     await completeForm(user)
 
-    await user.click(
-      screen.getByRole('button', { name: /verify my number and enroll/i }),
-    )
+    await user.click(screen.getByRole('button', { name: /verify my number/i }))
     await screen.findByText('Your SMS consent was saved.')
 
     await expectNoAxeViolations(container)
     expect(submit).toHaveBeenCalledTimes(1)
     expect(liveFetch).not.toHaveBeenCalled()
+  })
+})
+
+describe('OTP-only public contract', () => {
+  it('uses the exact OTP-only CTA and excludes deferred message categories', () => {
+    renderForm()
+
+    expect(
+      screen.getByRole('button', { name: 'Verify my number' }),
+    ).toBeVisible()
+    expect(
+      screen.getByRole('checkbox', {
+        name: /one-time verification code text messages/i,
+      }),
+    ).toBeVisible()
+    for (const deferredCategory of [
+      'enrollment and consent confirmations',
+      'visit-preparation reminders',
+      'symptom check-in reminders',
+      'care-workflow notifications',
+    ]) {
+      expect(
+        screen.queryByText(new RegExp(deferredCategory, 'i')),
+      ).not.toBeInTheDocument()
+    }
   })
 })

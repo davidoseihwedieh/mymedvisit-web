@@ -1,36 +1,22 @@
 # Transactional SMS opt-in readiness
 
-## 2026-09-22 hotfix for Twilio toll-free verification rejection 30513
+## 2026-09-24 OTP-only correction for Twilio toll-free verification rejection 30507
 
-Twilio rejected toll-free verification for `+18337254061` (SUGARCANEHAYES)
-with reason code 30513 ("Opt-in - Consent for messaging is a requirement for
-service"). This revision corrects the opt-in page's language and
-presentation only: an explicit SMS-consent checkbox naming the sender
-(MyMedVisit, operated by SUGARCANEHAYES) and the exact message categories
-submitted for verification, a separate number-control attestation checkbox,
-and Terms/Privacy links displayed immediately beneath the consent checkbox
-rather than combined with it. It does **not** enable the backend, send any
-SMS, or claim that consent was recorded - see "Current safe state" below,
-which is unchanged by this revision. The exact wording was authored/approved
-directly by the founder as a product decision (matching
-`product-approved-2026-09-20`'s precedent in
-`docs/compliance/sms-opt-in-product-approval-record.md`), not an
-outside-counsel sign-off.
+Twilio rejected toll-free verification for `+18337254061` (SUGARCANEHAYES) with
+reason code 30507 (the opt-in does not match the use case or website details).
+This revision narrows the opt-in page, Terms, and Privacy SMS language to the
+currently authorized OTP-only program: one-time verification codes requested by
+the user. It preserves the separate number-control attestation, optional
+consent, legal links, and disconnected integration. The exact wording remains
+subject to legal and compliance review; it is not an outside-counsel sign-off.
 
-**Known, deliberately out-of-scope gap:** the disclosure/checkbox now names
-five message categories (one-time verification codes, enrollment and
-consent confirmations, visit-preparation reminders, symptom check-in
-reminders, and care-workflow notifications). The technical wire contract's
-`transactionalMessageCategories` allowlist (`src/lib/sms-consent/constants.ts`,
-see "Central consent constants" below) still contains only
-`one_time_verification_codes` - expanding it is a backend-allowlist change,
-which this hotfix explicitly does not make. This is safe only because the
-integration remains fully disabled (`SMS_CONSENT_INTEGRATION_ENABLED =
-false`): nothing is ever actually submitted, so there is no live request for
-the broader disclosure to contradict. Do not enable the backend without
-first reconciling this gap - either by expanding the allowlist to match the
-disclosure, or by narrowing the disclosure back to what the allowlist
-supports.
+The public opt-in and legal pages now describe only the currently authorized
+one-time verification-code program. The four deferred categories are not named
+or enabled here. The website integration remains fully disabled
+(`SMS_CONSENT_INTEGRATION_ENABLED = false`). Before SMS activation, the
+backend/service legal-version configuration must be aligned with these website
+texts through a separately reviewed change; this website commit does not change
+that backend configuration.
 
 ## Current safe state
 
@@ -48,9 +34,9 @@ Do not enable submission merely because an endpoint or environment variable exis
 ## Public workflow
 
 1. A user enters a mobile number using the visibly labeled phone field.
-2. The user reviews the SMS-consent checkbox's own disclosure text (sender/legal-applicant identity, exact message categories, frequency, rates, STOP/HELP, and the not-a-condition-of-purchase statement) and, immediately beneath it, the separate Terms of Service and Privacy Policy links.
+2. The user reviews the SMS-consent checkbox's own disclosure text (sender/legal-applicant identity, exact OTP-only message purpose, frequency, rates, STOP/HELP, and the not-a-condition-of-purchase statement) and, immediately beneath it, the separate Terms of Service and Privacy Policy links.
 3. The user separately checks the unchecked SMS-consent and authorized-number-attestation controls. Checking one never checks or implies the other, and neither implies acceptance of the Terms or Privacy links.
-4. Only **Verify my number and enroll** may create a consent request; leaving the SMS-consent checkbox unchecked always blocks submission and focuses that checkbox, regardless of the attestation checkbox's state.
+4. Only **Verify my number** may create a consent request; leaving the SMS-consent checkbox unchecked always blocks submission and focuses that checkbox, regardless of the attestation checkbox's state.
 5. The button and form controls are disabled during a request. A synchronous in-flight guard also prevents duplicate submissions before React rerenders.
 6. The UI may show success only after a response confirms durable persistence and echoes the request's idempotency key.
 7. Any network error, timeout, disallowed status, malformed response, or ambiguous outcome is displayed and treated as **not recorded**. An explicit approved retry reuses the stable nine-field logical payload and idempotency key but obtains a fresh reCAPTCHA token for the new HTTP attempt.
@@ -76,11 +62,12 @@ Client-safe, non-secret values live in `src/lib/sms-consent/constants.ts`:
 - consent source; and
 - transactional message categories.
 
-The disclosure and page versions equal `product-approved-2026-09-22` -
-minted for the 2026-09-22 Twilio-30513 copy hotfix described above, following
-the same founder-approval pattern as `product-approved-2026-09-20`. The Terms
-and Privacy versions still equal `PENDING_LEGAL_AND_COMPLIANCE_REVIEW`; this
-hotfix does not touch Terms/Privacy content. Do not replace the Terms/Privacy
+The disclosure and page versions remain `product-approved-2026-09-22` for the
+existing backend contract. The visible Terms and Privacy pages were updated
+September 24, 2026 to match the OTP-only disclosure, while their website
+constants remain `PENDING_LEGAL_AND_COMPLIANCE_REVIEW`. Backend/service legal
+version alignment remains required before SMS activation; this website change
+does not alter backend configuration. Do not replace the Terms/Privacy
 placeholders with dates or approval claims until counsel/compliance supplies
 the identifiers for that exact approved text.
 
@@ -94,11 +81,10 @@ The proposed, unapproved initial website request contains exactly
 `one_time_verification_codes`. The other taxonomy members remain deferred. Any
 category change requires corresponding disclosure, policy, backend allowlist,
 and version updates; outbound message templates remain outside capture-only v1.
-**This taxonomy is unchanged by the 2026-09-22 hotfix above** - the visible
-disclosure now names five categories for toll-free verification review, but
-the technical allowlist intentionally still only contains
-`one_time_verification_codes` until the backend is separately extended. See
-the hotfix section's "known, deliberately out-of-scope gap" note.
+The public disclosure and legal pages now intentionally match the initial
+OTP-only website scope. The technical allowlist still contains only
+`one_time_verification_codes`; backend/service legal-version alignment remains
+required before activation.
 
 ## Approved technical contract; production values remain unapproved
 
@@ -281,18 +267,14 @@ approved binary types. Its finite decoding and constant-folding checks are
 defense in depth; they do not claim to determine arbitrary JavaScript behavior
 or replace the compiler graph.
 
-## Sample transactional messages
+## Sample transactional message
 
-One sample per category named in the 2026-09-22 SMS-consent checkbox
-disclosure, matching it exactly for toll-free verification submission:
+The OTP-only sample must match the actual authorized runtime message exactly:
 
-- One-time verification codes: `MyMedVisit verification code: 123456. This code expires soon. Reply STOP to opt out. HELP for help.`
-- Enrollment and consent confirmations: `MyMedVisit: You're enrolled to receive SMS messages from MyMedVisit, operated by SUGARCANEHAYES. Reply STOP to opt out. HELP for help.`
-- Visit-preparation reminders: `MyMedVisit: A visit-preparation reminder is ready in your account. Reply STOP to opt out. HELP for help.`
-- Symptom check-in reminders: `MyMedVisit: This is your requested symptom check-in reminder. Reply STOP to opt out. HELP for help.`
-- Care-workflow notifications: `MyMedVisit: A care-workflow notification is available in your account. Reply STOP to opt out. HELP for help.`
+- One-time verification code: `MyMedVisit: [code] is your verification code. It expires in 10 minutes. Do not share this code with anyone.`
 
-These examples contain no patient symptoms, diagnoses, appointment details, real credentials, or real phone numbers. They are examples only; final templates require legal/compliance and provider approval. As noted above, the technical backend only sends the first of these today (`one_time_verification_codes`); the other four are disclosed here for toll-free verification review and require a corresponding backend-allowlist change before any of them could ever actually be sent - the integration remains fully disabled regardless.
+No samples for deferred categories are included because those messages are not
+authorized.
 
 ## Local and preview verification
 
@@ -384,13 +366,20 @@ The current disconnected branch can also be retained as the safe website fallbac
 
 ## Unresolved legal/compliance decisions
 
-- Approval of the exact opt-in disclosure, button labels, decline wording, success wording, and sample message templates. The SMS-consent checkbox, attestation checkbox, decline wording, and CTA label were founder-approved 2026-09-22 as `product-approved-2026-09-22` (see the hotfix section above); this is still not an outside-counsel sign-off.
+- Approval of the exact opt-in disclosure, button labels, decline wording, success wording, and sample message templates. The SMS-consent checkbox, attestation checkbox, decline wording, and OTP-only CTA
+  were updated September 24, 2026; the existing disclosure/page identifier remains
+  `product-approved-2026-09-22` pending formal version alignment review.
 - Authoritative version identifiers for the Terms and Privacy text specifically. Do not infer them from existing "Last updated" dates. (The disclosure/page identifier is resolved above; Terms/Privacy remain `PENDING_LEGAL_AND_COMPLIANCE_REVIEW`.)
 - Whether and how the legal pages' displayed update dates change when the SMS sections are approved.
 - Reconciliation of the existing age language: the Terms say users must be at least 13, while the Privacy Policy says the app is not intended for people under 18.
-- Approval of the five disclosed message categories as the backend's _enabled_ subset - the 2026-09-22 disclosure names all five for toll-free verification review, but the technical allowlist (`TRANSACTIONAL_MESSAGE_CATEGORIES`) still only contains `one_time_verification_codes`, and the whole integration remains disabled regardless. Expanding the allowlist to actually match the disclosure is a separate, not-yet-made decision.
+- Approval of any category beyond one-time verification codes remains unresolved. The
+  website currently represents only the OTP-only subset; any future category change
+  requires matching website, policy, backend allowlist, legal-version, template,
+  and provider review.
 - Approved sender identity, message frequency statement, carrier rate statement, STOP/HELP flows, help contact, quiet-hours requirements, and supported countries.
 - Whether consent records or phone numbers are regulated health/personal data in each operating jurisdiction, plus retention/deletion/access rules.
+- Whether the visible September 24, 2026 legal-page date should receive a new
+  authoritative backend/service legal-version identifier before activation.
 - Whether the Privacy language about sale/sharing and Twilio processing is complete and accurate for the final data flow and vendors.
 - Relationship between website consent, account ownership/number verification, in-app notification preferences, prior consent, number reassignment, and provider-side opt-out state.
 - Whether the public page should be indexed after the flow is live. It remains `noindex,follow` until that decision is approved.

@@ -71,13 +71,13 @@ test('hydrates with two unchecked controls and enforces focus order', async ({
 
   const phone = page.getByRole('textbox', { name: /mobile phone number/i })
   const consent = page.getByRole('checkbox', {
-    name: /i agree to receive recurring sms text messages from mymedvisit/i,
+    name: /i agree to receive one-time verification code text messages from mymedvisit/i,
   })
   const attestation = page.getByRole('checkbox', {
     name: /i confirm that i am the subscriber/i,
   })
   const submit = page.getByRole('button', {
-    name: /verify my number and enroll/i,
+    name: /verify my number/i,
   })
 
   await expect(consent).not.toBeChecked()
@@ -112,9 +112,7 @@ test('accepts mocked 201 persistence with exact CORS and no privacy leakage', as
   await page.goto('/sms-opt-in')
   await completeForm(page)
 
-  await page
-    .getByRole('button', { name: /verify my number and enroll/i })
-    .click()
+  await page.getByRole('button', { name: /verify my number/i }).click()
   await expect(page.getByText('Your SMS consent was saved.')).toBeVisible()
 
   expect(state.recaptchaRequests).toHaveLength(1)
@@ -199,9 +197,7 @@ test('accepts an exact mocked 200 idempotent replay receipt', async ({
   await page.goto('/sms-opt-in')
   await completeForm(page)
 
-  await page
-    .getByRole('button', { name: /verify my number and enroll/i })
-    .click()
+  await page.getByRole('button', { name: /verify my number/i }).click()
 
   await expect(page.getByText('Your SMS consent was saved.')).toBeVisible()
   expect(state.captureRequests).toHaveLength(1)
@@ -228,9 +224,7 @@ test('retries a lost response with a fresh token and stable payload/key', async 
   await page.goto('/sms-opt-in')
   await completeForm(page)
 
-  await page
-    .getByRole('button', { name: /verify my number and enroll/i })
-    .click()
+  await page.getByRole('button', { name: /verify my number/i }).click()
   await expect(page.getByRole('main').getByRole('alert')).toContainText(
     'treated as not recorded',
   )
@@ -261,9 +255,7 @@ test('fails safely when CAPTCHA is blocked or execution is rejected', async ({
   })
   await page.goto('/sms-opt-in')
   await completeForm(page)
-  await page
-    .getByRole('button', { name: /verify my number and enroll/i })
-    .click()
+  await page.getByRole('button', { name: /verify my number/i }).click()
   await expect(page.getByRole('main').getByRole('alert')).toContainText(
     'treated as not recorded',
   )
@@ -291,17 +283,15 @@ test('recovers from offline state without automatic submission', async ({
   await context.setOffline(true)
   await expect(page.getByText(/you are offline/i)).toBeVisible()
   await expect(
-    page.getByRole('button', { name: /verify my number and enroll/i }),
+    page.getByRole('button', { name: /verify my number/i }),
   ).toBeDisabled()
   expect(state.captureRequests).toHaveLength(0)
 
   await context.setOffline(false)
   await expect(
-    page.getByRole('button', { name: /verify my number and enroll/i }),
+    page.getByRole('button', { name: /verify my number/i }),
   ).toBeEnabled()
-  await page
-    .getByRole('button', { name: /verify my number and enroll/i })
-    .click()
+  await page.getByRole('button', { name: /verify my number/i }).click()
   await expect(page.getByText('Your SMS consent was saved.')).toBeVisible()
   expect(state.captureRequests).toHaveLength(1)
 })
@@ -313,7 +303,7 @@ test('synchronous duplicate clicks acquire one token and send one request', asyn
   await page.goto('/sms-opt-in')
   await completeForm(page)
   const submit = page.getByRole('button', {
-    name: /verify my number and enroll/i,
+    name: /verify my number/i,
   })
 
   await submit.evaluate((element: HTMLButtonElement) => {
@@ -358,7 +348,7 @@ test('persisted PageTransitionEvent lifecycle harness clears all consent state',
   ).toHaveValue('')
   await expect(
     page.getByRole('checkbox', {
-      name: /i agree to receive recurring sms text messages from mymedvisit/i,
+      name: /i agree to receive one-time verification code text messages from mymedvisit/i,
     }),
   ).not.toBeChecked()
   await expect(
@@ -367,7 +357,7 @@ test('persisted PageTransitionEvent lifecycle harness clears all consent state',
     }),
   ).not.toBeChecked()
   await expect(
-    page.getByRole('button', { name: /verify my number and enroll/i }),
+    page.getByRole('button', { name: /verify my number/i }),
   ).toBeEnabled()
   expect(state.recaptchaRequests).toHaveLength(0)
   expect(state.captureRequests).toHaveLength(0)
@@ -415,7 +405,7 @@ test('Terms and Privacy links navigate only to their exact canonical paths', asy
   await geistFont.waitUntilSettled()
 
   const consentGroup = page.getByRole('group', {
-    name: /transactional sms consent/i,
+    name: /one-time verification sms consent/i,
   })
   const terms = consentGroup.getByRole('link', { name: /terms of service/i })
   const privacy = consentGroup.getByRole('link', { name: /privacy policy/i })
@@ -440,7 +430,7 @@ test('Terms and Privacy links navigate only to their exact canonical paths', asy
   ).toHaveValue('')
   await expect(
     page.getByRole('checkbox', {
-      name: /i agree to receive recurring sms text messages from mymedvisit/i,
+      name: /i agree to receive one-time verification code text messages from mymedvisit/i,
     }),
   ).not.toBeChecked()
   await expect(
@@ -501,7 +491,7 @@ test('does not permit either aborted legal-page document', async ({
 
 async function assertCanonicalLegalLinks(page: Page): Promise<void> {
   const group = page.getByRole('group', {
-    name: /transactional sms consent/i,
+    name: /one-time verification sms consent/i,
   })
   await expect(
     group.getByRole('link', { name: /terms of service/i }),
@@ -601,11 +591,11 @@ test('canonical legal-link contract rejects either changed destination', async (
   // Wait for that observable app-ready condition before deliberately mutating
   // its server-rendered legal link for the negative contract assertions.
   await expect(
-    page.getByRole('button', { name: /verify my number and enroll/i }),
+    page.getByRole('button', { name: /verify my number/i }),
   ).toBeEnabled()
   await geistFont.waitUntilSettled()
   const group = page.getByRole('group', {
-    name: /transactional sms consent/i,
+    name: /one-time verification sms consent/i,
   })
   const terms = group.getByRole('link', { name: /terms of service/i })
   await terms.evaluate((element) => {
@@ -860,7 +850,7 @@ async function completeForm(page: Page): Promise<void> {
     .fill(phoneNumber)
   await page
     .getByRole('checkbox', {
-      name: /i agree to receive recurring sms text messages from mymedvisit/i,
+      name: /i agree to receive one-time verification code text messages from mymedvisit/i,
     })
     .check()
   await page

@@ -469,13 +469,13 @@ export function SmsOptInClient({
                 MyMedVisit SMS preferences
               </p>
               <h1 className="mt-4 max-w-3xl font-[var(--font-fraunces)] text-[clamp(2.35rem,8vw,4.8rem)] leading-[1.05]">
-                Choose whether to receive MyMedVisit SMS text messages.
+                Choose whether to receive MyMedVisit one-time verification code
+                texts.
               </h1>
               <p className="mt-6 max-w-2xl text-base leading-relaxed text-[rgba(13,27,42,0.7)] sm:text-lg">
-                MyMedVisit may send one-time verification codes, enrollment and
-                consent confirmations, visit-preparation reminders, symptom
-                check-in reminders, and care-workflow notifications. This page
-                is not an enrollment for advertising or promotional messages.
+                MyMedVisit may send one-time verification code text messages
+                only when you request verification. This page is not for
+                advertising or promotional messages.
               </p>
               <p className="mt-4 text-sm font-medium text-[var(--teal-dark)]">
                 MyMedVisit, operated by SUGARCANEHAYES, is the sender of these
@@ -640,7 +640,7 @@ export function SmsOptInClient({
 
                   <fieldset className="rounded-2xl border border-[rgba(13,27,42,0.18)] bg-white/80 p-5">
                     <legend className="px-1 text-sm font-semibold">
-                      Transactional SMS consent
+                      One-time verification SMS consent
                     </legend>
                     <div className="mt-1 flex items-start gap-3">
                       <input
@@ -665,16 +665,13 @@ export function SmsOptInClient({
                         id="sms-consent-label"
                         className="cursor-pointer text-sm font-semibold leading-relaxed"
                       >
-                        I agree to receive recurring SMS text messages from
-                        MyMedVisit, operated by SUGARCANEHAYES, at the mobile
-                        number I provide. Messages may include one-time
-                        verification codes, enrollment and consent
-                        confirmations, visit-preparation reminders, symptom
-                        check-in reminders, and care-workflow notifications.
-                        Message frequency varies. Message and data rates may
+                        I agree to receive one-time verification code text
+                        messages from MyMedVisit, operated by SUGARCANEHAYES, at
+                        the mobile number provided. Messages are sent only when
+                        I request verification. Message frequency varies based
+                        on verification requests. Message and data rates may
                         apply. Reply STOP to opt out or HELP for help. Consent
-                        to receive text messages is not a condition of
-                        purchasing any goods or services.
+                        is not a condition of purchasing any goods or services.
                       </label>
                     </div>
                     {errors.consent && (
@@ -823,9 +820,7 @@ export function SmsOptInClient({
                       }
                       className="min-h-12 flex-1 rounded-full bg-[var(--teal-dark)] px-6 py-3 text-sm font-semibold text-white shadow-[var(--shadow)] transition-colors hover:bg-[var(--ink)] focus-visible:outline-[var(--ink)] disabled:cursor-not-allowed disabled:bg-slate-500 disabled:shadow-none"
                     >
-                      {submitting
-                        ? 'Submitting…'
-                        : 'Verify my number and enroll'}
+                      {submitting ? 'Submitting…' : 'Verify my number'}
                     </button>
                   </div>
                 </form>
@@ -834,8 +829,7 @@ export function SmsOptInClient({
 
             <p className="mt-6 text-center text-sm text-[rgba(13,27,42,0.65)]">
               Entering a number or checking either box alone does not opt you
-              in. Consent is requested only when you select Verify my number and
-              enroll.
+              in. Consent is requested only when you select Verify my number.
             </p>
           </div>
         </div>
