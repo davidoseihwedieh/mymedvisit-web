@@ -6,11 +6,13 @@ import jsQR from 'jsqr'
 import { describe, expect, it } from 'vitest'
 import { metadata } from './page'
 import { SmsOptInClient } from './SmsOptInClient'
+import TermsAndConditions from '../terms/page'
+import PrivacyPolicy from '../privacy/page'
 import { SMS_OPT_IN_CANONICAL_URL } from '@/lib/sms-consent/constants'
 
 describe('SMS opt-in route', () => {
   it('uses exact canonical metadata and remains noindex while disconnected', () => {
-    expect(metadata.title).toBe('Transactional SMS Opt-In | MyMedVisit')
+    expect(metadata.title).toBe('One-Time Verification SMS Opt-In | MyMedVisit')
     expect(metadata.description).toBeTruthy()
     expect(metadata.alternates).toMatchObject({
       canonical: SMS_OPT_IN_CANONICAL_URL,
@@ -144,5 +146,52 @@ describe('SMS opt-in route', () => {
     )
     const serialized = JSON.stringify(routeHeaders)
     expect(serialized).not.toMatch(/google|recaptcha|\*/i)
+  })
+})
+
+describe('OTP-only legal-page contract', () => {
+  it('keeps Terms and Privacy aligned to the OTP-only program and effective date', () => {
+    const terms = renderToStaticMarkup(createElement(TermsAndConditions))
+    const privacy = renderToStaticMarkup(createElement(PrivacyPolicy))
+    for (const markup of [terms, privacy]) {
+      expect(markup).toContain('September 24, 2026')
+      expect(markup).toContain('one-time verification code')
+      expect(markup).toContain(
+        'Message frequency varies based on verification requests',
+      )
+      expect(markup).toContain('Reply STOP to opt out or HELP for help')
+      expect(markup).toContain('SUGARCANEHAYES')
+      expect(markup).toContain(
+        'does not authorize marketing, reminders, symptom check-ins, or care-workflow notifications',
+      )
+    }
+  })
+})
+
+describe('OTP-only public evidence assets', () => {
+  it('contains desktop and mobile screenshots with no phone or contact PII', () => {
+    const assets = [
+      ['otp-only-desktop.png', 1440, 2035],
+      ['otp-only-mobile.png', 390, 3099],
+    ] as const
+    for (const [filename, width, height] of assets) {
+      const bytes = fs.readFileSync(
+        path.resolve(process.cwd(), 'public/sms-opt-in-evidence', filename),
+      )
+      expect(bytes.subarray(0, 8)).toEqual(
+        Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+      )
+      expect(bytes.readUInt32BE(16)).toBe(width)
+      expect(bytes.readUInt32BE(20)).toBe(height)
+      for (const forbidden of [
+        '+12025550123',
+        '+15555550123',
+        'admin@mymedvisit.app',
+        'legal@mymedvisit.app',
+        'privacy@mymedvisit.app',
+      ]) {
+        expect(bytes.includes(Buffer.from(forbidden))).toBe(false)
+      }
+    }
   })
 })
