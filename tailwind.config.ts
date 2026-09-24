@@ -1,9 +1,7 @@
 import type { Config } from 'tailwindcss'
 
 const config: Config = {
-  content: [
-    './src/**/*.{ts,tsx}',
-  ],
+  content: ['./src/**/*.{ts,tsx}'],
   theme: {
     extend: {
       fontFamily: {
@@ -11,7 +9,15 @@ const config: Config = {
         sans: ['Inter', 'system-ui', 'sans-serif'],
       },
       colors: {
-        ink: '#0d1b2a',
+        ink: {
+          DEFAULT: '#0d1b2a',
+          // Solid (non-alpha) muted text token. Verified ~7:1 contrast
+          // against the site's white/near-white backgrounds - comfortably
+          // above the 4.75:1 target, not just over the 4.5:1 AA minimum.
+          // Use this instead of a low-alpha rgba(13,27,42,x) for any real
+          // (non-decorative) secondary text.
+          muted: '#4b5b68',
+        },
         teal: {
           DEFAULT: '#0a7ea4',
           dark: '#0E7490',
@@ -42,9 +48,9 @@ const config: Config = {
         'fade-up-delay-3': 'fadeUp 0.7s ease-out 0.3s both',
         'fade-up-delay-4': 'fadeUp 0.7s ease-out 0.4s both',
         'pulse-slow': 'pulse 3s ease-in-out infinite',
-        'wave': 'wave 2s ease-in-out infinite',
-        'float': 'float 6s ease-in-out infinite',
-        'shimmer': 'shimmer 3s ease-in-out infinite',
+        wave: 'wave 2s ease-in-out infinite',
+        float: 'float 6s ease-in-out infinite',
+        shimmer: 'shimmer 3s ease-in-out infinite',
       },
       keyframes: {
         fadeUp: {

@@ -15,7 +15,9 @@ export default function Contact() {
 
     const form = event.currentTarget
     const formData = new FormData(form)
-    const name = [formData.get('firstName'), formData.get('lastName')].filter(Boolean).join(' ')
+    const name = [formData.get('firstName'), formData.get('lastName')]
+      .filter(Boolean)
+      .join(' ')
 
     try {
       const res = await fetch('/api/contact', {
@@ -57,8 +59,9 @@ export default function Contact() {
               <span className="text-gradient">experience clarity</span>.
             </h1>
             <p className="reveal stagger-2 mt-6 text-lg leading-relaxed text-[rgba(13,27,42,0.6)]">
-              We&apos;re onboarding families, caregivers, and healthcare professionals who want
-              to shape the future of health communication.
+              We&apos;re onboarding families, caregivers, and healthcare
+              professionals who want to shape the future of health
+              communication.
             </p>
           </div>
         </div>
@@ -70,26 +73,39 @@ export default function Contact() {
           <div className="grid gap-12 lg:grid-cols-[1fr_1.2fr]">
             {/* Left: info cards */}
             <div className="space-y-6">
-              <div className="reveal rounded-[24px] p-8" style={{ background: 'linear-gradient(135deg, rgba(10,126,164,0.08), rgba(224,244,246,0.4))' }}>
-                <h3 className="text-lg font-semibold">For families & patients</h3>
+              <div
+                className="reveal rounded-[24px] p-8"
+                style={{
+                  background:
+                    'linear-gradient(135deg, rgba(10,126,164,0.08), rgba(224,244,246,0.4))',
+                }}
+              >
+                <h2 className="text-lg font-semibold">
+                  For families & patients
+                </h2>
                 <p className="mt-3 text-sm leading-relaxed text-[rgba(13,27,42,0.55)]">
-                  Request early access to start capturing your doctor visits, building your health
-                  journal, and sharing updates with your care circle.
+                  Request early access to start capturing your doctor visits,
+                  building your health journal, and sharing updates with your
+                  care circle.
                 </p>
               </div>
               <div className="reveal stagger-1 rounded-[24px] bg-white/85 p-8 shadow-sm">
-                <h3 className="text-lg font-semibold text-[var(--teal-dark)]">For healthcare professionals</h3>
+                <h2 className="text-lg font-semibold text-[var(--teal-dark)]">
+                  For healthcare professionals
+                </h2>
                 <p className="mt-3 text-sm leading-relaxed text-[rgba(13,27,42,0.55)]">
-                  Interested in how MyMedVisit can improve patient communication and adherence?
-                  We&apos;d love to explore a partnership.
+                  Interested in how MyMedVisit can improve patient communication
+                  and adherence? We&apos;d love to explore a partnership.
                 </p>
               </div>
               <div className="reveal stagger-2 rounded-[24px] bg-[var(--ink)] p-8 text-white">
-                <h3 className="text-lg font-semibold">General inquiries</h3>
+                <h2 className="text-lg font-semibold">General inquiries</h2>
                 <p className="mt-3 text-sm leading-relaxed text-white/50">
                   Questions about our technology, privacy, or anything else?
                   Reach us at{' '}
-                  <span className="font-medium text-white/70">hello@mymedvisit.app</span>
+                  <span className="font-medium text-white/70">
+                    hello@mymedvisit.app
+                  </span>
                 </p>
               </div>
             </div>
@@ -99,14 +115,20 @@ export default function Contact() {
               <div className="glass-card rounded-[28px] p-10">
                 {submitted ? (
                   <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-8 text-center">
-                    <h3 className="text-xl font-bold text-emerald-900">Request Received!</h3>
+                    <h2 className="text-xl font-bold text-emerald-900">
+                      Request Received!
+                    </h2>
                     <p className="mt-2 text-sm text-emerald-700">
-                      Thank you for your interest in MyMedVisit. We&apos;ve routed your request to our team and will be in touch shortly.
+                      Thank you for your interest in MyMedVisit. We&apos;ve
+                      routed your request to our team and will be in touch
+                      shortly.
                     </p>
                   </div>
                 ) : (
                   <>
-                    <h2 className="font-[var(--font-fraunces)] text-2xl">Request early access</h2>
+                    <h2 className="font-[var(--font-fraunces)] text-2xl">
+                      Request early access
+                    </h2>
                     <p className="mt-2 text-sm text-[rgba(13,27,42,0.45)]">
                       We&apos;ll reach out with next steps within 48 hours.
                     </p>
@@ -149,16 +171,22 @@ export default function Contact() {
                         />
                       </div>
                       <div>
-                        <label className="text-xs font-semibold uppercase tracking-[0.15em] text-[rgba(13,27,42,0.4)]">
+                        <label
+                          htmlFor="contact-role"
+                          className="text-xs font-semibold uppercase tracking-[0.15em] text-[rgba(13,27,42,0.4)]"
+                        >
                           I am a...
                         </label>
                         <select
+                          id="contact-role"
                           name="role"
                           className="mt-2 w-full appearance-none rounded-2xl border border-[rgba(13,27,42,0.1)] bg-white/80 px-4 py-3 text-sm text-[rgba(13,27,42,0.6)] outline-none transition-colors focus:border-[var(--teal)]"
                         >
                           <option value="">Select your role</option>
                           <option value="patient">Patient / Senior</option>
-                          <option value="family">Family member / Adult child</option>
+                          <option value="family">
+                            Family member / Adult child
+                          </option>
                           <option value="caregiver">Caregiver</option>
                           <option value="provider">Healthcare provider</option>
                           <option value="other">Other</option>
@@ -176,7 +204,9 @@ export default function Contact() {
                         />
                       </div>
                       {error && (
-                        <p className="text-center text-sm font-medium text-red-600">{error}</p>
+                        <p className="text-center text-sm font-medium text-red-600">
+                          {error}
+                        </p>
                       )}
                       <button
                         type="submit"
@@ -187,7 +217,10 @@ export default function Contact() {
                       </button>
                       <p className="text-center text-xs text-[rgba(13,27,42,0.3)]">
                         By submitting, you agree to our{' '}
-                        <Link href="/privacy" className="underline transition-colors hover:text-[var(--teal)]">
+                        <Link
+                          href="/privacy"
+                          className="underline transition-colors hover:text-[var(--teal)]"
+                        >
                           Privacy Policy
                         </Link>
                         .
@@ -204,12 +237,14 @@ export default function Contact() {
       {/* FAQ mini */}
       <section className="px-6 py-20">
         <div className="mx-auto max-w-4xl">
-          <h2 className="reveal text-center font-[var(--font-fraunces)] text-3xl">Common questions</h2>
+          <h2 className="reveal text-center font-[var(--font-fraunces)] text-3xl">
+            Common questions
+          </h2>
           <div className="mt-10 grid gap-5 md:grid-cols-2">
             {[
               {
                 q: 'Is early access free?',
-                a: 'Yes. During the early access period, MyMedVisit is completely free. We\'re focused on building the best experience with your feedback.',
+                a: "Yes. During the early access period, MyMedVisit is completely free. We're focused on building the best experience with your feedback.",
               },
               {
                 q: 'What devices are supported?',
@@ -217,7 +252,7 @@ export default function Contact() {
               },
               {
                 q: 'Is my data safe?',
-                a: 'All data is encrypted end-to-end with AES-256. We use zero-knowledge architecture — even we can\'t read your health information.',
+                a: "All data is encrypted end-to-end with AES-256. We use zero-knowledge architecture — even we can't read your health information.",
               },
               {
                 q: 'Can I invite family members?',
@@ -231,7 +266,9 @@ export default function Contact() {
                 }`}
               >
                 <h3 className="font-semibold">{faq.q}</h3>
-                <p className="mt-3 text-sm leading-relaxed text-[rgba(13,27,42,0.55)]">{faq.a}</p>
+                <p className="mt-3 text-sm leading-relaxed text-[rgba(13,27,42,0.55)]">
+                  {faq.a}
+                </p>
               </div>
             ))}
           </div>

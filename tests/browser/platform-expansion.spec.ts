@@ -71,6 +71,83 @@ async function waitForHomepageReadiness(page: Page) {
   await expect(exerciseTab).toBeFocused()
 }
 
+test('homepage early-access CTA preserves comfortable contrast across interaction states', async ({
+  page,
+}) => {
+  await waitForHomepageReadiness(page)
+  const cta = page.getByRole('link', { name: 'Request Early Access' })
+  await cta.scrollIntoViewIfNeeded()
+  const expectedInk = 'rgb(13, 27, 42)'
+  const expectedBlue = 'rgb(30, 64, 175)'
+
+  const contrastRatio = async () =>
+    cta.evaluate((element) => {
+      const parseColor = (value: string) => {
+        const match = value.match(/rgba?\(([^)]+)\)/)
+        if (!match) throw new Error(`Unsupported color: ${value}`)
+        const channels = match[1]
+          .split(',')
+          .map((channel) => Number(channel.trim()))
+        const [red, green, blue] = channels
+        return [red, green, blue].map((channel) => {
+          const normalized = channel / 255
+          return normalized <= 0.03928
+            ? normalized / 12.92
+            : ((normalized + 0.055) / 1.055) ** 2.4
+        })
+      }
+
+      const foreground = parseColor(getComputedStyle(element).color)
+      const background = parseColor(getComputedStyle(element).backgroundColor)
+      const luminance = ([red, green, blue]: number[]) =>
+        0.2126 * red + 0.7152 * green + 0.0722 * blue
+      const foregroundLuminance = luminance(foreground)
+      const backgroundLuminance = luminance(background)
+      return (
+        (Math.max(foregroundLuminance, backgroundLuminance) + 0.05) /
+        (Math.min(foregroundLuminance, backgroundLuminance) + 0.05)
+      )
+    })
+
+  const expectStateColors = async ({
+    background,
+    outline,
+  }: {
+    background: string
+    outline?: string
+  }) => {
+    await expect(cta).toHaveCSS('background-color', background)
+    if (outline !== undefined) {
+      await expect(cta).toHaveCSS('outline-color', outline)
+    }
+  }
+
+  await expectStateColors({ background: expectedInk })
+  expect(await contrastRatio()).toBeGreaterThanOrEqual(7)
+
+  await cta.hover()
+  await expectStateColors({ background: expectedBlue })
+  expect(await contrastRatio()).toBeGreaterThanOrEqual(7)
+
+  await cta.focus()
+  await expect(cta).toBeFocused()
+  await expectStateColors({
+    background: expectedBlue,
+    outline: expectedBlue,
+  })
+  expect(await contrastRatio()).toBeGreaterThanOrEqual(7)
+  await expect(cta).toHaveCSS('outline-style', 'solid')
+
+  await cta.hover()
+  await page.mouse.down()
+  try {
+    await expectStateColors({ background: expectedBlue })
+    expect(await contrastRatio()).toBeGreaterThanOrEqual(7)
+  } finally {
+    await page.mouse.up()
+  }
+})
+
 for (const viewport of viewports) {
   test(`platform specialties remain actionable at ${viewport.label}`, async ({
     page,

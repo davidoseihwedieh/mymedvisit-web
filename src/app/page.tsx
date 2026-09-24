@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import Link from 'next/link'
 import { illustrations } from '@/assets/illustrations'
 import FAQProviderConsent from '@/components/FAQProviderConsent'
@@ -108,7 +109,7 @@ export default function Home() {
                 </li>
               ))}
             </ol>
-            <p className="mt-5 max-w-3xl text-sm leading-relaxed text-[rgba(13,27,42,0.62)]">
+            <p className="mt-5 max-w-3xl text-sm leading-relaxed text-ink-muted">
               Information is organized to support appropriate human review—not
               to diagnose, guarantee detection, or replace clinical judgment.
             </p>
@@ -117,21 +118,34 @@ export default function Home() {
 
         <section aria-labelledby="dyadic-title" className="px-6 py-16">
           <div className="mx-auto max-w-6xl">
-            <div className="max-w-3xl">
-              <p className="text-sm font-semibold uppercase tracking-[0.35em] text-[var(--teal-dark)]">
-                The dyadic model
-              </p>
-              <h2
-                className="mt-4 font-[var(--font-fraunces)] text-4xl leading-tight md:text-5xl"
-                id="dyadic-title"
-              >
-                Two perspectives. One longitudinal clinical picture.
-              </h2>
-              <p className="mt-5 text-lg leading-relaxed text-[rgba(13,27,42,0.68)]">
-                Patients and caregivers may notice different or complementary
-                changes between visits. Bringing those observations into context
-                can help make the timeline more useful for care-team review.
-              </p>
+            <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+              <div className="max-w-3xl">
+                <p className="text-sm font-semibold uppercase tracking-[0.35em] text-[var(--teal-dark)]">
+                  The dyadic model
+                </p>
+                <h2
+                  className="mt-4 font-[var(--font-fraunces)] text-4xl leading-tight md:text-5xl"
+                  id="dyadic-title"
+                >
+                  Two perspectives. One longitudinal clinical picture.
+                </h2>
+                <p className="mt-5 text-lg leading-relaxed text-ink-muted">
+                  Patients and caregivers may notice different or complementary
+                  changes between visits. Bringing those observations into
+                  context can help make the timeline more useful for care-team
+                  review.
+                </p>
+              </div>
+              <div className="glass-card flex items-center justify-center rounded-[28px] p-6 sm:p-8">
+                <Image
+                  alt="Illustration of several people in different everyday settings — a living room, a clinic desk, a kitchen, and a walk outdoors — connected by lines representing shared information"
+                  className="mx-auto h-auto w-full max-w-[320px] object-contain"
+                  height={1024}
+                  src={illustrations.familySharing}
+                  unoptimized
+                  width={1024}
+                />
+              </div>
             </div>
 
             <div className="mt-10 grid items-center gap-5 lg:grid-cols-[1fr_auto_1.1fr]">
@@ -248,10 +262,13 @@ export default function Home() {
               </div>
               <div>
                 <div className="glass-card flex min-h-[300px] items-center justify-center rounded-[28px] p-8">
-                  <img
-                    src={illustrations.privacyEncryption}
+                  <Image
                     alt="Illustration representing privacy and user control"
-                    className="w-full max-w-[280px] object-contain"
+                    className="h-auto w-full max-w-[280px] object-contain"
+                    height={1024}
+                    src={illustrations.privacyEncryption}
+                    unoptimized
+                    width={1024}
                   />
                 </div>
               </div>
@@ -311,7 +328,7 @@ export default function Home() {
                 <div className="flex w-full max-w-sm flex-col gap-3">
                   <Link
                     href="/contact"
-                    className="rounded-full bg-[var(--teal)] px-6 py-3 text-center text-sm font-semibold text-white shadow-[var(--shadow)] transition-colors hover:bg-[var(--teal-dark)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--teal-dark)]"
+                    className="rounded-full bg-[var(--ink)] px-6 py-3 text-center text-sm font-semibold text-white shadow-[var(--shadow)] transition-colors hover:bg-[var(--blue)] active:bg-[var(--blue)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--blue)]"
                   >
                     Request Early Access
                   </Link>

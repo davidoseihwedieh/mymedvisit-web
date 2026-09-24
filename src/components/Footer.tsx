@@ -25,14 +25,14 @@ export function Footer() {
           {/* Brand */}
           <div>
             <Image
-              src="/mmv_website_images/mymedvisit-logo.png"
+              src="/mmv_website_images/mymedvisit-logo-optimized.png"
               alt="MyMedVisit — The patient voice between visits."
-              width={2009}
-              height={783}
+              width={480}
+              height={187}
               unoptimized
               className="h-auto w-[220px]"
             />
-            <p className="mt-4 max-w-xs text-sm text-[rgba(13,27,42,0.5)]">
+            <p className="mt-4 max-w-xs text-sm text-ink-muted">
               Patient and caregiver observations, organized into longitudinal
               context for care-team workflows.
             </p>
@@ -40,7 +40,7 @@ export function Footer() {
 
           {/* Product */}
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[rgba(13,27,42,0.4)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted">
               Product
             </p>
             <div className="mt-4 flex flex-col gap-3">
@@ -48,7 +48,7 @@ export function Footer() {
                 <Link
                   key={link.href + link.label}
                   href={link.href}
-                  className="text-sm text-[rgba(13,27,42,0.6)] transition-colors hover:text-[var(--teal)]"
+                  className="text-sm text-ink-muted transition-colors hover:text-[var(--teal-dark)]"
                 >
                   {link.label}
                 </Link>
@@ -58,7 +58,7 @@ export function Footer() {
 
           {/* Company */}
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[rgba(13,27,42,0.4)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted">
               Company
             </p>
             <div className="mt-4 flex flex-col gap-3">
@@ -66,7 +66,7 @@ export function Footer() {
                 <Link
                   key={link.href + link.label}
                   href={link.href}
-                  className="text-sm text-[rgba(13,27,42,0.6)] transition-colors hover:text-[var(--teal)]"
+                  className="text-sm text-ink-muted transition-colors hover:text-[var(--teal-dark)]"
                 >
                   {link.label}
                 </Link>
@@ -76,7 +76,7 @@ export function Footer() {
 
           {/* Legal */}
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[rgba(13,27,42,0.4)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted">
               Legal
             </p>
             <div className="mt-4 flex flex-col gap-3">
@@ -84,7 +84,7 @@ export function Footer() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="text-sm text-[rgba(13,27,42,0.6)] transition-colors hover:text-[var(--teal)]"
+                  className="text-sm text-ink-muted transition-colors hover:text-[var(--teal-dark)]"
                 >
                   {link.label}
                 </Link>
@@ -95,12 +95,10 @@ export function Footer() {
 
         {/* Bottom bar */}
         <div className="mt-14 flex flex-wrap items-center justify-between gap-4 border-t border-[rgba(13,27,42,0.05)] pt-8">
-          <p className="text-xs text-[rgba(13,27,42,0.4)]">
+          <p className="text-xs text-ink-muted">
             &copy; {new Date().getFullYear()} MyMedVisit. All rights reserved.
           </p>
-          <p className="text-xs text-[rgba(13,27,42,0.3)]">
-            Voice-first clinical context
-          </p>
+          <p className="text-xs text-ink-muted">Voice-first clinical context</p>
         </div>
       </div>
     </footer>
