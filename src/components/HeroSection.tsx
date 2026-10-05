@@ -50,9 +50,6 @@ export default function HeroSection() {
                 width={1024}
               />
             </div>
-            <p className="mt-3 text-center text-xs text-ink-muted">
-              Illustrative example · not a real patient encounter
-            </p>
           </div>
         </div>
       </div>
