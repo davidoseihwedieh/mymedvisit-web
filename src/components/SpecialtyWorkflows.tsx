@@ -7,7 +7,7 @@ const workflows = [
     id: 'genitourinary-oncology',
     name: 'Genitourinary Oncology',
     description:
-      'Toxicity that evolves between infusions of modern combination therapy: neuropathy, skin changes, fatigue, high blood sugar, and immune-related symptoms, reported by the patient and caregiver as they happen.',
+      'Toxicity that evolves between infusions, from neuropathy and skin changes to high blood sugar and immune-related symptoms, reported by patients and caregivers as it happens.',
     signals: [
       'Treatment-related symptoms',
       'Patient + caregiver observations',
@@ -15,7 +15,7 @@ const workflows = [
     ],
     example: [
       { label: 'Observation', value: 'Caregiver notes new numbness in feet' },
-      { label: 'Clarification', value: 'Onset, severity, and effect on walking asked' },
+      { label: 'Clarification', value: 'Onset, severity, and walking asked' },
       { label: 'Care-team workflow', value: 'Structured report ready for review' },
     ],
     accent: 'gu',
@@ -24,7 +24,7 @@ const workflows = [
     id: 'breast-oncology',
     name: 'Breast Oncology',
     description:
-      'Symptom reporting for adults receiving systemic therapy, with patient, caregiver, and clinician priorities kept distinct and every report traceable to its source.',
+      'Symptom reporting during systemic therapy, with patient, caregiver, and clinician priorities kept distinct and every report traceable to its source.',
     signals: [
       'Symptom severity and trajectory',
       'Patient and caregiver priorities',
@@ -41,15 +41,15 @@ const workflows = [
     id: 'pulmonary',
     name: 'Pulmonary / COPD',
     description:
-      'After a COPD exacerbation, changes in oxygen saturation, activity, and sleep against a personal baseline prompt a short, targeted check-in with the patient or caregiver, with local air quality and heat added for context.',
+      'After a COPD exacerbation, drift in oxygen, activity, and sleep from a personal baseline prompts a short check-in, with local air quality and heat for context.',
     signals: [
       'Wearable and phone signals',
       'Targeted symptom check-in',
       'Air quality and heat context',
     ],
     example: [
-      { label: 'Observation', value: 'Activity and oxygen below personal baseline' },
-      { label: 'Clarification', value: 'Rescue inhaler use and sputum change asked' },
+      { label: 'Observation', value: 'Oxygen and activity below baseline' },
+      { label: 'Clarification', value: 'Inhaler use and sputum change asked' },
       { label: 'Care-team workflow', value: 'Structured report ready for review' },
     ],
     accent: 'pulmonary',
@@ -58,14 +58,14 @@ const workflows = [
     id: 'rural-rpm',
     name: 'Rural Remote Monitoring',
     description:
-      'Remote monitoring for adults with hypertension, heart failure, or diabetes and for pregnancy and postpartum care, using cellular-connected devices that need no smartphone or home internet.',
+      'Monitoring for hypertension, heart failure, diabetes, and pregnancy and postpartum care, using cellular devices that need no smartphone or home internet.',
     signals: [
       'Blood pressure, weight, glucose',
       'Pregnancy and postpartum care',
       'Works without home internet',
     ],
     example: [
-      { label: 'Observation', value: 'Postpartum blood pressure reading rises' },
+      { label: 'Observation', value: 'Postpartum blood pressure rises' },
       { label: 'Clarification', value: 'Headache and vision symptoms asked' },
       { label: 'Care-team workflow', value: 'Escalated to the monitoring nurse' },
     ],

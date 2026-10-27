@@ -19,7 +19,7 @@ describe('specialty content policy', () => {
 
     expect(specialtySource).toContain('Four programs, one shared platform')
     expect(specialtySource).toContain(
-      'After a COPD exacerbation, changes in oxygen saturation, activity, and sleep against a personal baseline prompt a short, targeted check-in with the patient or caregiver, with local air quality and heat added for context.',
+      'After a COPD exacerbation, drift in oxygen, activity, and sleep from a personal baseline prompts a short check-in, with local air quality and heat for context.',
     )
     expect(specialtySource).toMatch(
       /grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4/,

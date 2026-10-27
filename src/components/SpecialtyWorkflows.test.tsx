@@ -77,7 +77,7 @@ describe('SpecialtyWorkflows', () => {
       screen.getByRole('heading', { name: 'Pulmonary / COPD', level: 3 }),
     ).toBeVisible()
     expect(
-      screen.getByText(/After a COPD exacerbation, changes in oxygen saturation/i),
+      screen.getByText(/After a COPD exacerbation, drift in oxygen/i),
     ).toBeVisible()
     expect(pulmonary).toHaveAttribute('aria-controls', panel.id)
     expect(panel).toHaveAttribute('aria-labelledby', pulmonary.id)
@@ -85,7 +85,7 @@ describe('SpecialtyWorkflows', () => {
     fireEvent.click(breast)
     expect(breast).toHaveAttribute('aria-selected', 'true')
     expect(
-      screen.getByText(/Symptom reporting for adults receiving systemic therapy/i),
+      screen.getByText(/Symptom reporting during systemic therapy/i),
     ).toBeVisible()
 
     fireEvent.click(rpm)
