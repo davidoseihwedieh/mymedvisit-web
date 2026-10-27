@@ -254,7 +254,9 @@ for (const viewport of viewports) {
     }
 
     await page.emulateMedia({ reducedMotion: 'reduce' })
-    const oncologyTab = page.getByRole('tab', { name: 'Genitourinary Oncology' })
+    const oncologyTab = page.getByRole('tab', {
+      name: 'Genitourinary Oncology',
+    })
     await oncologyTab.focus()
     await expect(oncologyTab).toBeFocused()
     await page.keyboard.press('ArrowRight')
