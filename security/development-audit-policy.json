@@ -2,28 +2,6 @@
   "schemaVersion": 1,
   "entries": [
     {
-      "advisoryId": "GHSA-82fw-gwwq-j7x9",
-      "packageName": "@vitest/mocker",
-      "installedVersion": "3.2.7",
-      "nodePath": "node_modules/@vitest/mocker",
-      "affectedRange": ">=2.1.0 <4.1.11",
-      "severity": "moderate",
-      "developmentOnly": true,
-      "rationale": "Development-only test mocker; tests do not load untrusted remote mock modules, and the available remediation requires a separately reviewed test-runner major upgrade.",
-      "expiresOn": "2026-10-31"
-    },
-    {
-      "advisoryId": "GHSA-82fw-gwwq-j7x9",
-      "packageName": "vitest",
-      "installedVersion": "3.2.7",
-      "nodePath": "node_modules/vitest",
-      "affectedRange": ">=2.1.0 <4.1.11",
-      "severity": "moderate",
-      "developmentOnly": true,
-      "rationale": "Development-only test runner; tests do not load untrusted remote mock modules, and the available remediation is a separately reviewed major upgrade.",
-      "expiresOn": "2026-10-31"
-    },
-    {
       "advisoryId": "GHSA-2g4f-4pwh-qvx6",
       "packageName": "ajv",
       "installedVersion": "8.6.3",
@@ -197,6 +175,39 @@
       "severity": "low",
       "developmentOnly": true,
       "rationale": "Transitive Vercel development tooling only; the production dependency graph is separately required to have zero findings.",
+      "expiresOn": "2026-10-31"
+    },
+    {
+      "advisoryId": "GHSA-x8mw-p69m-v3mx",
+      "packageName": "@fastify/busboy",
+      "installedVersion": "2.1.1",
+      "nodePath": "node_modules/@fastify/busboy",
+      "affectedRange": ">=1.0.0 <3.2.1",
+      "severity": "high",
+      "developmentOnly": true,
+      "rationale": "Transitive Vercel development tooling only (@vercel/node -> undici); the production dependency graph is separately required to have zero findings.",
+      "expiresOn": "2026-10-31"
+    },
+    {
+      "advisoryId": "GHSA-gxm5-99cw-xjw9",
+      "packageName": "@fastify/busboy",
+      "installedVersion": "2.1.1",
+      "nodePath": "node_modules/@fastify/busboy",
+      "affectedRange": "<3.2.2",
+      "severity": "moderate",
+      "developmentOnly": true,
+      "rationale": "Transitive Vercel development tooling only (@vercel/node -> undici); the production dependency graph is separately required to have zero findings.",
+      "expiresOn": "2026-10-31"
+    },
+    {
+      "advisoryId": "GHSA-r53p-7pc4-xj5r",
+      "packageName": "undici",
+      "installedVersion": "5.28.4",
+      "nodePath": "node_modules/undici",
+      "affectedRange": "<6.28.1",
+      "severity": "low",
+      "developmentOnly": true,
+      "rationale": "Transitive Vercel development tooling only (@vercel/node -> undici); the production dependency graph is separately required to have zero findings.",
       "expiresOn": "2026-10-31"
     }
   ]
