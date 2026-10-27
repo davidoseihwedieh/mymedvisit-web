@@ -1,5 +1,16 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { IncomingMessage, ServerResponse } from 'node:http';
 import { Resend } from 'resend';
+
+// The Vercel Node.js runtime adds these helpers to Node's request and
+// response objects. Only the members this handler uses are declared, so the
+// @vercel/node package (and its vulnerable transitive tooling) is not needed.
+type VercelRequest = IncomingMessage & {
+  body?: { name?: string; email?: string; role?: string; message?: string };
+};
+type VercelResponse = ServerResponse & {
+  status(statusCode: number): VercelResponse;
+  json(body: unknown): VercelResponse;
+};
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 

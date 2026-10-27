@@ -42,7 +42,6 @@
     "@types/node": "^22.20.5",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.6",
-    "@vercel/node": "^5.8.26",
     "acorn": "8.17.0",
     "acorn-walk": "8.3.4",
     "autoprefixer": "^10.4.19",
