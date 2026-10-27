@@ -38,7 +38,7 @@ describe('homepage platform narrative', () => {
     })
     expect(within(tablist).getAllByRole('tab')).toHaveLength(4)
     expect(
-      within(tablist).getByRole('tab', { name: 'Cardiovascular' }),
+      within(tablist).getByRole('tab', { name: 'Pulmonary / COPD' }),
     ).toBeVisible()
     expect(
       screen.queryByText(/most developed|concept workflow|in development/i),

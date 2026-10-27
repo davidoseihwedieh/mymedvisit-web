@@ -27,7 +27,7 @@ export default function HeroSection() {
                 className="inline-flex items-center justify-center rounded-full bg-[var(--teal)] px-6 py-3.5 text-base font-semibold text-white shadow-[var(--shadow)] transition-colors hover:bg-[var(--teal-dark)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--teal-dark)]"
                 href="/contact"
               >
-                Get Early Access
+                Request a Demo
               </Link>
               <Link
                 className="inline-flex items-center justify-center rounded-full border border-[rgba(13,27,42,0.16)] px-6 py-3.5 text-base font-semibold text-[var(--ink)] transition-colors hover:bg-[rgba(13,27,42,0.05)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--teal-dark)]"

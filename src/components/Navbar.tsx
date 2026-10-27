@@ -120,7 +120,7 @@ export function Navbar() {
             href="/contact"
             className="ml-3 rounded-full bg-[var(--ink)] px-5 py-2.5 text-sm font-semibold text-white shadow-[var(--shadow)] transition-all hover:shadow-lg"
           >
-            Get Early Access
+            Request a Demo
           </Link>
         </div>
 
@@ -206,7 +206,7 @@ export function Navbar() {
               onClick={closeMobileMenu}
               className="mt-3 rounded-full bg-[var(--ink)] px-5 py-3 text-center text-sm font-semibold text-white"
             >
-              Get Early Access
+              Request a Demo
             </Link>
           </div>
         </div>

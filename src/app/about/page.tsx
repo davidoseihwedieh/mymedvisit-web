@@ -3,43 +3,43 @@ import { SectionHeader } from '@/components/SectionHeader'
 
 const values = [
   {
-    title: 'Voice-first always',
-    description: 'Technology should adapt to people, not the other way around. The most natural interface is the one you were born with.',
+    title: 'Clinicians decide',
+    description: 'MyMedVisit organizes information for review. It does not diagnose, prescribe, or change care, and every escalation ends with a documented decision by a qualified person.',
   },
   {
-    title: 'Privacy as a foundation',
-    description: 'Health data is deeply personal. We don\'t treat privacy as a feature — it\'s the bedrock of every design decision.',
+    title: 'Two voices, kept distinct',
+    description: 'Patients and caregivers often notice different parts of the same change. We keep each account separate and attributed rather than merging them into one answer.',
   },
   {
-    title: 'Clarity over complexity',
-    description: 'Healthcare is complicated enough. Every screen, every summary, every interaction is designed to reduce cognitive load.',
+    title: 'Evidence before claims',
+    description: 'Platform readiness is not clinical validation. We test against strong comparators, publish what we measure, and say plainly what has not yet been shown.',
   },
   {
-    title: 'Families matter',
-    description: 'Health is rarely a solo journey. We build for the entire care circle — patients, children, caregivers, and providers.',
+    title: 'Access for everyone',
+    description: 'Voice-first reporting, caregiver participation, multilingual support, and devices that work without a smartphone or home internet, so reporting does not depend on digital confidence.',
   },
 ]
 
 const milestones = [
   {
-    phase: 'Origin',
-    title: 'Born from real need',
-    description: 'MyMedVisit started when a family member\'s critical post-visit instructions were lost in translation. If a 30-minute doctor visit can be forgotten in 30 seconds, something is broken.',
+    phase: 'Platform',
+    title: 'A shared foundation',
+    description: 'An iOS and Android beta with voice and text reporting, patient–caregiver workflows, phone and wearable data, SMART on FHIR connectivity to Epic, REDCap integration, tiered safety screening, and a clinician escalation queue.',
   },
   {
-    phase: 'Research',
-    title: 'Understanding the gap',
-    description: 'We spent months talking to seniors, caregivers, adult children, and physicians. Everyone wanted better communication, but no one had the tools to make it effortless.',
+    phase: 'Testing',
+    title: 'Formative evaluation',
+    description: 'Formative home testing and structured benchmark evaluations of triage and clarification. These establish technical function, not clinical effectiveness.',
   },
   {
-    phase: 'Development',
-    title: 'Building the intelligence',
-    description: 'We assembled a pipeline of proprietary voice, language, and medical intelligence systems — each tuned for the unique challenges of clinical speech and health data.',
+    phase: 'Programs',
+    title: 'Clinical applications in preparation',
+    description: 'Research and service programs in genitourinary oncology, breast oncology, recovery after COPD exacerbations, and rural remote monitoring for chronic disease and perinatal care.',
   },
   {
-    phase: 'Today',
-    title: 'Early access and growing',
-    description: 'MyMedVisit is in early access, serving real families and refining our platform with every visit summarized. We\'re building the future of family health.',
+    phase: 'Next',
+    title: 'Prospective evaluation',
+    description: 'Protocol-driven studies that ask whether the platform produces more complete reports and earlier appropriate action than portals and fixed questionnaires, without adding burden for care teams.',
   },
 ]
 
@@ -55,12 +55,12 @@ export default function About() {
               About MyMedVisit
             </p>
             <h1 className="reveal stagger-1 mt-4 font-[var(--font-fraunces)] text-[clamp(2.4rem,4vw,4.2rem)] leading-[1.08]">
-              Every health conversation{' '}
-              <span className="text-gradient">deserves to be remembered</span>.
+              Built by physicians for{' '}
+              <span className="text-gradient">the time between visits</span>.
             </h1>
             <p className="reveal stagger-2 mt-6 text-lg leading-relaxed text-[rgba(13,27,42,0.6)]">
-              No one should leave a doctor&apos;s office wondering what just happened —
-              and no family member should have to guess.
+              Clinically important change usually happens at home, days before anyone on the care
+              team hears about it. We build the tools that close that gap.
             </p>
           </div>
         </div>
@@ -73,7 +73,7 @@ export default function About() {
             <div className="mx-auto max-w-3xl text-center">
               <p className="text-sm font-semibold uppercase tracking-[0.35em] text-[var(--teal-dark)]">Our mission</p>
               <h2 className="mt-4 font-[var(--font-fraunces)] text-3xl leading-snug md:text-4xl">
-                Make health information effortless to capture, understand, and share — so families can focus on care.
+                Turn what patients and caregivers notice into information a care team can act on, safely and without adding burden.
               </h2>
             </div>
           </div>
@@ -85,26 +85,28 @@ export default function About() {
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-10 lg:grid-cols-2">
             <div className="reveal">
-              <SectionHeader tag="The problem" title="Healthcare communication is broken." />
+              <SectionHeader tag="The problem" title="First reports rarely say enough." />
               <div className="mt-6 space-y-4 leading-relaxed text-[rgba(13,27,42,0.6)]">
                 <p>
-                  The average doctor visit lasts 18 minutes. Within an hour, patients forget
-                  40–80% of what was discussed. For seniors managing multiple conditions, lost
-                  information means missed medications, duplicated tests, and families left in the dark.
+                  “I feel worse” or “more short of breath” leaves out what a clinician needs to judge
+                  urgency: when it started, how severe it is, whether it is getting worse, and what it
+                  stops someone from doing. Portals and fixed questionnaires record that a symptom
+                  exists, but they cannot ask the next question.
                 </p>
                 <p>
-                  Existing solutions demand typing, navigating complex apps, or rely on patient portals
-                  that most seniors never use.
+                  Remote monitoring adds numbers, but numbers alone often become alarms that no one
+                  can interpret. Care teams need fewer, better reports, not more data.
                 </p>
               </div>
             </div>
             <div className="reveal stagger-1">
               <div className="rounded-[28px] bg-[var(--ink)] p-10 text-white shadow-[var(--shadow)]">
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/40">The difference</p>
-                <h3 className="mt-4 font-[var(--font-fraunces)] text-3xl text-[var(--sky)]">We start with voice because voice is universal.</h3>
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/40">Our approach</p>
+                <h3 className="mt-4 font-[var(--font-fraunces)] text-3xl text-[var(--sky)]">Ask for what is missing.</h3>
                 <p className="mt-5 leading-relaxed text-white/55">
-                  No forms. No typing. Just speak naturally — the same way you&apos;d tell a friend
-                  what happened at the doctor. Our intelligence handles everything else.
+                  MyMedVisit captures a report in the person’s own words, reads it alongside device
+                  data and the health record, asks a short follow-up for the missing facts, and hands
+                  the care team a structured, source-linked report to review.
                 </p>
               </div>
             </div>
@@ -115,7 +117,7 @@ export default function About() {
       {/* Values */}
       <section className="px-6 py-20">
         <div className="mx-auto max-w-6xl">
-          <SectionHeader tag="Our values" title="What guides everything we build." centered />
+          <SectionHeader tag="Our principles" title="What guides everything we build." centered />
           <div className="mt-12 grid gap-6 md:grid-cols-2">
             {values.map((value, index) => (
               <div
@@ -132,10 +134,10 @@ export default function About() {
         </div>
       </section>
 
-      {/* Journey */}
+      {/* Where we are */}
       <section className="px-6 py-20">
         <div className="mx-auto max-w-6xl">
-          <SectionHeader tag="Our journey" title="From personal need to platform." />
+          <SectionHeader tag="Where we are" title="From platform to programs." />
           <div className="mt-12 space-y-6">
             {milestones.map((m, index) => (
               <div
@@ -157,25 +159,28 @@ export default function About() {
         </div>
       </section>
 
-      {/* Vision */}
+      {/* Leadership */}
       <section className="px-6 py-20">
         <div className="mx-auto max-w-6xl">
           <div className="reveal glass-card rounded-[32px] p-12">
             <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
               <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.35em] text-[var(--teal-dark)]">Our vision</p>
+                <p className="text-sm font-semibold uppercase tracking-[0.35em] text-[var(--teal-dark)]">Leadership</p>
                 <h2 className="mt-4 font-[var(--font-fraunces)] text-3xl leading-snug md:text-4xl">
-                  Health information that flows as naturally as conversation.
+                  David Osei-Hwedieh, MD, PhD
                 </h2>
+                <p className="mt-2 text-sm font-semibold uppercase tracking-[0.2em] text-[rgba(13,27,42,0.45)]">
+                  Founder and Chief Executive Officer
+                </p>
               </div>
               <div className="space-y-4 leading-relaxed text-[rgba(13,27,42,0.6)]">
                 <p>
-                  We envision a future where every health interaction is automatically captured,
-                  understood, and shared with the right people at the right time.
+                  A physician-scientist who founded MyMedVisit to make the changes patients and
+                  caregivers notice between visits visible, and usable, for the clinicians
+                  responsible for their care.
                 </p>
                 <p>
-                  Where continuous monitoring from wearables weaves into your health narrative,
-                  creating a living document that helps families and providers make better decisions.
+                  MyMedVisit is a trade name of SugarcaneHayes, LLC, based in Randolph, Massachusetts.
                 </p>
               </div>
             </div>
@@ -186,23 +191,23 @@ export default function About() {
       {/* CTA */}
       <section className="px-6 pb-24 pt-10">
         <div className="mx-auto max-w-4xl text-center">
-          <h2 className="reveal font-[var(--font-fraunces)] text-4xl">Join us in building the future of family health.</h2>
+          <h2 className="reveal font-[var(--font-fraunces)] text-4xl">Work with us.</h2>
           <p className="reveal stagger-1 mt-4 text-[rgba(13,27,42,0.5)]">
-            We&apos;re looking for early adopters, healthcare professionals, and families
-            who want to help shape what comes next.
+            We partner with clinicians, investigators, health systems, and public health programs
+            to configure and evaluate the platform for specific populations.
           </p>
           <div className="reveal stagger-2 mt-8 flex flex-wrap justify-center gap-4">
             <Link
               href="/contact"
               className="rounded-full bg-[var(--ink)] px-8 py-4 text-sm font-semibold text-white shadow-[var(--shadow)]"
             >
-              Get Early Access
+              Talk With Us
             </Link>
             <Link
               href="/technology"
               className="rounded-full border border-[rgba(13,27,42,0.15)] px-8 py-4 text-sm font-semibold text-[var(--ink)]"
             >
-              Explore Our Technology
+              Explore the Platform
             </Link>
           </div>
         </div>

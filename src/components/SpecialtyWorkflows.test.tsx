@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { SpecialtyWorkflows } from './SpecialtyWorkflows'
 
 describe('SpecialtyWorkflows', () => {
-  it('presents four equal specialty applications and labels examples synthetic', () => {
+  it('presents four equal program applications and labels examples synthetic', () => {
     render(<SpecialtyWorkflows />)
 
     expect(
@@ -17,16 +17,16 @@ describe('SpecialtyWorkflows', () => {
       screen.getByRole('tablist', { name: 'Select a specialty workflow' }),
     ).getAllByRole('tab')
     expect(tabs.map((tab) => tab.id)).toEqual([
-      'specialty-tab-oncology',
-      'specialty-tab-exercise-recovery',
-      'specialty-tab-orthopaedics',
-      'specialty-tab-cardiovascular',
+      'specialty-tab-genitourinary-oncology',
+      'specialty-tab-breast-oncology',
+      'specialty-tab-pulmonary',
+      'specialty-tab-rural-rpm',
     ])
     for (const name of [
-      'Oncology',
-      'Exercise & Recovery',
-      'Orthopaedics',
-      'Cardiovascular',
+      'Genitourinary Oncology',
+      'Breast Oncology',
+      'Pulmonary / COPD',
+      'Rural Remote Monitoring',
     ]) {
       expect(screen.getByRole('tab', { name: new RegExp(name) })).toBeVisible()
     }
@@ -52,75 +52,60 @@ describe('SpecialtyWorkflows', () => {
     ).toBeVisible()
   })
 
-  it('keeps all specialty details selectable by click and keyboard', () => {
+  it('keeps all program details selectable by click and keyboard', () => {
     render(<SpecialtyWorkflows />)
 
-    const oncology = screen.getByRole('tab', { name: /Oncology/i })
-    const exercise = screen.getByRole('tab', { name: /Exercise & Recovery/i })
-    const orthopaedics = screen.getByRole('tab', { name: /Orthopaedics/i })
-    const cardiovascular = screen.getByRole('tab', {
-      name: /Cardiovascular/i,
-    })
+    const gu = screen.getByRole('tab', { name: /Genitourinary Oncology/i })
+    const breast = screen.getByRole('tab', { name: /Breast Oncology/i })
+    const pulmonary = screen.getByRole('tab', { name: /Pulmonary \/ COPD/i })
+    const rpm = screen.getByRole('tab', { name: /Rural Remote Monitoring/i })
     const tablist = screen.getByRole('tablist', {
       name: 'Select a specialty workflow',
     })
     const panel = screen.getByRole('tabpanel')
 
     expect(within(tablist).getAllByRole('tab')).toHaveLength(4)
-    expect(oncology).toHaveAttribute('aria-controls', panel.id)
-    expect(panel).toHaveAttribute('aria-labelledby', oncology.id)
+    expect(gu).toHaveAttribute('aria-controls', panel.id)
+    expect(panel).toHaveAttribute('aria-labelledby', gu.id)
 
-    exercise.focus()
-    fireEvent.keyDown(exercise, { key: 'ArrowRight' })
+    breast.focus()
+    fireEvent.keyDown(breast, { key: 'ArrowRight' })
 
-    expect(orthopaedics).toHaveFocus()
-    expect(orthopaedics).toHaveAttribute('aria-selected', 'true')
+    expect(pulmonary).toHaveFocus()
+    expect(pulmonary).toHaveAttribute('aria-selected', 'true')
     expect(
-      screen.getByRole('heading', { name: 'Orthopaedics', level: 3 }),
+      screen.getByRole('heading', { name: 'Pulmonary / COPD', level: 3 }),
     ).toBeVisible()
     expect(
-      screen.getByText(/Pain, mobility, function, postoperative recovery/i),
+      screen.getByText(/After a COPD exacerbation, changes in oxygen saturation/i),
     ).toBeVisible()
-    expect(orthopaedics).toHaveAttribute('aria-controls', panel.id)
-    expect(panel).toHaveAttribute('aria-labelledby', orthopaedics.id)
+    expect(pulmonary).toHaveAttribute('aria-controls', panel.id)
+    expect(panel).toHaveAttribute('aria-labelledby', pulmonary.id)
 
-    fireEvent.click(exercise)
-    expect(exercise).toHaveAttribute('aria-selected', 'true')
+    fireEvent.click(breast)
+    expect(breast).toHaveAttribute('aria-selected', 'true')
     expect(
-      screen.getByText(
-        /Exertional symptoms, activity tolerance, recovery patterns/i,
-      ),
+      screen.getByText(/Symptom reporting for adults receiving systemic therapy/i),
     ).toBeVisible()
 
-    fireEvent.click(orthopaedics)
+    fireEvent.click(rpm)
+    expect(rpm).toHaveAttribute('aria-selected', 'true')
     expect(
-      screen.getByText(/Pain, mobility, function, postoperative recovery/i),
+      screen.getByRole('heading', { name: 'Rural Remote Monitoring', level: 3 }),
     ).toBeVisible()
+    expect(screen.getByText('Works without home internet')).toBeVisible()
 
-    fireEvent.click(cardiovascular)
-    expect(cardiovascular).toHaveAttribute('aria-selected', 'true')
-    expect(
-      screen.getByRole('heading', { name: 'Cardiovascular', level: 3 }),
-    ).toBeVisible()
-    expect(
-      screen.getByText(
-        /Longitudinal symptoms, functional tolerance, medication-related observations, recovery patterns/i,
-      ),
-    ).toBeVisible()
-    expect(screen.getByText('Functional tolerance')).toBeVisible()
-    expect(screen.getByText('Medication-related observations')).toBeVisible()
+    fireEvent.keyDown(rpm, { key: 'ArrowRight' })
+    expect(gu).toHaveFocus()
+    expect(gu).toHaveAttribute('aria-selected', 'true')
+    fireEvent.keyDown(gu, { key: 'End' })
+    expect(rpm).toHaveFocus()
+    expect(rpm).toHaveAttribute('aria-selected', 'true')
 
-    fireEvent.keyDown(cardiovascular, { key: 'ArrowRight' })
-    expect(oncology).toHaveFocus()
-    expect(oncology).toHaveAttribute('aria-selected', 'true')
-    fireEvent.keyDown(oncology, { key: 'End' })
-    expect(cardiovascular).toHaveFocus()
-    expect(cardiovascular).toHaveAttribute('aria-selected', 'true')
-
-    fireEvent.click(oncology)
-    expect(oncology).toHaveAttribute('aria-selected', 'true')
+    fireEvent.click(gu)
+    expect(gu).toHaveAttribute('aria-selected', 'true')
     expect(
-      screen.getByText(/Treatment-related symptoms, patient and caregiver/i),
+      screen.getByText(/Toxicity that evolves between infusions/i),
     ).toBeVisible()
   })
 
@@ -128,17 +113,17 @@ describe('SpecialtyWorkflows', () => {
     const { container } = render(<SpecialtyWorkflows />)
 
     expect(
-      screen.getByText(/Four applications, one shared platform/i),
+      screen.getByText(/Four programs, one shared platform/i),
     ).toBeVisible()
     expect(
-      screen.getByText(/observations, change over time, prioritization/i),
+      screen.getByText(/observations, change over time,\s+prioritization/i),
     ).toBeVisible()
 
     for (const name of [
-      'Oncology',
-      'Exercise & Recovery',
-      'Orthopaedics',
-      'Cardiovascular',
+      'Genitourinary Oncology',
+      'Breast Oncology',
+      'Pulmonary / COPD',
+      'Rural Remote Monitoring',
     ]) {
       const tab = screen.getByRole('tab', { name: new RegExp(name) })
       fireEvent.click(tab)

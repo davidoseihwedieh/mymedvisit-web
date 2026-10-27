@@ -39,17 +39,17 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://mymedvisit.app'),
-  title: 'MyMedVisit — Your health, remembered by voice',
+  title: 'MyMedVisit — Longitudinal clinical context',
   description:
-    'MyMedVisit captures doctor visits and daily health metrics through voice, then turns them into clear, shareable insights for families.',
+    'A care-team platform that turns patient and caregiver reports, connected devices, and health-record context into reviewable clinical information between visits.',
   keywords: [
-    'health',
-    'medical visits',
-    'voice summarization',
-    'AI',
-    'family health',
-    'caregiving',
-    'senior health',
+    'remote patient monitoring',
+    'patient-reported outcomes',
+    'caregiver reporting',
+    'oncology symptom monitoring',
+    'COPD',
+    'clinical workflow',
+    'FHIR',
   ],
   icons: {
     icon: '/mmv-icon.png',
@@ -57,15 +57,14 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'MyMedVisit — Your health, remembered by voice',
-    description:
-      'Capture doctor visits and daily health metrics through voice. Clear, shareable insights for families.',
+    title: 'MyMedVisit — Longitudinal clinical context',
+    description: 'Patient and caregiver observations, connected devices, and care-team review between visits.',
     images: ['/mmv-social.png'],
   },
   openGraph: {
-    title: 'MyMedVisit — Your health, remembered by voice',
+    title: 'MyMedVisit — Longitudinal clinical context',
     description:
-      'Capture doctor visits and daily health metrics through voice. Clear, shareable insights for families.',
+      'Patient and caregiver observations, connected devices, and care-team review between visits.',
     type: 'website',
     url: 'https://mymedvisit.app',
     images: [

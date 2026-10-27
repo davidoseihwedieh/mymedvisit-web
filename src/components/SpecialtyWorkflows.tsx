@@ -4,76 +4,72 @@ import { useRef, useState, type KeyboardEvent } from 'react'
 
 const workflows = [
   {
-    id: 'oncology',
-    name: 'Oncology',
+    id: 'genitourinary-oncology',
+    name: 'Genitourinary Oncology',
     description:
-      'Treatment-related symptoms, patient and caregiver observations, longitudinal change, prioritization, and care-team review.',
+      'Toxicity that evolves between infusions of modern combination therapy: neuropathy, skin changes, fatigue, high blood sugar, and immune-related symptoms, reported by the patient and caregiver as they happen.',
     signals: [
       'Treatment-related symptoms',
       'Patient + caregiver observations',
-      'Change and care-team review',
+      'Time-stamped onset',
     ],
     example: [
-      { label: 'Observation', value: 'Treatment-related symptom noted' },
-      { label: 'Change over time', value: 'Context organized for review' },
-      { label: 'Care-team workflow', value: 'Information ready to consider' },
+      { label: 'Observation', value: 'Caregiver notes new numbness in feet' },
+      { label: 'Clarification', value: 'Onset, severity, and effect on walking asked' },
+      { label: 'Care-team workflow', value: 'Structured report ready for review' },
     ],
-    accent: 'oncology',
+    accent: 'gu',
   },
   {
-    id: 'exercise-recovery',
-    name: 'Exercise & Recovery',
+    id: 'breast-oncology',
+    name: 'Breast Oncology',
     description:
-      'Exertional symptoms, activity tolerance, recovery patterns, and meaningful changes over time.',
+      'Symptom reporting for adults receiving systemic therapy, with patient, caregiver, and clinician priorities kept distinct and every report traceable to its source.',
     signals: [
-      'Exertional symptoms',
-      'Activity tolerance',
-      'Recovery over time',
+      'Symptom severity and trajectory',
+      'Patient and caregiver priorities',
+      'Source-linked reports',
     ],
     example: [
-      { label: 'Observation', value: 'Activity experience described' },
-      { label: 'Change over time', value: 'Recovery context organized' },
-      { label: 'Care-team workflow', value: 'Information ready to consider' },
+      { label: 'Observation', value: 'Patient describes worsening fatigue' },
+      { label: 'Clarification', value: 'Fever, intake, and daily function asked' },
+      { label: 'Care-team workflow', value: 'Structured report ready for review' },
     ],
-    accent: 'exercise',
+    accent: 'breast',
   },
   {
-    id: 'orthopaedics',
-    name: 'Orthopaedics',
+    id: 'pulmonary',
+    name: 'Pulmonary / COPD',
     description:
-      'Pain, mobility, function, postoperative recovery, wound concerns, and implant-related changes between encounters.',
+      'After a COPD exacerbation, changes in oxygen saturation, activity, and sleep against a personal baseline prompt a short, targeted check-in with the patient or caregiver, with local air quality and heat added for context.',
     signals: [
-      'Pain, mobility, and function',
-      'Postoperative recovery',
-      'Wound or implant-related change',
+      'Wearable and phone signals',
+      'Targeted symptom check-in',
+      'Air quality and heat context',
     ],
     example: [
-      { label: 'Observation', value: 'Recovery experience described' },
-      {
-        label: 'Change over time',
-        value: 'Context organized for review',
-      },
-      { label: 'Care-team workflow', value: 'Information ready to consider' },
+      { label: 'Observation', value: 'Activity and oxygen below personal baseline' },
+      { label: 'Clarification', value: 'Rescue inhaler use and sputum change asked' },
+      { label: 'Care-team workflow', value: 'Structured report ready for review' },
     ],
-    accent: 'orthopaedics',
+    accent: 'pulmonary',
   },
   {
-    id: 'cardiovascular',
-    name: 'Cardiovascular',
+    id: 'rural-rpm',
+    name: 'Rural Remote Monitoring',
     description:
-      'Longitudinal symptoms, functional tolerance, medication-related observations, recovery patterns, and meaningful changes between encounters.',
+      'Remote monitoring for adults with hypertension, heart failure, or diabetes and for pregnancy and postpartum care, using cellular-connected devices that need no smartphone or home internet.',
     signals: [
-      'Longitudinal symptoms',
-      'Functional tolerance',
-      'Medication-related observations',
-      'Recovery patterns',
+      'Blood pressure, weight, glucose',
+      'Pregnancy and postpartum care',
+      'Works without home internet',
     ],
     example: [
-      { label: 'Observation', value: 'Everyday experience described' },
-      { label: 'Change over time', value: 'Context organized for review' },
-      { label: 'Care-team workflow', value: 'Information ready to consider' },
+      { label: 'Observation', value: 'Postpartum blood pressure reading rises' },
+      { label: 'Clarification', value: 'Headache and vision symptoms asked' },
+      { label: 'Care-team workflow', value: 'Escalated to the monitoring nurse' },
     ],
-    accent: 'cardiovascular',
+    accent: 'rpm',
   },
 ] as const
 
@@ -83,27 +79,30 @@ function WorkflowMark({
   kind: (typeof workflows)[number]['accent']
 }) {
   const paths = {
-    oncology: (
+    gu: (
       <>
         <path d="M12 3v18M3 12h18" />
         <circle cx="12" cy="12" r="8.5" />
       </>
     ),
-    exercise: (
+    breast: (
       <>
-        <path d="M4 12h3l2-6 4 12 2-6h5" />
-        <path d="M3 5v14M21 5v14" />
+        <path d="M12 3c-2.5 0-4 2-4 4 0 3 4 6 4 6s4-3 4-6c0-2-1.5-4-4-4Z" />
+        <path d="M10 12.5 6 21M14 12.5l4 8.5" />
       </>
     ),
-    orthopaedics: (
+    pulmonary: (
       <>
-        <path d="M8 4a2.5 2.5 0 1 0-3.5 3.5l7.9 7.9a2.5 2.5 0 1 0 3.5-3.5L8 4Z" />
-        <path d="M16 20a2.5 2.5 0 1 0 3.5-3.5l-2.2-2.2" />
+        <path d="M12 3v8M12 11c-1 0-2 1-2 2" />
+        <path d="M10 6.5C7 6 4 9 4 14c0 3 1 5 3 5s3-2 3-4v-4" />
+        <path d="M14 6.5c3-.5 6 2.5 6 7.5 0 3-1 5-3 5s-3-2-3-4v-4" />
       </>
     ),
-    cardiovascular: (
+    rpm: (
       <>
-        <path d="M12 20s-7-4.4-9-9.1C1.3 6.8 6.5 3.2 10 6.3L12 8l2-1.7c3.5-3.1 8.7.5 7 4.6C19 15.6 12 20 12 20Z" />
+        <path d="M3 11 12 4l9 7" />
+        <path d="M5 10v10h14V10" />
+        <path d="M7.5 15h2l1.5-3 2 5 1.5-2h2" />
       </>
     ),
   }
@@ -160,7 +159,7 @@ export function SpecialtyWorkflows() {
       <div className="mx-auto max-w-6xl">
         <div className="max-w-3xl">
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--teal-dark)]">
-            Four applications, one shared platform
+            Four programs, one shared platform
           </p>
           <h2
             className="mt-4 font-[var(--font-fraunces)] text-4xl leading-tight tracking-tight sm:text-5xl"
@@ -169,10 +168,10 @@ export function SpecialtyWorkflows() {
             One platform. Specialty-specific intelligence.
           </h2>
           <p className="mt-5 max-w-2xl text-base leading-relaxed text-[rgba(13,27,42,0.7)] sm:text-lg">
-            Each specialty brings its own clinical context to the same platform
-            foundation: observations, change over time, prioritization, and
-            care-team review. These examples are synthetic and do not represent
-            clinical validation, active deployment, or institutional
+            Each program brings its own clinical questions and escalation rules
+            to the same platform foundation: observations, change over time,
+            prioritization, and care-team review. These examples are synthetic
+            and do not represent clinical validation, active deployment, or institutional
             partnership.
           </p>
         </div>

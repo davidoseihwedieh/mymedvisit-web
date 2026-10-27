@@ -4,57 +4,57 @@ import Link from 'next/link'
 const detailedSteps = [
   {
     num: '01',
-    title: 'Record your doctor visit',
-    subtitle: 'Capture the conversation naturally',
+    title: 'Enroll through a care program',
+    subtitle: 'Connected to a responsible care team',
     description:
-      'Open MyMedVisit and tap record. Talk naturally during or after your appointment. No need to take notes. Our system understands medical terminology, handles background noise, and captures everything discussed.',
+      'Participants join through a clinic, health system, or research program, not an app store. Every participant is linked to a care team and an escalation path before any data is collected.',
     details: [
-      'Record during the visit or immediately after',
-      'Works even in noisy clinic environments',
-      'Medical terminology recognized automatically',
-      'Data encrypted locally and never leaves your device unencrypted',
+      'Institution-issued invitation and identity verification',
+      'Program-specific consent and emergency instructions',
+      'Optional, permissioned caregiver enrollment',
+      'Smartphone app or cellular devices, whichever fits the participant',
     ],
     visual: 'capture',
   },
   {
     num: '02',
-    title: 'Get a clinical summary',
-    subtitle: 'Structured note focusing on what matters',
+    title: 'Capture what changes between visits',
+    subtitle: 'Reports, devices, and context',
     description:
-      'Our medical AI transforms your recording into a clean clinical note. Diagnoses, medications, dosages, and recommendations—clearly organized. No small talk, no fluff. Just clinically relevant information you can reference forever.',
+      'Patients and caregivers report changes by voice or text when they notice them. Phone, wearable, or cellular-device readings arrive alongside, and health-record context comes in through SMART on FHIR where the program connects it.',
     details: [
-      'Automatic extraction of diagnoses and clinical findings',
-      'Medications with dosages clearly listed',
-      'Recommendations and action items prioritized',
-      'Ignores pleasantries and non-clinical conversation',
+      'User-activated voice or text; never continuous listening',
+      'Patient and caregiver reports kept separate and attributed',
+      'Readings compared against each person’s own baseline',
+      'Language detection for multilingual reporting',
     ],
     visual: 'process',
   },
   {
     num: '03',
-    title: 'Query your note with AI',
-    subtitle: 'Understand the medical reasoning',
+    title: 'Clarify and screen',
+    subtitle: 'Ask for what is missing',
     description:
-      'Your clinical note is searchable and queryable. Ask "Why did my doctor recommend this medication?" or "What does this diagnosis mean?" Our AI provides clear answers grounded in medical evidence and your specific situation.',
+      'When a report leaves out what a clinician needs — onset, severity, trajectory, effect on daily function — the platform asks a short follow-up. Program-specific rules then screen the completed report.',
     details: [
-      'Ask questions about diagnoses, medications, recommendations',
-      'Get explanations in plain English, not medical jargon',
-      'Understand the reasoning behind your doctor\'s choices',
-      'Upload lab results and get interpretations',
+      'Targeted follow-up instead of a fixed questionnaire',
+      'Clinician-approved rules for each program',
+      'Screening never lowers an urgent result',
+      'Severe symptoms are directed to emergency care at once',
     ],
     visual: 'review',
   },
   {
     num: '04',
-    title: 'Log symptoms, share with family',
-    subtitle: 'Better health insights through data',
+    title: 'Review, act, and document',
+    subtitle: 'Clinicians stay in charge',
     description:
-      'Log how you feel daily—symptoms, energy levels, concerns. This data helps your clinician make better decisions. Share your visit notes with family who missed the appointment. They can query your notes too. Get AI alerts for concerning symptom combinations.',
+      'Structured reports enter a ring-fenced escalation queue. A named clinician claims each item, decides what to do, and closes it only with a documented outcome. Programs can report on completeness, timeliness, and alert burden.',
     details: [
-      'Daily symptom logging improves clinician decision-making',
-      'Share visit summaries with loved ones instantly',
-      'Family members can query your clinical notes',
-      'Red flag alerts if you log a dangerous symptom given your diagnoses',
+      'Every escalation claimed, worked, and closed with an outcome',
+      'Source-linked statements, device trends, and open questions in one view',
+      'Audit trail from receipt to resolution',
+      'Program and study reporting',
     ],
     visual: 'share',
   },
@@ -72,11 +72,13 @@ export default function HowItWorks() {
               How it works
             </p>
             <h1 className="reveal stagger-1 mt-4 font-[var(--font-fraunces)] text-[clamp(2.4rem,4vw,4.2rem)] leading-[1.08]">
-              From doctor visit to{' '}
-              <span className="text-gradient">medical understanding</span>.
+              From a change at home to{' '}
+              <span className="text-gradient">care-team action</span>.
             </h1>
             <p className="reveal stagger-2 mt-6 text-lg leading-relaxed text-[rgba(13,27,42,0.6)]">
-              Record your appointment. Get a searchable clinical note. Query it for medical insights. Log your symptoms. Share with family. That\'s how you take control of your health.
+              The same four steps run in every program, whether it is oncology symptom monitoring,
+              recovery after a COPD exacerbation, or rural remote monitoring. Only the clinical
+              questions, thresholds, and escalation paths change.
             </p>
           </div>
         </div>
@@ -139,16 +141,16 @@ export default function HowItWorks() {
       <section className="px-6 pb-24 pt-16">
         <div className="mx-auto max-w-4xl">
           <div className="glass-card reveal rounded-[32px] p-12 text-center">
-            <h2 className="font-[var(--font-fraunces)] text-4xl">Never forget what your doctor said.</h2>
+            <h2 className="font-[var(--font-fraunces)] text-4xl">Bring the time between visits into view.</h2>
             <p className="mx-auto mt-4 max-w-lg text-[rgba(13,27,42,0.55)]">
-              Join early access and start transforming your doctor visits into searchable, queryable medical records you can understand and share.
+              We work with clinical programs, investigators, and health systems to configure the platform for a specific population and workflow.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-4">
               <Link
                 href="/contact"
                 className="rounded-full bg-[var(--ink)] px-8 py-4 text-sm font-semibold text-white shadow-[var(--shadow)]"
               >
-                Get Early Access
+                Talk With Us
               </Link>
               <Link
                 href="/technology"

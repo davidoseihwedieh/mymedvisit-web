@@ -5,7 +5,7 @@ const footerLinks = {
   product: [
     { href: '/how-it-works', label: 'How It Works' },
     { href: '/technology', label: 'Technology' },
-    { href: '/contact', label: 'Get Early Access' },
+    { href: '/contact', label: 'Request a Demo' },
   ],
   company: [
     { href: '/about', label: 'About' },
