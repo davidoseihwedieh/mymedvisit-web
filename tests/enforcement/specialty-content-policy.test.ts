@@ -7,19 +7,19 @@ const specialtySource = readFileSync(
 )
 
 describe('specialty content policy', () => {
-  it('keeps exactly four equal specialty applications and the approved cardiovascular scope', () => {
+  it('keeps exactly four equal program applications and the approved pulmonary scope', () => {
     for (const specialty of [
-      "id: 'oncology'",
-      "id: 'exercise-recovery'",
-      "id: 'orthopaedics'",
-      "id: 'cardiovascular'",
+      "id: 'genitourinary-oncology'",
+      "id: 'breast-oncology'",
+      "id: 'pulmonary'",
+      "id: 'rural-rpm'",
     ]) {
       expect(specialtySource).toContain(specialty)
     }
 
-    expect(specialtySource).toContain('Four applications, one shared platform')
+    expect(specialtySource).toContain('Four programs, one shared platform')
     expect(specialtySource).toContain(
-      'Longitudinal symptoms, functional tolerance, medication-related observations, recovery patterns, and meaningful changes between encounters.',
+      'After a COPD exacerbation, drift in oxygen, activity, and sleep from a personal baseline prompts a short check-in, with local air quality and heat for context.',
     )
     expect(specialtySource).toMatch(
       /grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4/,

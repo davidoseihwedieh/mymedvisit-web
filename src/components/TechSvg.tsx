@@ -62,7 +62,7 @@ export function EncryptionSvg({ className = '' }: { className?: string }) {
         <path d="M322 122 L330 114 L338 122 L338 134 C338 138 330 143 330 143 C330 143 322 138 322 134 Z" fill="#0a7ea4" fillOpacity="0.15" stroke="#0a7ea4" strokeWidth="1.2" />
         <path d="M326 130 L330 134 L336 127" fill="none" stroke="#0a7ea4" strokeWidth="1.2" strokeLinecap="round" />
         {/* Labels */}
-        <text x="330" y="168" textAnchor="middle" className="text-[10px] font-semibold" fill="#0E7490">Zero-knowledge</text>
+        <text x="330" y="168" textAnchor="middle" className="text-[10px] font-semibold" fill="#0E7490">Encrypted at rest</text>
         <text x="330" y="182" textAnchor="middle" className="text-[10px] font-semibold" fill="#0E7490">processing</text>
       </g>
 

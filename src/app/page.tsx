@@ -330,7 +330,7 @@ export default function Home() {
                     href="/contact"
                     className="rounded-full bg-[var(--ink)] px-6 py-3 text-center text-sm font-semibold text-white shadow-[var(--shadow)] transition-colors hover:bg-[var(--blue)] active:bg-[var(--blue)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--blue)]"
                   >
-                    Request Early Access
+                    Request a Demo
                   </Link>
                 </div>
               </div>

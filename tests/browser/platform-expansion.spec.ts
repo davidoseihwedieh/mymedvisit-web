@@ -8,10 +8,10 @@ const viewports = [
 ] as const
 
 const specialties = [
-  { id: 'oncology', name: 'Oncology' },
-  { id: 'exercise-recovery', name: 'Exercise & Recovery' },
-  { id: 'orthopaedics', name: 'Orthopaedics' },
-  { id: 'cardiovascular', name: 'Cardiovascular' },
+  { id: 'genitourinary-oncology', name: 'Genitourinary Oncology' },
+  { id: 'breast-oncology', name: 'Breast Oncology' },
+  { id: 'pulmonary', name: 'Pulmonary / COPD' },
+  { id: 'rural-rpm', name: 'Rural Remote Monitoring' },
 ] as const
 
 async function returnToPageTop(page: Page) {
@@ -51,8 +51,8 @@ async function waitForHomepageReadiness(page: Page) {
     .poll(() => page.evaluate(() => document.fonts.status))
     .toBe('loaded')
 
-  const oncologyTab = page.getByRole('tab', { name: 'Oncology' })
-  const exerciseTab = page.getByRole('tab', { name: 'Exercise & Recovery' })
+  const oncologyTab = page.getByRole('tab', { name: 'Genitourinary Oncology' })
+  const exerciseTab = page.getByRole('tab', { name: 'Breast Oncology' })
   await oncologyTab.focus()
   await expect(oncologyTab).toBeFocused()
   await expect
@@ -71,11 +71,14 @@ async function waitForHomepageReadiness(page: Page) {
   await expect(exerciseTab).toBeFocused()
 }
 
-test('homepage early-access CTA preserves comfortable contrast across interaction states', async ({
+test('homepage demo-request CTA preserves comfortable contrast across interaction states', async ({
   page,
 }) => {
   await waitForHomepageReadiness(page)
-  const cta = page.getByRole('link', { name: 'Request Early Access' })
+  const cta = page
+    .getByRole('main')
+    .getByRole('link', { name: 'Request a Demo' })
+    .last()
   await cta.scrollIntoViewIfNeeded()
   const expectedInk = 'rgb(13, 27, 42)'
   const expectedBlue = 'rgb(30, 64, 175)'
@@ -176,9 +179,9 @@ for (const viewport of viewports) {
       await expect(panel).toContainText(
         'Synthetic example · not a patient record',
       )
-      if (specialty.id === 'cardiovascular') {
+      if (specialty.id === 'pulmonary') {
         await expect(panel).toContainText(
-          'Longitudinal symptoms, functional tolerance, medication-related observations, recovery patterns, and meaningful changes between encounters.',
+          'After a COPD exacerbation, drift in oxygen, activity, and sleep from a personal baseline prompts a short check-in, with local air quality and heat for context.',
         )
       }
 
@@ -251,11 +254,13 @@ for (const viewport of viewports) {
     }
 
     await page.emulateMedia({ reducedMotion: 'reduce' })
-    const oncologyTab = page.getByRole('tab', { name: 'Oncology' })
+    const oncologyTab = page.getByRole('tab', {
+      name: 'Genitourinary Oncology',
+    })
     await oncologyTab.focus()
     await expect(oncologyTab).toBeFocused()
     await page.keyboard.press('ArrowRight')
-    const exerciseTab = page.getByRole('tab', { name: 'Exercise & Recovery' })
+    const exerciseTab = page.getByRole('tab', { name: 'Breast Oncology' })
     await expect(exerciseTab).toBeFocused()
     await expect(exerciseTab).toHaveAttribute('aria-selected', 'true')
     expect(

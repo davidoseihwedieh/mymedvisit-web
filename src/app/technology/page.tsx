@@ -4,62 +4,62 @@ import { illustrations } from '@/assets/illustrations'
 
 const aiCapabilities = [
   {
-    title: 'Clinical Voice Recognition',
-    description: 'Trained on actual doctor-patient conversations, our system understands medical terminology, regional accents, and clinical shorthand. Works perfectly in noisy environments—hospitals, clinics, even home settings.',
+    title: 'Voice and text capture',
+    description: 'Patients and caregivers describe what changed in their own words, by voice or text. Spoken language is detected automatically, and each report is time-stamped and attributed to the person who gave it.',
   },
   {
-    title: 'Clinical Note Generation',
-    description: 'Transforms your recording into a clean, structured clinical note. Automatically extracts diagnoses, medications, dosages, and recommendations. Filters out pleasantries and focuses only on clinically relevant information.',
+    title: 'Adaptive clarification',
+    description: 'The platform identifies what is missing from a report — onset, severity, trajectory, effect on daily function — and asks a short, targeted follow-up instead of a fixed questionnaire.',
   },
   {
-    title: 'Medical AI Reasoning',
-    description: 'When you ask your clinical note a question, our AI explains the medical reasoning behind your doctor\'s recommendations. Uses evidence-based medical knowledge to help you understand your diagnosis and treatment plan.',
+    title: 'Source-linked evidence',
+    description: 'Patient statements, caregiver observations, and device readings stay separate and traceable. Disagreements are surfaced rather than averaged, and the system can say “not enough information” rather than force a grade.',
   },
   {
-    title: 'Symptom Intelligence & Red Flag Detection',
-    description: 'When you log daily symptoms, the system understands your known diagnoses and flags dangerous combinations. Example: hypertension + sudden vision loss = amaurosis fugax alert. Urges you to seek emergency care.',
+    title: 'Tiered safety screening',
+    description: 'Reports are screened against program-specific, clinician-approved rules. Screening never lowers an urgent result, and anyone reporting a severe symptom is directed to emergency care rather than asked to wait for review.',
   },
 ]
 
 const integrations = [
   {
-    title: 'Apple Health Integration',
-    description: 'Seamlessly pull heart rate, blood pressure, step count, respiratory rate, and body measurements from Apple Health. Your wearable data enriches every visit summary with objective biometric context.',
-    metrics: ['Heart Rate', 'Blood Pressure', 'Steps', 'Respiratory Rate', 'Body Temperature'],
+    title: 'Phone and wearable data',
+    description: 'With permission, the app reads data from Apple Health on iPhone and Health Connect on Android, compared against each person’s own baseline.',
+    metrics: ['Heart Rate', 'Blood Pressure', 'Oxygen Saturation', 'Steps', 'Sleep', 'Weight', 'Glucose'],
   },
   {
-    title: 'Continuous Glucose Monitoring',
-    description: 'Connect compatible CGM devices and smart rings for real-time glucose trend data. Our intelligence correlates glucose patterns with visit notes, medication changes, and meal timing — building a complete metabolic picture.',
-    metrics: ['Real-time Glucose', 'Trend Arrows', 'Time in Range', 'A1C Estimation', 'Pattern Detection'],
+    title: 'Cellular-connected devices',
+    description: 'For participants without a smartphone or home internet, readings can come from cellular-connected devices that transmit automatically with nothing more than a power outlet.',
+    metrics: ['Blood Pressure Cuffs', 'Scales', 'Glucose Meters', 'No Wi-Fi Required'],
   },
   {
-    title: 'Sleep Pattern Analysis',
-    description: 'Import sleep data from wearable rings, watches, and dedicated sleep trackers. Our ambient intelligence analyzes sleep stages, duration, consistency, and disturbances — then correlates them with health events and medication changes.',
-    metrics: ['Sleep Stages', 'Duration & Quality', 'Sleep Latency', 'HRV During Sleep', 'Consistency Score'],
+    title: 'Electronic health record',
+    description: 'SMART on FHIR connectivity to Epic brings in conditions, medications, vitals, and care-team context with provenance. Standalone clinician tools serve practices on other systems.',
+    metrics: ['SMART on FHIR', 'Epic', 'Provenance'],
   },
   {
-    title: 'Wearable Biosensor Network',
-    description: 'From blood oxygen saturation to skin temperature, stress indicators to activity patterns — our platform unifies data from an expanding ecosystem of wearable health sensors into your personal health timeline.',
-    metrics: ['SpO2 Levels', 'Skin Temperature', 'Stress Index', 'Activity Zones', 'Recovery Score'],
+    title: 'Research data capture',
+    description: 'Structured outputs for research protocols, including REDCap workflows, version-locked study configurations, and audit trails suitable for prospective evaluation.',
+    metrics: ['REDCap', 'Version Locking', 'Audit Trail'],
   },
 ]
 
 const securityLayers = [
   {
-    title: 'On-device encryption',
-    description: 'All voice data and health information are encrypted with AES-256 before leaving your device. The encryption keys are generated and stored locally — we never have access to them.',
+    title: 'Encryption',
+    description: 'Health data is encrypted in transit and at rest, and sensitive information stored on the device is kept in encrypted storage.',
   },
   {
-    title: 'Zero-knowledge processing',
-    description: 'Our AI processes anonymized, encrypted data. We cannot read your health information. The system is architectured so that even our own engineers cannot access patient data.',
+    title: 'Role-based access',
+    description: 'Clinical queues and records are limited to authorized clinical roles within each participating program. Patients and caregivers see only what they are permitted to see.',
   },
   {
-    title: 'Granular access control',
-    description: 'You define exactly who sees what. Share full visit summaries with your daughter, medication changes with your caregiver, and vitals trends with your physician — each with independently revocable access.',
+    title: 'Permission-based sharing',
+    description: 'Caregiver access is invited, role-based, and revocable. Family members never receive clinical information automatically.',
   },
   {
-    title: 'Complete audit trail',
-    description: 'Every access, share, and modification is logged with cryptographic timestamps. You can see exactly who viewed your data, when, and what they saw. Full transparency, full control.',
+    title: 'Audit trail',
+    description: 'Access, sharing, and clinical actions are logged, so every escalation can be traced from receipt to documented outcome.',
   },
 ]
 
@@ -76,11 +76,12 @@ export default function Technology() {
               Our technology
             </p>
             <h1 className="reveal stagger-1 mt-4 font-[var(--font-fraunces)] text-[clamp(2.4rem,4vw,4.2rem)] leading-[1.08]">
-              <span className="text-gradient">Clinical-grade AI</span> that understands your care.
+              One platform for <span className="text-gradient">between-visit information</span>.
             </h1>
             <p className="reveal stagger-2 mt-6 text-lg leading-relaxed text-[rgba(13,27,42,0.6)]">
-              Every step—recording, transcription, note generation, querying, symptom analysis—is built with medical expertise.
-              Our system knows clinical language, understands medical reasoning, and respects your privacy absolutely.
+              A shared foundation for capture, clarification, safety screening, and care-team review.
+              Each clinical program adds its own questions, thresholds, and escalation paths.
+              Clinicians make every clinical decision.
             </p>
           </div>
         </div>
@@ -90,9 +91,9 @@ export default function Technology() {
       <section className="px-6 py-20">
         <div className="mx-auto max-w-6xl">
           <SectionHeader
-            tag="The Technology"
-            title="From recording to medical understanding."
-            description="Our technology pipeline transforms doctor visits into searchable, queryable clinical records. Voice recognition trained on clinical dialogue. AI that generates clean notes. Medical reasoning engines that answer your questions. Symptom intelligence that detects emergencies."
+            tag="The platform"
+            title="From an incomplete report to a reviewable one."
+            description="A first report such as “I feel worse” rarely says enough to act on. The platform captures it, asks for what is missing, keeps every fact tied to its source, and places a structured report in front of the care team."
           />
           <div className="mt-14 grid gap-8 md:grid-cols-2">
             {aiCapabilities.map((cap, index) => (
@@ -122,14 +123,14 @@ export default function Technology() {
       <section className="px-6 py-20">
         <div className="mx-auto max-w-6xl">
           <SectionHeader
-            tag="Ambient clinical intelligence"
-            title="Your health data, woven into one living narrative."
-            description="Voice is just the beginning. MyMedVisit integrates with the devices and platforms you already wear and use — building a comprehensive health picture that no single data source could provide alone."
+            tag="Connected data"
+            title="Reports, devices, and the record in one timeline."
+            description="What patients and caregivers report is read alongside device readings and health-record context, so a change can be seen in full rather than one stream at a time. MyMedVisit is user-activated and does not listen continuously."
             centered
           />
           <div className="reveal stagger-1 mx-auto mt-12 max-w-5xl">
             <div className="glass-card rounded-[32px] p-6">
-              <img src={illustrations.passiveDevices} alt="Ambient intelligence" className="w-full object-contain" />
+              <img src={illustrations.passiveDevices} alt="Connected data sources" className="w-full object-contain" />
             </div>
           </div>
         </div>
@@ -139,9 +140,9 @@ export default function Technology() {
       <section className="px-6 py-20">
         <div className="mx-auto max-w-6xl">
           <SectionHeader
-            tag="Connected health ecosystem"
-            title="Every signal matters."
-            description="We pull together data from across your health ecosystem to surface insights that individual devices can't."
+            tag="Integrations"
+            title="Built to fit existing care and research workflows."
+            description="Data sources and outputs are configured per program, so a remote-monitoring service and a research protocol can run on the same foundation."
           />
           <div className="mt-14 grid gap-8 md:grid-cols-2">
             {integrations.map((item, index) => (
@@ -219,9 +220,9 @@ export default function Technology() {
       <section className="px-6 py-20">
         <div className="mx-auto max-w-6xl">
           <SectionHeader
-            tag="End-to-end encryption"
-            title="Your data is yours. Period."
-            description="Every byte of health data is encrypted before it leaves your device. Our architecture ensures that even we cannot access your information."
+            tag="Privacy and security"
+            title="Protected by design, governed by the program."
+            description="Each deployment runs under the participating organization’s consent, privacy, and clinical governance, with access limited to the people responsible for care."
             centered
           />
           <div className="reveal stagger-1 mx-auto mt-12 max-w-5xl">
@@ -237,7 +238,7 @@ export default function Technology() {
         <div className="mx-auto max-w-6xl">
           <SectionHeader
             tag="Security architecture"
-            title="Four layers of protection."
+            title="Four safeguards."
           />
           <div className="mt-14 grid gap-6 md:grid-cols-2">
             {securityLayers.map((layer, index) => (
@@ -265,24 +266,23 @@ export default function Technology() {
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-8 lg:grid-cols-2">
             <div className="reveal rounded-[28px] bg-[var(--ink)] p-10 text-white">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/40">Personalized intelligence</p>
-              <h3 className="mt-4 font-[var(--font-fraunces)] text-3xl text-[var(--sky)]">Responses tailored to you.</h3>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/40">Human in the loop</p>
+              <h3 className="mt-4 font-[var(--font-fraunces)] text-3xl text-[var(--sky)]">Clinicians decide.</h3>
               <p className="mt-5 leading-relaxed text-white/50">
-                Our specialized medical language models don&apos;t just summarize — they contextualize.
-                By understanding your medication history, conditions, and health trends, the system
-                provides personalized guidance that grows more accurate over time. Combined with
-                evidence-based pharmacological databases, it surfaces interactions, contraindications,
-                and follow-up recommendations specific to your health profile.
+                MyMedVisit organizes information for review; it does not diagnose, prescribe, or change care.
+                Candidate signals enter a ring-fenced escalation queue where each item is claimed by a named
+                clinician, worked, and closed only with a documented outcome. Nothing is silently dropped,
+                and duplicate submissions cannot create duplicate alerts.
               </p>
             </div>
             <div className="reveal stagger-1 rounded-[28px] p-10" style={{ background: 'linear-gradient(135deg, rgba(10,126,164,0.08), rgba(224,244,246,0.4))' }}>
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--teal-dark)]">Evidence-based alerts</p>
-              <h3 className="mt-4 font-[var(--font-fraunces)] text-3xl">Proactive health guidance.</h3>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--teal-dark)]">Built for evaluation</p>
+              <h3 className="mt-4 font-[var(--font-fraunces)] text-3xl">Measurable from day one.</h3>
               <p className="mt-5 leading-relaxed text-[rgba(13,27,42,0.55)]">
-                By combining visit summaries with continuous health data from Apple Health, glucose monitors,
-                and sleep trackers, our intelligence can detect patterns and generate evidence-based alerts.
-                A glucose spike after a medication change. A sleep disruption correlating with a new prescription.
-                The system connects the dots so you and your care team can act early.
+                Clinical rules, models, and settings can be version-locked for a study. Every report keeps its
+                timestamps and sources, so programs can measure what matters: how complete reports are, how
+                quickly the care team learns of a change, alert burden, and the effort asked of patients,
+                caregivers, and staff.
               </p>
             </div>
           </div>
@@ -293,16 +293,16 @@ export default function Technology() {
       <section className="px-6 pb-24 pt-10">
         <div className="mx-auto max-w-4xl">
           <div className="glass-card reveal rounded-[32px] p-12 text-center">
-            <h2 className="font-[var(--font-fraunces)] text-4xl">Experience the intelligence firsthand.</h2>
+            <h2 className="font-[var(--font-fraunces)] text-4xl">See the platform with your workflow in mind.</h2>
             <p className="mx-auto mt-4 max-w-lg text-[rgba(13,27,42,0.5)]">
-              Join early access and see what happens when advanced AI meets personal health care.
+              We offer live demonstrations with synthetic participants for clinical programs, investigators, and health systems.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-4">
               <Link
                 href="/contact"
                 className="rounded-full bg-[var(--ink)] px-8 py-4 text-sm font-semibold text-white shadow-[var(--shadow)]"
               >
-                Get Early Access
+                Request a Demonstration
               </Link>
               <Link
                 href="/how-it-works"
